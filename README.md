@@ -55,3 +55,11 @@ those ids to names.
 - Channels with hidden history or that are private are recorded in `sync_state.last_error`.
 - Media files are not downloaded, only typed (`photo/video/document/webpage`).
 - Unresolved from the research lists: "Zluka de Novorusia. ZOV", "DMP Geopolítica".
+
+## Hosting
+
+- `serve.sh` serves `site/` on 127.0.0.1:8788 (crontab `@reboot`).
+- Public via a dedicated locally-managed Cloudflare tunnel `tg-monitor` (`~/.cloudflared/tg-monitor.yml`,
+  user unit `cloudflared-tg-monitor.service`): https://canales.m19182.dev and https://tg.m19182.dev.
+- Gotcha: `cloudflared tunnel route dns` takes the tunnel from the default `~/.cloudflared/config.yml`
+  regardless of the name argument. Always pass `--config tg-monitor.yml` (and `--overwrite-dns` to repoint).
