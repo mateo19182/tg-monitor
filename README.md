@@ -14,7 +14,9 @@ Each channel carries a `tier` label so the dataset can be sliced:
 | C_spain_node | Channels run from inside Spain (Herqles, Eureka News, TSA Noticias...) |
 | D_spain_farright_election | Spanish far-right political actors (Vox-adjacent, SALF, Falange, DN...) |
 | E_russian_parent | Russian/English parent channels, for translation-lag and provenance (limited `since`) |
-| F_russian_official | Embassies and state-media mirrors |
+| F_russian_official | Embassies, MFA, TASS and state-media mirrors |
+| G_allied_state_media_es | Allied state media in Spanish (Iran, Syria, Venezuela, Cuba) |
+| H_discovered_es_aggregator | Spanish-language channels surfaced by forward provenance, not in any published list |
 
 ## Layout
 
