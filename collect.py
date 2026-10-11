@@ -4,6 +4,7 @@
   python collect.py                      # every channel in channels.csv
   python collect.py RybarESP herQles     # subset
   python collect.py --resolve "Eureka News"   # search Telegram for a channel by name
+  python collect.py --refetch RybarESP        # re-walk full history to fill columns added later
 
 Each run, per channel: (1) fetch messages newer than the last stored id (full history on the
 first run, or from the channel's `since` date), (2) refresh views/forwards for the last 7 days,
@@ -57,6 +58,7 @@ CREATE TABLE IF NOT EXISTS messages (
   fwd_from_channel_id INTEGER, fwd_from_msg_id INTEGER, fwd_from_name TEXT, fwd_date TEXT,
   reply_to_msg_id INTEGER, media TEXT, urls TEXT, grouped_id INTEGER,
   edit_date TEXT, fetched_at TEXT, sender_id INTEGER,
+  media_id INTEGER, media_size INTEGER, media_mime TEXT, media_duration REAL, media_w INTEGER, media_h INTEGER,
   PRIMARY KEY (channel_id, msg_id)
 );
 CREATE INDEX IF NOT EXISTS idx_messages_date ON messages(date);
@@ -81,8 +83,11 @@ def open_db() -> sqlite3.Connection:
     if "tier" not in cols:
         db.execute("ALTER TABLE channels ADD COLUMN tier TEXT")
     cols = {r[1] for r in db.execute("PRAGMA table_info(messages)")}
-    if "sender_id" not in cols:
-        db.execute("ALTER TABLE messages ADD COLUMN sender_id INTEGER")
+    for col, typ in [("sender_id", "INTEGER"), ("media_id", "INTEGER"), ("media_size", "INTEGER"), ("media_mime", "TEXT"),
+                     ("media_duration", "REAL"), ("media_w", "INTEGER"), ("media_h", "INTEGER")]:
+        if col not in cols:
+            db.execute(f"ALTER TABLE messages ADD COLUMN {col} {typ}")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_messages_media ON messages(media_id)")
     cols = {r[1] for r in db.execute("PRAGMA table_info(fwd_sources)")}
     if "participants" not in cols:
         db.execute("ALTER TABLE fwd_sources ADD COLUMN participants INTEGER")
@@ -114,6 +119,27 @@ def media_kind(m) -> str | None:
     return type(m).__name__.replace("MessageMedia", "").lower()
 
 
+def media_info(m) -> tuple:
+    """Stable Telegram ids + metadata, no download. The same photo/document id across channels
+    means the same file was re-posted (copy-paste), which forwards alone do not reveal."""
+    if isinstance(m, MessageMediaPhoto) and m.photo:
+        sizes = [sz for sz in (m.photo.sizes or []) if hasattr(sz, "w")]
+        big = max(sizes, key=lambda sz: sz.w * sz.h) if sizes else None
+        size = None
+        if big is not None:
+            size = getattr(big, "size", None) or (max(big.sizes) if getattr(big, "sizes", None) else None)  # progressive JPEGs list sizes
+        return (m.photo.id, size, "image/jpeg", None, getattr(big, "w", None), getattr(big, "h", None))
+    if isinstance(m, MessageMediaDocument) and m.document:
+        d = m.document
+        dur = w = h = None
+        for a in d.attributes or []:
+            dur = getattr(a, "duration", dur)
+            w = getattr(a, "w", w)
+            h = getattr(a, "h", h)
+        return (d.id, d.size, d.mime_type, dur, w, h)
+    return (None, None, None, None, None, None)
+
+
 def extract_urls(msg) -> list[str]:
     urls = []
     for ent in msg.entities or []:
@@ -143,14 +169,17 @@ def row_from(msg, channel_id: int, now: str) -> tuple:
         media_kind(msg.media), json.dumps(extract_urls(msg)), msg.grouped_id,
         (msg.edit_date.isoformat() if msg.edit_date else None), now,
         (msg.sender_id if msg.sender_id and msg.sender_id != channel_id else None),  # users in groups; NULL for the channel itself
+        *media_info(msg.media),
     )
 
 
 UPSERT = """
-INSERT INTO messages (channel_id,msg_id,date,text,views,forwards,replies,fwd_from_channel_id,fwd_from_msg_id,fwd_from_name,fwd_date,reply_to_msg_id,media,urls,grouped_id,edit_date,fetched_at,sender_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+INSERT INTO messages (channel_id,msg_id,date,text,views,forwards,replies,fwd_from_channel_id,fwd_from_msg_id,fwd_from_name,fwd_date,reply_to_msg_id,media,urls,grouped_id,edit_date,fetched_at,sender_id,media_id,media_size,media_mime,media_duration,media_w,media_h) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 ON CONFLICT(channel_id, msg_id) DO UPDATE SET
   text=excluded.text, views=excluded.views, forwards=excluded.forwards,
-  replies=excluded.replies, edit_date=excluded.edit_date, fetched_at=excluded.fetched_at, sender_id=excluded.sender_id
+  replies=excluded.replies, edit_date=excluded.edit_date, fetched_at=excluded.fetched_at, sender_id=excluded.sender_id,
+  media_id=excluded.media_id, media_size=excluded.media_size, media_mime=excluded.media_mime,
+  media_duration=excluded.media_duration, media_w=excluded.media_w, media_h=excluded.media_h
 """
 
 
@@ -170,7 +199,7 @@ async def with_retries(coro_fn, what: str, tries: int = 3):
             await asyncio.sleep(5 * attempt)
 
 
-async def sync_channel(client: TelegramClient, db: sqlite3.Connection, spec: dict) -> None:
+async def sync_channel(client: TelegramClient, db: sqlite3.Connection, spec: dict, refetch: bool = False) -> None:
     handle = spec["handle"]
     since = None
     if spec.get("since"):
@@ -193,6 +222,8 @@ async def sync_channel(client: TelegramClient, db: sqlite3.Connection, spec: dic
     db.commit()
 
     last = db.execute("SELECT MAX(msg_id) FROM messages WHERE channel_id=?", (ent.id,)).fetchone()[0] or 0
+    if refetch:
+        last = 0  # walk everything again; UPSERT refreshes columns in place
     n = 0
     # (1) new messages, oldest first so a crash leaves a contiguous prefix
     async for msg in client.iter_messages(ent, min_id=last, reverse=True, offset_date=since if last == 0 else None):
@@ -252,6 +283,7 @@ async def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("channels", nargs="*")
     ap.add_argument("--resolve", help="search Telegram for a channel by name")
+    ap.add_argument("--refetch", action="store_true", help="re-read full history of the given channels (fills new columns; no new rows expected)")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stderr)
     logging.getLogger("telethon").setLevel(logging.WARNING)
@@ -270,7 +302,7 @@ async def main() -> None:
         failed = 0
         for spec in specs:
             try:
-                await sync_channel(client, db, spec)
+                await sync_channel(client, db, spec, refetch=args.refetch)
             except FloodWaitError as e:
                 failed += 1
                 db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"flood wait {e.seconds}s", spec["handle"]))

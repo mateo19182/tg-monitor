@@ -17,7 +17,8 @@ DB = HERE / "tg.db"
 
 MSG_COLS = ["sender_id", "channel_id", "msg_id", "date", "text", "views", "forwards", "replies",
             "fwd_from_channel_id", "fwd_from_msg_id", "fwd_from_name", "fwd_date",
-            "reply_to_msg_id", "media", "urls", "grouped_id", "edit_date", "fetched_at"]
+            "reply_to_msg_id", "media", "urls", "grouped_id", "edit_date", "fetched_at",
+            "media_id", "media_size", "media_mime", "media_duration", "media_w", "media_h"]
 
 
 def main() -> None:
