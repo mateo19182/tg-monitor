@@ -137,7 +137,7 @@ header{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;border-bott
 header h1{font-size:14px;margin:0;font-weight:700}
 header .r{margin-left:auto;display:flex;gap:14px}
 .btn{cursor:pointer;color:var(--mute)}.btn:hover{color:var(--fg)}
-main{display:grid;grid-template-columns:220px 1fr;gap:28px}
+main{display:grid;grid-template-columns:220px 1fr;gap:28px}main>*{min-width:0}#view{overflow-wrap:anywhere}.tw{overflow-x:auto}
 nav{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto;font-size:13px}
 nav h3{margin:14px 0 4px;font-size:12px;color:var(--mute);font-weight:400}
 nav ul{list-style:none;margin:0;padding:0}nav li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -164,7 +164,10 @@ section{margin-bottom:26px}
 .chart{white-space:pre;line-height:1.15;overflow:auto;color:var(--bar);position:relative}
 .chart .lbl{color:var(--mute)}
 .tip{position:absolute;pointer-events:none;background:var(--bg);border:1px solid var(--line);padding:2px 6px;font-size:12px;display:none}
-@media(max-width:760px){main{grid-template-columns:1fr}nav{position:static;max-height:none}}
+#menu{display:none}
+@media(max-width:760px){main{grid-template-columns:1fr;gap:12px}nav{display:none;position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:10px}
+ body.nav-open nav{display:block}#menu{display:inline}#hdr{display:none}.m-hide{display:none}.wrap{padding:12px}
+ .kv{grid-template-columns:1fr;gap:0 0}.kv div:nth-child(odd){margin-top:6px}.big{font-size:18px}}
 </style>
 </head>
 <body>
@@ -172,7 +175,7 @@ section{margin-bottom:26px}
 <header>
  <h1><a href="#/">channel index</a></h1>
  <span class="mute" id="hdr"></span>
- <span class="r"><span class="btn" id="lang">[es]</span><span class="btn" id="theme">[dark]</span></span>
+ <span class="r"><span class="btn" id="menu">[index]</span><span class="btn" id="lang">[es]</span><span class="btn" id="theme">[dark]</span></span>
 </header>
 <main><nav id="nav"></nav><div id="view"></div></main>
 </div>
@@ -192,7 +195,7 @@ let L=localStorage.getItem('lang')||'en';
 const t=k=>T[L][k]||k;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=n=>n==null?'—':Number(n).toLocaleString(L==='es'?'es-ES':'en-GB');
-const BL='▁▂▃▄▅▆▇█';
+const BL='▁▂▃▄▅▆▇█';const SP=()=>innerWidth<=760?30:60;
 function spark(a,n=60){const off=a.length-n;a=a.slice(off);const m=Math.max(1,...a);const s=new Date(D.start);s.setDate(s.getDate()+off);return '<span class="spark">'+a.map((v,i)=>{const d=new Date(s);d.setDate(d.getDate()+i);return `<span title="${d.toISOString().slice(0,10)}: ${v}">${v?BL[Math.min(7,Math.floor(v/m*7.99))]:'·'}</span>`}).join('')+'</span>'}
 function bar(n,max,w=24){return '<span class="bar">'+'█'.repeat(Math.max(1,Math.round(n/max*w)))+'</span>'}
 function link(c){return c.handle?`<a href="https://t.me/${esc(c.handle)}" target="_blank" rel="noopener">@${esc(c.handle)}</a>`:`<span class="mute">id ${c.id}</span>`}
@@ -207,9 +210,9 @@ let sortKey='tier',sortDir=1;
 function index(){const rows=[...D.channels].sort((a,b)=>{const x=a[sortKey],y=b[sortKey];return (x==null)-(y==null)||(x>y?1:x<y?-1:0)*sortDir||a.handle.localeCompare(b.handle)});
  const th=(k,l,cls='')=>`<th class="${cls}" data-k="${k}">${l}${sortKey===k?(sortDir>0?' ▴':' ▾'):''}</th>`;
  let h=`<p class="big">${fmt(D.channels.length)} ${t('channels')} · ${fmt(D.total)} ${t('messages')}</p><div class="ul">${t('archive')} ${D.range[0]} → ${D.range[1]} · ${t('built')} ${D.built}</div>`;
- h+=`<table><tr>${th('tier',t('tier'))}${th('title',t('title'))}${th('subs',t('subs'),'num')}${th('n',t('posts'),'num')}${th('last',t('last'))}<th>${t('days').replace('%d',60)}</th></tr>`;
- for(const c of rows)h+=`<tr><td class="mute">${c.tier[0]}</td><td><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a> <span class="mute">@${esc(c.handle)}</span></td><td class="num">${fmt(c.subs)}</td><td class="num">${c.n?fmt(c.n):'<span class="mute">—</span>'}</td><td class="nw">${c.last||'<span class="mute">'+t('notyet')+'</span>'}</td><td>${spark(c.daily)}</td></tr>`;
- h+='</table>';document.getElementById('view').innerHTML=h;
+ h+=`<div class="tw"><table><tr>${th('tier',t('tier'))}${th('title',t('title'))}${th('subs',t('subs'),'num m-hide')}${th('n',t('posts'),'num')}${th('last',t('last'),'m-hide')}<th>${t('days').replace('%d',SP())}</th></tr>`;
+ for(const c of rows)h+=`<tr><td class="mute">${c.tier[0]}</td><td><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a> <span class="mute">@${esc(c.handle)}</span></td><td class="num m-hide">${fmt(c.subs)}</td><td class="num">${c.n?fmt(c.n):'<span class="mute">—</span>'}</td><td class="nw m-hide">${c.last||'<span class="mute">'+t('notyet')+'</span>'}</td><td>${spark(c.daily,SP())}</td></tr>`;
+ h+='</table></div>';document.getElementById('view').innerHTML=h;
  document.querySelectorAll('th[data-k]').forEach(e=>e.onclick=()=>{const k=e.dataset.k;if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=1}index()})}
 function chart(a){const H=8,W=a.length,m=Math.max(1,...a);const rows=[];for(let r=H;r>=1;r--){let s=String(Math.round(m*r/H)).padStart(6)+' ┤';for(let i=0;i<W;i++){const v=a[i]/m*H;s+=v>=r?'█':v>=r-.5?'▄':' '}rows.push(s)}
  rows.push('       └'+'─'.repeat(W));const s=D.start,lab=[];for(let i=0;i<W;i+=30){const d=new Date(s);d.setDate(d.getDate()+i);lab.push(d.toISOString().slice(5,10).padEnd(30))}rows.push('        '+lab.join(''));return `<div class="chart">${rows.map(r=>esc(r)).join('\n')}</div>`}
@@ -228,7 +231,7 @@ function channel(handle){const c=D.channels.find(x=>x.handle.toLowerCase()===han
  h+='</div>';
  if(c.n)h+=`<div class="mute">${t('perday')} · ${t('days').replace('%d',D.days)}</div>`+chart(c.daily);
  h+='</section>';
- const list=(title,items,f)=>{h+=`<section><h2>${title}</h2>`;if(!items.length){h+=`<p class="mute">${t('none')}</p></section>`;return}const m=items[0].n;h+='<table class="list">'+items.map(i=>`<tr><td class="num">${fmt(i.n)}</td><td>${bar(i.n,m)}</td><td>${f(i)}</td></tr>`).join('')+'</table></section>'};
+ const list=(title,items,f)=>{h+=`<section><h2>${title}</h2>`;if(!items.length){h+=`<p class="mute">${t('none')}</p></section>`;return}const m=items[0].n;h+='<div class="tw"><table class="list">'+items.map(i=>`<tr><td class="num">${fmt(i.n)}</td><td>${bar(i.n,m,innerWidth<=760?12:24)}</td><td>${f(i)}</td></tr>`).join('')+'</table></div></section>'};
  list(t('fwdfrom'),c.fwd_from,i=>`${chanLink(i)} ${i.handle?`<span class="mute">@${esc(i.handle)}</span>`:''}${i.tracked?'':' <span class="mute">·</span>'}`);
  list(t('fwdto'),c.fwd_to,i=>chanLink(i));
  list(t('domains'),c.domains.map(([d,n])=>({d,n})),i=>esc(i.d));
@@ -243,7 +246,8 @@ document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';
 const th=document.getElementById('theme');let dark=(localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';
 function applyTheme(){document.documentElement.dataset.theme=dark?'dark':'light';th.textContent=dark?'[light]':'[dark]'}applyTheme();
 th.onclick=()=>{dark=!dark;localStorage.setItem('theme',dark?'dark':'light');applyTheme()};
-window.onhashchange=route;route();
+document.getElementById('menu').onclick=()=>document.body.classList.toggle('nav-open');
+window.onhashchange=()=>{document.body.classList.remove('nav-open');route()};route();
 </script>
 </body>
 </html>
