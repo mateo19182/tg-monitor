@@ -1,0 +1,11 @@
+.env
+.venv/
+*.session
+*.session-journal
+*.db
+*.db-*
+.login_state.json
+.sync.lock
+*.log
+__pycache__/
+data/

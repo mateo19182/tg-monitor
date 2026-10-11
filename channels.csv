@@ -1,0 +1,47 @@
+handle,tier,since,source,note
+RybarESP,A_russian_project_es,,maldita-2025-07,Spanish edition of Rybar (Zvinchuk)
+ukr_leaks_esp,A_russian_project_es,,maldita-2025-07,Spanish edition of UKR Leaks (Prozorov)
+infodefSPAIN,A_russian_project_es,,maldita-2025-07,InfoDefenseESPAÑOL (Podolskaya volunteer network)
+InfoDefenseESP,A_russian_project_es,,dfrlab-2023-03,IDpublicESP - second InfoDefense Spanish channel
+surf_noise_sp,A_russian_project_es,,maldita-2025-07,ROKOT | TORMENTA (Surf Noise network)
+DDGeopoliticsES,A_russian_project_es,,maldita-2025-07,DD Geopolitics Español
+nuevo_orden_mundial_canal,B_es_aggregator,,maldita-2025-07,most-cited Pravda source (~100 posts/day)
+elOJOen,B_es_aggregator,,maldita-2025-07,El Ojo Noticias - 63.8% replicated on Pravda
+Irinamar_Z,B_es_aggregator,,maldita-2025-07,Irina - 41% of posts come from El Ojo
+guerrasygeo,B_es_aggregator,,maldita-2025-07,Guerras y Geopolíticas
+atodapotencia,B_es_aggregator,,maldita-2025-07,A Toda Potencia
+ophiucu,B_es_aggregator,,maldita-2025-07,Los Sombreros Blancos [Z] - Russian military group posting in Spanish
+ucraniando,B_es_aggregator,,maldita-2025-07,Ucraniando (Lisa Vuković)
+albatrops,B_es_aggregator,,maldita-2025-07,Albatrops
+Latrincheradelche,B_es_aggregator,,maldita-2025-07,La Trinchera del Che - crypto donations
+wofnon,B_es_aggregator,,maldita-2025-07,Wofnon
+RusiaEspanaUkraina,B_es_aggregator,,maldita-2025-07,Rusia España Ucrania - early spreader of Macron cocaine hoax
+Lyudmila_ZOV,B_es_aggregator,,ekstrategies-2026-09,Lyudmila Z Patriotas Rusos - Ceuta counter-narrative
+IHPSnuevosparadigmas,B_es_aggregator,,ekstrategies-2026-09,Nuevos Paradigmas - Ceuta/Morocco narrative
+lineasinvisibles,B_es_aggregator,,ekstrategies-2026-09,Líneas invisibles
+musicarusaesp,B_es_aggregator,,ekstrategies-2026-09,"""Desinformador Ruso"""
+elespiadeltelon,B_es_aggregator,,ekstrategies-2026-09,Espía del Telón
+herQles,C_spain_node,,maldita-2025-07,Herqles (César Pintado / Revuelta) - Madrid
+TSAnoticias,C_spain_node,,maldita-2025-07,TSA Noticias - ex-COVID denialist
+ViejosTerciosESP,C_spain_node,,maldita-2025-07,Viejos Tercios
+Eurekapress,C_spain_node,,maldita-2025-07,Eureka News (Santiago Martínez) - Vigo
+balearesWWG1WGA,C_spain_node,,maldita-2025-05,Baleares-WWG1WGA - most-cited by Spain/Catalan/Basque/Galician Pravda pages
+pravosp,C_spain_node,,ekstrategies-2026-09,Europa glazami yurista (Oleg Gubarev) - Russian-language Madrid
+revuelta_es,D_spain_farright_election,,maldita-2025-07,Revuelta - group attending Vox events
+DEMOCRACIA_NACIONAL,D_spain_farright_election,,ekstrategies-2026-09,Democracia Nacional - Paladins network founder member
+fedelasjons,D_spain_farright_election,,ekstrategies-2026-09,Falange Española de las JONS - Paladins network
+AlvisePerez,D_spain_farright_election,,own-2026-10,Alvise Pérez personal channel (~614k subs)
+SeAcaboLaFiesta,D_spain_farright_election,,own-2026-10,SALF party channel
+SantiagoAbascalPresidente,D_spain_farright_election,,own-2026-10,Santiago Abascal (Vox) official-looking channel (~40k subs)
+vitoquilestelegram,D_spain_farright_election,,own-2026-10,Vito Quiles (~149k subs) - far-right agitator/journalist
+desokupaOficial,D_spain_farright_election,,own-2026-10,Desokupa (Daniel Esteve) (~47k subs)
+difusionfrenteobrero,D_spain_farright_election,,own-2026-10,Frente Obrero - red-brown party
+rybar,E_russian_parent,2025-01-01,maldita-2025-07,Rybar RU parent (1.5M subs) - for translation-lag analysis
+InfoDefAll,E_russian_parent,,dfrlab-2023-03,InfoDefense parent
+ukr_leaks,E_russian_parent,2025-01-01,maldita-2025-07,UKR Leaks parent
+DDGeopolitics,E_russian_parent,2025-01-01,maldita-2025-07,DD Geopolitics EN parent
+readovkanews,E_russian_parent,2026-01-01,own-2026-10,Readovka (2M subs) - large RU source often forwarded
+EmbajadaRusaES,F_russian_official,,dfrlab-2023-03,Russian Embassy in Spain - flagged as amplifier by DFRLab
+embrusiamexico,F_russian_official,,own-2026-10,Russian Embassy in Mexico - LatAm ES feeder
+actualidad_rt,F_russian_official,,own-2026-10,Actualidad RT mirror (unofficial? 2k subs) - verify
+sputnik_espanol1,F_russian_official,,own-2026-10,Sputnik Mundo mirror (unofficial? 4k subs) - verify
