@@ -27,6 +27,8 @@ Each channel carries a `tier` label so the dataset can be sliced:
 - `report.py`     `daily`, `sources`, `spikes`, `grep "phrase"`.
 - `export.py`     `data/<handle>.jsonl.gz` + `channels.csv` + `fwd_sources.csv` + `manifest.json`.
 - `login.py`      two-step login (`send <phone>`, `code <code>`, `password`, `check`).
+- `wiki.csv`, `sources.csv`  cited facts per channel for the site; neutral wording, every fact carries a source key.
+- `site.py`       builds `site/index.html` (single self-contained page) from the database; `serve.sh` serves it on 127.0.0.1:8788.
 
 Secrets/data never in git: `.env` (TG_API_ID/TG_API_HASH), `tgmon.session*`, `tg.db*`, logs, `data/`.
 
