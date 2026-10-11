@@ -69,6 +69,11 @@ def build() -> dict:
 
     has_sender = "sender_id" in {r[1] for r in db.execute("PRAGMA table_info(messages)")}
     senders = "COUNT(DISTINCT sender_id)" if has_sender else "0"
+    hours = defaultdict(lambda: [[0] * 24 for _ in range(7)])  # [weekday][hour], UTC
+    for cid, wd, hr, n in db.execute(
+        "SELECT channel_id, CAST(strftime('%w', date) AS INT), CAST(strftime('%H', date) AS INT), COUNT(*) "
+        "FROM messages WHERE date >= ? GROUP BY 1,2,3", (start,)):
+        hours[cid][(wd + 6) % 7][hr] = n  # Monday first
     stats = {r["channel_id"]: dict(r) for r in db.execute(
         "SELECT channel_id, COUNT(*) n, MIN(date) lo, MAX(date) hi, SUM(views) views, "
         f"SUM(fwd_from_channel_id IS NOT NULL) n_fwd, {senders} senders FROM messages GROUP BY 1")}
@@ -106,6 +111,7 @@ def build() -> dict:
             "n": st.get("n", 0), "first": (st.get("lo") or "")[:10], "last": (st.get("hi") or "")[:10],
             "views": st.get("views"), "n_fwd": st.get("n_fwd", 0), "senders": st.get("senders", 0),
             "daily": daily.get(cid, [0] * DAYS) if cid else [0] * DAYS,
+            "hours": hours.get(cid) if cid else None,
             "fwd_from": [{**label(s), "n": n} for s, n in fwd_from[cid].most_common(TOP)] if cid else [],
             "fwd_to": [{**label(s), "n": n} for s, n in fwd_to[cid].most_common(TOP)] if cid else [],
             "domains": domains[cid].most_common(TOP) if cid else [],
@@ -149,7 +155,7 @@ h2{font-size:14px;margin:0 0 2px;font-weight:700}
 .ul{color:var(--mute);margin-bottom:14px}
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{text-align:left;padding:3px 10px 3px 0;vertical-align:top;border-bottom:1px solid var(--line)}
-td.nw{white-space:nowrap}table.list{width:auto}table.list td{padding-right:16px}
+td.nw{white-space:nowrap}table.list{width:auto}table.list td{padding-right:16px}table.list td:nth-child(2){white-space:nowrap}
 th{color:var(--mute);font-weight:400;cursor:pointer;white-space:nowrap}
 td.num,th.num{text-align:right}
 .spark{letter-spacing:-1px;white-space:nowrap;color:var(--bar)}
@@ -189,11 +195,11 @@ const T={
  en:{channels:'channels',messages:'messages',archive:'archive',tiers:'tiers',sources:'sources',handle:'handle',title:'title',tier:'tier',subs:'subscribers',posts:'posts',last:'last post',days:'last %d days',search:'search /',
   about:'description (as published by the channel)',facts:'published research',stats:'archive',created:'channel created',first:'first archived post',views:'total views',fwd:'posts that are forwards',senders:'distinct senders',
   fwdfrom:'most forwarded from',fwdto:'forwarded by tracked channels',domains:'most linked domains',none:'none',notyet:'not yet archived',perday:'posts per day',tracked:'tracked',untracked:'not tracked',
-  tierlist:'tiers',built:'built',since:'archived from',nofacts:'no published research recorded for this channel.',group:'discussion group'},
+  tierlist:'tiers',built:'built',since:'archived from',nofacts:'no published research recorded for this channel.',group:'discussion group',hours:'posts by weekday and hour (UTC)',days7:'Mo Tu We Th Fr Sa Su'},
  es:{channels:'canales',messages:'mensajes',archive:'archivo',tiers:'niveles',sources:'fuentes',handle:'usuario',title:'título',tier:'nivel',subs:'suscriptores',posts:'publicaciones',last:'última publicación',days:'últimos %d días',search:'buscar /',
   about:'descripción (tal como la publica el canal)',facts:'investigaciones publicadas',stats:'archivo',created:'canal creado',first:'primera publicación archivada',views:'visualizaciones totales',fwd:'publicaciones que son reenvíos',senders:'remitentes distintos',
   fwdfrom:'más reenviado desde',fwdto:'reenviado por canales seguidos',domains:'dominios más enlazados',none:'ninguno',notyet:'aún no archivado',perday:'publicaciones por día',tracked:'seguido',untracked:'no seguido',
-  tierlist:'niveles',built:'generado',since:'archivado desde',nofacts:'no hay investigaciones publicadas registradas para este canal.',group:'grupo de debate'}};
+  tierlist:'niveles',built:'generado',since:'archivado desde',nofacts:'no hay investigaciones publicadas registradas para este canal.',group:'grupo de debate',hours:'publicaciones por día de la semana y hora (UTC)',days7:'Lu Ma Mi Ju Vi Sá Do'}};
 let L=localStorage.getItem('lang')||'en';
 const t=k=>T[L][k]||k;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -219,6 +225,12 @@ function index(){const rows=[...D.channels].sort((a,b)=>{const x=a[sortKey],y=b[
  document.querySelectorAll('th[data-k]').forEach(e=>e.onclick=()=>{const k=e.dataset.k;if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=1}index()})}
 function chart(a){const H=8,W=a.length,m=Math.max(1,...a);const rows=[];for(let r=H;r>=1;r--){let s=String(Math.round(m*r/H)).padStart(6)+' ┤';for(let i=0;i<W;i++){const v=a[i]/m*H;s+=v>=r?'█':v>=r-.5?'▄':' '}rows.push(s)}
  rows.push('       └'+'─'.repeat(W));const s=D.start,lab=[];for(let i=0;i<W;i+=30){const d=new Date(s);d.setDate(d.getDate()+i);lab.push(d.toISOString().slice(5,10).padEnd(30))}rows.push('        '+lab.join(''));return `<div class="chart">${rows.map(r=>esc(r)).join('\n')}</div>`}
+function heat(hm){if(!hm)return '';const G=' ·░▒▓█';const m=Math.max(1,...hm.flat());const days=t('days7').split(' ');
+ let out='      '+Array.from({length:24},(_,h)=>String(h).padStart(2,'0')).join(' ')+'\n';
+ hm.forEach((row,d)=>{out+=days[d].padEnd(5)+' '+row.map(v=>{const g=v?G[Math.min(5,1+Math.floor(v/m*4.99))]:' ';return g+g}).join(' ')+'\n'});
+ const tot=hm.flat().reduce((a,b)=>a+b,0);const byH=Array.from({length:24},(_,h)=>hm.reduce((a,r)=>a+r[h],0));
+ const peak=byH.indexOf(Math.max(...byH));const wk=hm.slice(0,5).flat().reduce((a,b)=>a+b,0)/5,we=hm.slice(5).flat().reduce((a,b)=>a+b,0)/2;
+ return `<div class="chart">${esc(out)}</div><div class="mute">${L==='es'?'hora pico':'peak hour'} ${String(peak).padStart(2,'0')}:00 UTC (${(peak+2)%24}:00 Madrid, ${(peak+3)%24}:00 Moscow) · ${L==='es'?'fin de semana / laborable':'weekend / weekday'} ${(we/Math.max(1,wk)).toFixed(2)}</div>`}
 function channel(handle){const c=D.channels.find(x=>x.handle.toLowerCase()===handle.toLowerCase());if(!c){document.getElementById('view').innerHTML='?';return}
  let h=`<h2>${esc(c.title||c.handle)}</h2><div class="ul">${'='.repeat(Math.min(60,(c.title||c.handle).length))}</div>`;
  h+=`<div class="kv"><div>${t('handle')}</div><div>${link(c)}</div><div>${t('tier')}</div><div>${c.tier[0]} · ${esc(D.tiers[c.tier][L])}</div>`;
@@ -232,7 +244,7 @@ function channel(handle){const c=D.channels.find(x=>x.handle.toLowerCase()===han
  if(c.n){h+=`<div>${t('first')}</div><div>${c.first}${c.since?` <span class="mute">(${t('since')} ${c.since})</span>`:''}</div><div>${t('last')}</div><div>${c.last}</div><div>${t('views')}</div><div>${fmt(c.views)}</div><div>${t('fwd')}</div><div>${fmt(c.n_fwd)} (${Math.round(c.n_fwd/c.n*100)}%)</div>`;
   if(c.senders>1)h+=`<div>${t('senders')}</div><div>${fmt(c.senders)}</div>`}
  h+='</div>';
- if(c.n)h+=`<div class="mute">${t('perday')} · ${t('days').replace('%d',D.days)}</div>`+chart(c.daily);
+ if(c.n)h+=`<div class="mute">${t('perday')} · ${t('days').replace('%d',D.days)}</div>`+chart(c.daily)+`<div class="mute" style="margin-top:10px">${t('hours')} · ${t('days').replace('%d',D.days)}</div>`+heat(c.hours);
  h+='</section>';
  const list=(title,items,f)=>{h+=`<section><h2>${title}</h2>`;if(!items.length){h+=`<p class="mute">${t('none')}</p></section>`;return}const m=items[0].n;h+='<div class="tw"><table class="list">'+items.map(i=>`<tr><td class="num">${fmt(i.n)}</td><td>${bar(i.n,m,innerWidth<=760?12:24)}</td><td>${f(i)}</td></tr>`).join('')+'</table></div></section>'};
  list(t('fwdfrom'),c.fwd_from,i=>`${chanLink(i)} ${i.handle?`<span class="mute">@${esc(i.handle)}</span>`:''}${i.tracked?'':' <span class="mute">·</span>'}`);
