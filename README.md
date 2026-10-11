@@ -1,7 +1,9 @@
 # tg-monitor
 
-Dataset builder: full-history archive of Spanish-language pro-Kremlin Telegram channels and the
-Spanish far-right accounts they overlap with, for the run-up to Spain's 29 Nov 2026 general election.
+A research archive of public Telegram channels relevant to Spanish politics. The site shows
+archived messages, channel statistics and facts attributed to published sources.
+
+Project changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
 The channel list comes from published research (Maldita.es' 25 most-replicated Pravda feeders,
 DFRLab's Info Defense / Surf Noise networks, EK Strategies' Ceuta analysis) plus our own additions.
@@ -10,7 +12,7 @@ Each channel carries a `tier` label so the dataset can be sliced:
 | tier | meaning |
 |---|---|
 | A_russian_project_es | Spanish editions of multilingual Russian projects (Rybar, UKR Leaks, InfoDefense, ROKOT, DD Geopolitics) |
-| B_es_aggregator | Spanish-language pro-Kremlin aggregators/originators, mostly anonymous |
+| B_es_aggregator | Spanish-language channels listed as frequent sources of the Pravda network's Spanish pages |
 | C_spain_node | Channels run from inside Spain (Herqles, Eureka News, TSA Noticias...) |
 | D_spain_farright_election | Spanish right-wing and nationalist parties, organisations and activists (Vox, SALF, Falange, DN, Hazte Oír...) |
 | E_russian_parent | Russian/English parent channels, for translation-lag and provenance (limited `since`) |
@@ -26,12 +28,15 @@ Each channel carries a `tier` label so the dataset can be sliced:
 
 - `channels.csv`  watchlist: `handle,tier,since,source,note`. `since` bounds the initial backfill for huge channels.
 - `collect.py`    resumable collector → `tg.db` (SQLite, WAL). First run = full history; later runs = new posts + 7-day engagement refresh. Per-channel errors are recorded in `sync_state` and never stop the run.
+- `benchmark.py`  compares normal and Takeout history reads and records timing, message-id hashes and any initialization delay or retry deadline in `data/takeout-benchmark.json`.
 - `sync.sh`       the only entrypoint (cron + manual). flock-guarded, logs to `sync.log`.
 - `report.py`     `daily`, `sources`, `spikes`, `grep "phrase"`.
 - `export.py`     `data/<handle>.jsonl.gz` + `channels.csv` + `fwd_sources.csv` + `manifest.json`.
 - `login.py`      two-step login (`send <phone>`, `code <code>`, `password`, `check`).
 - `wiki.csv`, `sources.csv`  cited facts per channel for the site; neutral wording, every fact carries a source key.
-- `site.py`       builds `site/index.html` (single self-contained page) from the database; `serve.sh` serves it on 127.0.0.1:8788.
+- `site.py`       builds `site/index.html` from the database: an archive homepage, channel browser at `#/channels`, channel pages at `#/c/<handle>`, and message search at `#/search`.
+- `search.py`     SQLite FTS5 index and search queries. Insert, text-update and delete triggers keep the index current during collection.
+- `server.py`     serves `site/` and `GET /api/search` on the same origin; `serve.sh` starts it on 127.0.0.1:8788.
 
 Secrets/data never in git: `.env` (TG_API_ID/TG_API_HASH), `tgmon.session*`, `tg.db*`, logs, `data/`.
 
@@ -41,9 +46,30 @@ Secrets/data never in git: `.env` (TG_API_ID/TG_API_HASH), `tgmon.session*`, `tg
 crontab: 17 * * * * /home/mateo/projects/tg-monitor/sync.sh
 ./sync.sh                      # manual run (no-op if one is already running)
 ./sync.sh RybarESP herQles     # subset
-.venv/bin/python collect.py --resolve "Eureka News"   # find a handle
+./sync.sh --benchmark-takeout RybarESP infodefSPAIN  # compare history reads without archive writes
+./sync.sh --resolve "Eureka News" --resolve "Rybar"   # find handles; repeat --resolve for multiple names
 sqlite3 tg.db 'select handle,last_ok,new_msgs,last_error from sync_state'   # health
+.venv/bin/python -m unittest -v test_search
+.venv/bin/python search.py --index --rebuild  # repair the search index if message rows were rewritten
 ```
+
+## Message search
+
+The server initialises the full-text index on its first start. Searches read the database through
+a read-only connection and include only channels in `channels.csv`. Words are combined with AND;
+double quotes search a phrase. Matching ignores case and Latin accents. Results contain excerpts
+with marked matches, channel names, UTC dates, and links to the original Telegram messages.
+
+`GET /api/search?q=texto&channel=handle&from=2026-01-01&to=2026-10-12&sort=newest&page=1`
+
+Only `q` is required. Dates include both endpoints in UTC. `sort` is `relevance` by default,
+or `newest` or `oldest`. Pages contain up to 25 results. Search text is limited to 300 characters
+and 20 words or quoted phrases. Responses return `total`, `page`, `page_size`, `has_next`, and
+`results`; invalid parameters return HTTP 400 with an error code. Queries have a three-second
+execution limit. Search parameters live in the page URL so searches can be bookmarked or shared.
+
+The HTTP and page code use the search request/result contract; SQLite queries and index maintenance
+live in `search.py`. A later database migration can replace that implementation.
 
 ## Schema (`messages`)
 
@@ -61,7 +87,7 @@ those ids to names.
 
 ## Hosting
 
-- `serve.sh` serves `site/` on 127.0.0.1:8788 (crontab `@reboot`).
+- `serve.sh` serves `site/` and message search on 127.0.0.1:8788 (crontab `@reboot`).
 - Public via a dedicated locally-managed Cloudflare tunnel `tg-monitor` (`~/.cloudflared/tg-monitor.yml`,
   user unit `cloudflared-tg-monitor.service`): https://canales.m19182.dev and https://tg.m19182.dev.
 - Gotcha: `cloudflared tunnel route dns` takes the tunnel from the default `~/.cloudflared/config.yml`

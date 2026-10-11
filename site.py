@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build site/index.html: a single self-contained page (data embedded) from tg.db + channels.csv + wiki.csv.
+"""Build site/index.html from tg.db + channels.csv + wiki.csv. Message search uses /api/search.
 
   python site.py [--out site]
 """
@@ -122,6 +122,7 @@ def build() -> dict:
     return {
         "built": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "days": DAYS, "start": start, "total": total[0], "range": [(total[1] or "")[:10], (total[2] or "")[:10]],
+        "daily": [sum(counts[i] for counts in daily.values()) for i in range(DAYS)],
         "tiers": TIERS, "sources": sources, "channels": out,
     }
 
@@ -131,11 +132,11 @@ HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>channel index</title>
+<title>Telegram archive</title>
 <style>
-:root{--bg:#f7f7f4;--fg:#1a1a1a;--mute:#6b6b66;--line:#d8d8d2;--dot:#cfcfc8;--acc:#1a1a1a;--bar:#1a1a1a}
-:root:not([data-theme="light"]){ @media (prefers-color-scheme: dark){ --bg:#0f0f0e;--fg:#e6e6e0;--mute:#8a8a84;--line:#2a2a28;--dot:#2a2a28;--acc:#e6e6e0;--bar:#e6e6e0 } }
-:root[data-theme="dark"]{--bg:#0f0f0e;--fg:#e6e6e0;--mute:#8a8a84;--line:#2a2a28;--dot:#2a2a28;--acc:#e6e6e0;--bar:#e6e6e0}
+:root{color-scheme:light;--bg:#f7f7f4;--fg:#1a1a1a;--mute:#6b6b66;--line:#d8d8d2;--dot:#cfcfc8;--acc:#1a1a1a;--bar:#1a1a1a}
+:root:not([data-theme="light"]){ @media (prefers-color-scheme: dark){ color-scheme:dark;--bg:#0f0f0e;--fg:#e6e6e0;--mute:#8a8a84;--line:#2a2a28;--dot:#2a2a28;--acc:#e6e6e0;--bar:#e6e6e0 } }
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f0f0e;--fg:#e6e6e0;--mute:#8a8a84;--line:#2a2a28;--dot:#2a2a28;--acc:#e6e6e0;--bar:#e6e6e0}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg)}
 body{font:14px/1.5 ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
@@ -145,7 +146,8 @@ a{color:var(--fg);text-decoration:none}a:hover{text-decoration:underline}
 header{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
 header h1{font-size:14px;margin:0;font-weight:700}
 header .r{margin-left:auto;display:flex;gap:14px}
-.btn{cursor:pointer;color:var(--mute)}.btn:hover{color:var(--fg)}
+.btn{cursor:pointer;color:var(--mute);background:none;border:0;padding:0;font:inherit}.btn:hover{color:var(--fg)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:1px dashed var(--fg);outline-offset:4px}
 main{display:grid;grid-template-columns:220px 1fr;gap:28px}main>*{min-width:0}#view{overflow-wrap:anywhere}.tw{overflow-x:auto}
 nav{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto;font-size:13px}
 nav h3{margin:14px 0 4px;font-size:12px;color:var(--mute);font-weight:400}
@@ -174,17 +176,40 @@ section{margin-bottom:26px}
 .chart .lbl{color:var(--mute)}
 .tip{position:absolute;pointer-events:none;background:var(--bg);border:1px solid var(--line);padding:2px 6px;font-size:12px;display:none}
 #menu{display:none}
+body.home main{display:block}body.home #nav,body.home #menu,body.home #hdr{display:none}
+.home-page{max-width:880px;margin:48px auto 24px}
+.home-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:32px}
+.home-heading h2{font-size:clamp(24px,4vw,36px);font-weight:400;line-height:1.2;margin:0 0 12px}
+.archive-mark{font-family:inherit;font-size:12px;white-space:pre;line-height:1.2;color:var(--mute);margin:0;flex-shrink:0}
+.home-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;padding:22px 0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);margin:0 0 32px}
+.home-stats dt{font-size:12px;color:var(--mute)}.home-stats dd{font-size:24px;margin:4px 0 0}
+.home-grid{display:grid;grid-template-columns:1fr 2fr;gap:36px}
+.home-page h3{font-size:13px;font-weight:400;color:var(--mute);margin:0 0 12px}
+.archive-tree{list-style:none;margin:0;padding:0}.archive-tree li{margin:8px 0}.archive-tree .branch{color:var(--mute);white-space:pre}
+.home-page .chart{font-size:12px}.home-page .dates{font-size:12px;margin-top:10px}
+.home-footer{border-top:1px dashed var(--line);padding-top:14px;margin-top:24px;font-size:12px;color:var(--mute)}
+.message-form{margin:20px 0 24px}.message-query{display:flex;gap:16px;align-items:end}.message-query label{flex:1;min-width:0}
+.message-form label{display:block;color:var(--mute);font-size:12px}
+.message-form input,.message-form select{display:block;width:100%;min-width:0;background:var(--bg);color:var(--fg);font:inherit;font-size:14px;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:6px 0}
+.message-form button{padding:6px 0;white-space:nowrap}.message-form .hint{font-size:12px;margin-top:6px}
+.message-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:18px}
+.message-result{padding:16px 0;border-bottom:1px solid var(--line)}.message-meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px}
+.message-text{white-space:pre-wrap;margin:10px 0;overflow-wrap:anywhere}.message-result .original{font-size:12px}
+mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;margin-top:20px;align-items:center;font-size:13px}
 @media(max-width:760px){main{grid-template-columns:1fr;gap:12px}nav{display:none;position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:10px}
  body.nav-open nav{display:block}#menu{display:inline}#hdr{display:none}.m-hide{display:none}.wrap{padding:12px}
- .kv{grid-template-columns:1fr;gap:0 0}.kv div:nth-child(odd){margin-top:6px}.big{font-size:18px}}
+ .kv{grid-template-columns:1fr;gap:0 0}.kv div:nth-child(odd){margin-top:6px}.big{font-size:18px}
+ .home-page{margin-top:28px}.home-heading{gap:12px}.archive-mark{font-size:10px}.home-stats{grid-template-columns:repeat(2,1fr);gap:20px}.home-grid{grid-template-columns:1fr;gap:24px}
+ .message-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.message-query{gap:12px}}
+@media(max-width:380px){.archive-mark{display:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
- <h1><a href="#/">channel index</a></h1>
+ <h1><a href="#/" id="brand">Telegram archive</a></h1>
  <span class="mute" id="hdr"></span>
- <span class="r"><span class="btn" id="menu">[index]</span><span class="btn" id="lang">[es]</span><span class="btn" id="theme">[dark]</span></span>
+ <span class="r"><button class="btn" id="menu" type="button" aria-controls="nav" aria-expanded="false">[index]</button><button class="btn" id="lang" type="button">[es]</button><button class="btn" id="theme" type="button">[dark]</button></span>
 </header>
 <main><nav id="nav"></nav><div id="view"></div></main>
 </div>
@@ -195,12 +220,20 @@ const T={
  en:{channels:'channels',messages:'messages',archive:'archive',tiers:'tiers',sources:'sources',handle:'handle',title:'title',tier:'tier',subs:'subscribers',posts:'posts',last:'last post',days:'last %d days',search:'search /',
   about:'description (as published by the channel)',facts:'published research',stats:'archive',created:'channel created',first:'first archived post',views:'total views',fwd:'posts that are forwards',senders:'distinct senders',
   fwdfrom:'most forwarded from',fwdto:'forwarded by tracked channels',domains:'most linked domains',none:'none',notyet:'not yet archived',perday:'posts per day',tracked:'tracked',untracked:'not tracked',
-  tierlist:'tiers',built:'built',since:'archived from',nofacts:'no published research recorded for this channel.',group:'discussion group',hours:'posts by weekday and hour (UTC)',days7:'Mo Tu We Th Fr Sa Su'},
+  tierlist:'tiers',built:'updated',since:'archived from',nofacts:'no published research recorded for this channel.',group:'discussion group',hours:'posts by weekday and hour (UTC)',days7:'Mo Tu We Th Fr Sa Su',
+  name:'Telegram archive',home:'home',browse:'browse channels',directory:'index',indexed:'channels in index',cited:'cited facts',activity:'messages per day',period:'archive dates',light:'light',dark:'dark',
+  messageSearch:'search messages',query:'text',searchGo:'search',queryHint:'Words or "quoted phrases"',allChannels:'all channels',dateFrom:'from (UTC)',dateTo:'to (UTC)',order:'order',relevance:'relevance',newest:'newest',oldest:'oldest',
+  loading:'searching…',results:'results',noresults:'no matching messages.',original:'original post',previous:'previous',next:'next',page:'page',
+  invalid_query:'Enter words or balanced "quoted phrases". Maximum 20 terms.',query_too_long:'Search text is limited to 300 characters.',invalid_date:'Enter a valid date.',date_range:'The start date must be on or before the end date.',invalid_sort:'Choose a valid order.',invalid_page:'Choose a valid page.',invalid_channel:'Choose a channel in the index.',invalid_request:'Check the search fields.',search_unavailable:'Search is unavailable. Try again.',search_timeout:'This search took too long. Try more words or a narrower date range.'},
  es:{channels:'canales',messages:'mensajes',archive:'archivo',tiers:'niveles',sources:'fuentes',handle:'usuario',title:'título',tier:'nivel',subs:'suscriptores',posts:'publicaciones',last:'última publicación',days:'últimos %d días',search:'buscar /',
   about:'descripción (tal como la publica el canal)',facts:'investigaciones publicadas',stats:'archivo',created:'canal creado',first:'primera publicación archivada',views:'visualizaciones totales',fwd:'publicaciones que son reenvíos',senders:'remitentes distintos',
   fwdfrom:'más reenviado desde',fwdto:'reenviado por canales seguidos',domains:'dominios más enlazados',none:'ninguno',notyet:'aún no archivado',perday:'publicaciones por día',tracked:'seguido',untracked:'no seguido',
-  tierlist:'niveles',built:'generado',since:'archivado desde',nofacts:'no hay investigaciones publicadas registradas para este canal.',group:'grupo de debate',hours:'publicaciones por día de la semana y hora (UTC)',days7:'Lu Ma Mi Ju Vi Sá Do'}};
-let L=localStorage.getItem('lang')||'en';
+  tierlist:'niveles',built:'actualizado',since:'archivado desde',nofacts:'no hay investigaciones publicadas registradas para este canal.',group:'grupo de debate',hours:'publicaciones por día de la semana y hora (UTC)',days7:'Lu Ma Mi Ju Vi Sá Do',
+  name:'Archivo de Telegram',home:'inicio',browse:'ver canales',directory:'índice',indexed:'canales en el índice',cited:'datos con fuentes',activity:'mensajes por día',period:'fechas del archivo',light:'claro',dark:'oscuro',
+  messageSearch:'buscar mensajes',query:'texto',searchGo:'buscar',queryHint:'Palabras o "frases entre comillas"',allChannels:'todos los canales',dateFrom:'desde (UTC)',dateTo:'hasta (UTC)',order:'orden',relevance:'relevancia',newest:'más recientes',oldest:'más antiguos',
+  loading:'buscando…',results:'resultados',noresults:'no hay mensajes coincidentes.',original:'publicación original',previous:'anterior',next:'siguiente',page:'página',
+  invalid_query:'Introduce palabras o "frases entre comillas" cerradas. Máximo 20 términos.',query_too_long:'El texto de búsqueda está limitado a 300 caracteres.',invalid_date:'Introduce una fecha válida.',date_range:'La fecha inicial debe ser anterior o igual a la final.',invalid_sort:'Elige un orden válido.',invalid_page:'Elige una página válida.',invalid_channel:'Elige un canal del índice.',invalid_request:'Revisa los campos de búsqueda.',search_unavailable:'La búsqueda no está disponible. Inténtalo de nuevo.',search_timeout:'La búsqueda tardó demasiado. Añade palabras o reduce el intervalo de fechas.'}};
+let L=localStorage.getItem('lang')==='es'?'es':'en';
 const t=k=>T[L][k]||k;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=n=>n==null?'—':Number(n).toLocaleString(L==='es'?'es-ES':'en-GB');
@@ -210,11 +243,61 @@ function bar(n,max,w=24){return '<span class="bar">'+'█'.repeat(Math.max(1,Mat
 function link(c){return c.handle?`<a href="https://t.me/${esc(c.handle)}" target="_blank" rel="noopener">@${esc(c.handle)}</a>`:`<span class="mute">id ${c.id}</span>`}
 function chanLink(c){return c.tracked?`<a href="#/c/${esc(c.handle||c.id)}">${esc(c.title||c.handle||c.id)}</a>`:esc(c.title||c.handle||('id '+c.id))}
 function nav(cur){const byT={};D.channels.forEach(c=>(byT[c.tier]=byT[c.tier]||[]).push(c));
- let h=`<input class="search" id="q" placeholder="${t('search')}"><ul><li><a href="#/">${t('channels')}</a></li><li><a href="#/tiers">${t('tiers')}</a></li><li><a href="#/sources">${t('sources')}</a></li></ul>`;
+ let h=`<input class="search" id="q" aria-label="${t('search')}" placeholder="${t('search')}"><ul><li><a href="#/">${t('home')}</a></li><li><a href="#/search">${t('messageSearch')}</a></li><li><a href="#/channels">${t('channels')}</a></li><li><a href="#/tiers">${t('tiers')}</a></li><li><a href="#/sources">${t('sources')}</a></li></ul>`;
  for(const k of Object.keys(D.tiers)){if(!byT[k])continue;h+=`<h3>${k.slice(0,1)} · ${byT[k].length}</h3><ul>`+byT[k].map(c=>`<li class="${cur===c.handle.toLowerCase()?'cur':''}"><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a></li>`).join('')+'</ul>'}
  document.getElementById('nav').innerHTML=h;
  const q=document.getElementById('q');q.oninput=()=>{const v=q.value.toLowerCase();document.querySelectorAll('#nav li').forEach(li=>{li.style.display=li.textContent.toLowerCase().includes(v)?'':'none'})};
- document.onkeydown=e=>{if(e.key==='/'&&document.activeElement!==q){e.preventDefault();q.focus()}}}
+ document.onkeydown=e=>{if(e.key==='/'&&!e.target.closest('input,textarea,select,[contenteditable]')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();if(innerWidth<=760){document.body.classList.add('nav-open');document.getElementById('menu').setAttribute('aria-expanded','true')}q.focus()}}}
+function home(){
+ const counts=[[t('indexed'),D.channels.length],[t('messages'),D.total],[t('cited'),D.channels.reduce((n,c)=>n+c.facts.length,0)],[t('sources'),Object.keys(D.sources).length]];
+ const n=SP(),daily=D.daily.slice(-n),start=new Date(D.start+'T00:00:00Z');start.setUTCDate(start.getUTCDate()+D.days-n);
+ const first=start.toISOString().slice(0,10),last=new Date(start);last.setUTCDate(last.getUTCDate()+n-1);
+ document.getElementById('view').innerHTML=`<div class="home-page">
+  <section class="home-heading"><div><h2>${t('name')}</h2><div class="mute">${t('period')}<br>${D.range[0]||'—'} → ${D.range[1]||'—'}</div></div>
+   <pre class="archive-mark" aria-hidden="true">   .------------.
+   |  ________  |
+   | |___[]___| |
+   |  ________  |
+   | |___[]___| |
+   |  ________  |
+   | |___[]___| |
+   '------------'</pre></section>
+  <dl class="home-stats">${counts.map(([label,n])=>`<div><dt>${label}</dt><dd>${fmt(n)}</dd></div>`).join('')}</dl>
+  <div class="home-grid"><section><h3>${t('directory')} /</h3><ul class="archive-tree">
+   <li><span class="branch" aria-hidden="true">├── </span><a href="#/search">[${t('messageSearch')}]</a></li>
+   <li><span class="branch" aria-hidden="true">├── </span><a href="#/channels">[${t('browse')}]</a></li>
+   <li><span class="branch" aria-hidden="true">├── </span><a href="#/tiers">[${t('tiers')}]</a></li>
+   <li><span class="branch" aria-hidden="true">└── </span><a href="#/sources">[${t('sources')}]</a></li>
+  </ul></section><section><h3>${t('activity')} · ${t('days').replace('%d',n)}</h3>${chart(daily,first)}<div class="mute dates">${first} → ${last.toISOString().slice(0,10)}</div></section></div>
+  <footer class="home-footer">${t('built')} ${D.built}</footer></div>`;
+ document.onkeydown=e=>{if(e.key==='/'&&!e.target.closest('input,textarea,select,[contenteditable]')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();location.hash='/search'}};
+}
+let searchController=null;
+function searchURL(params,page=1){const p=new URLSearchParams(params);p.delete('page');if(page>1)p.set('page',page);return '#/search'+(p.size?'?'+p.toString():'')}
+async function messageSearch(params){
+ const options=D.channels.filter(c=>c.id).sort((a,b)=>(a.title||a.handle).localeCompare(b.title||b.handle));
+ document.getElementById('view').innerHTML=`<h2>${t('messageSearch')}</h2><div class="ul">==============</div>
+  <form class="message-form" id="message-form"><div class="message-query"><label>${t('query')}<input type="search" name="q" id="message-q" required maxlength="300" value="${esc(params.get('q')||'')}" autocomplete="off"></label><button class="btn" type="submit">[${t('searchGo')}]</button></div><div class="mute hint">${t('queryHint')}</div>
+   <div class="message-filters"><label>${t('channels')}<select name="channel"><option value="">${t('allChannels')}</option>${options.map(c=>`<option value="${esc(c.handle.toLowerCase())}">${esc(c.title||c.handle)} · @${esc(c.handle)}</option>`).join('')}</select></label>
+    <label>${t('dateFrom')}<input type="date" name="from" value="${esc(params.get('from')||'')}"></label><label>${t('dateTo')}<input type="date" name="to" value="${esc(params.get('to')||'')}"></label>
+    <label>${t('order')}<select name="sort">${['relevance','newest','oldest'].map(s=>`<option value="${s}">${t(s)}</option>`).join('')}</select></label></div>
+  </form><div id="search-status" class="mute" role="status"></div><div id="search-results"></div>`;
+ const form=document.getElementById('message-form'),input=document.getElementById('message-q');
+ form.elements.channel.value=(params.get('channel')||'').replace(/^@/,'').toLowerCase();form.elements.sort.value=params.get('sort')||'relevance';
+ form.onsubmit=e=>{e.preventDefault();const p=new URLSearchParams();for(const [k,v] of new FormData(form)){if(v&&(k!=='sort'||v!=='relevance'))p.set(k,v)}const url=searchURL(p);if(location.hash===url)route();else location.hash=url};
+ document.onkeydown=e=>{if(e.key==='/'&&!e.target.closest('input,textarea,select,[contenteditable]')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();input.focus()}};
+ if(!params.get('q')){input.focus();return}
+ const status=document.getElementById('search-status'),results=document.getElementById('search-results'),controller=new AbortController();searchController=controller;
+ status.textContent=t('loading');results.setAttribute('aria-busy','true');
+ try{
+  const response=await fetch('/api/search?'+params.toString(),{signal:controller.signal});const data=await response.json();if(controller.signal.aborted)return;
+  if(!response.ok){status.textContent=t(data.error in T[L]?data.error:'search_unavailable');return}
+  status.textContent=data.total?`${fmt(data.total)} ${t('results')} · ${t('page')} ${fmt(data.page)} / ${fmt(Math.ceil(data.total/data.page_size))}`:t('noresults');
+  let h=data.results.map(r=>`<article class="message-result"><div class="message-meta"><a href="#/c/${esc(encodeURIComponent(r.handle))}">${esc(r.title||r.handle)} <span class="mute">@${esc(r.handle)}</span></a><time class="mute" datetime="${esc(r.date)}">${esc(new Date(r.date).toISOString().slice(0,16).replace('T',' '))} UTC · #${r.msg_id}</time></div><div class="message-text">${r.snippet.map(p=>p.match?`<mark>${esc(p.text)}</mark>`:esc(p.text)).join('')}</div><a class="original" href="${esc(r.url)}" target="_blank" rel="noopener">[${t('original')}]</a></article>`).join('');
+  if(data.page>1||data.has_next){h+='<div class="pagination">';if(data.page>1)h+=`<a href="${esc(searchURL(params,data.page-1))}">[${t('previous')}]</a>`;if(data.has_next)h+=`<a href="${esc(searchURL(params,data.page+1))}">[${t('next')}]</a>`;h+='</div>'}results.innerHTML=h;
+ }catch(e){if(e.name!=='AbortError')status.textContent=t('search_unavailable')}
+ finally{if(!controller.signal.aborted)results.setAttribute('aria-busy','false')}
+}
 let sortKey='tier',sortDir=1;
 function index(){const rows=[...D.channels].sort((a,b)=>{const x=a[sortKey],y=b[sortKey];return (x==null)-(y==null)||(x>y?1:x<y?-1:0)*sortDir||a.handle.localeCompare(b.handle)});
  const th=(k,l,cls='')=>`<th class="${cls}" data-k="${k}">${l}${sortKey===k?(sortDir>0?' ▴':' ▾'):''}</th>`;
@@ -223,8 +306,8 @@ function index(){const rows=[...D.channels].sort((a,b)=>{const x=a[sortKey],y=b[
  for(const c of rows)h+=`<tr><td class="mute">${c.tier[0]}</td><td><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a> <span class="mute">@${esc(c.handle)}</span></td><td class="num m-hide">${fmt(c.subs)}</td><td class="num">${c.n?fmt(c.n):'<span class="mute">—</span>'}</td><td class="nw m-hide">${c.last||'<span class="mute">'+t('notyet')+'</span>'}</td><td>${spark(c.daily,SP())}</td></tr>`;
  h+='</table></div>';document.getElementById('view').innerHTML=h;
  document.querySelectorAll('th[data-k]').forEach(e=>e.onclick=()=>{const k=e.dataset.k;if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=1}index()})}
-function chart(a){const H=8,W=a.length,m=Math.max(1,...a);const rows=[];for(let r=H;r>=1;r--){let s=String(Math.round(m*r/H)).padStart(6)+' ┤';for(let i=0;i<W;i++){const v=a[i]/m*H;s+=v>=r?'█':v>=r-.5?'▄':' '}rows.push(s)}
- rows.push('       └'+'─'.repeat(W));const s=D.start,lab=[];for(let i=0;i<W;i+=30){const d=new Date(s);d.setDate(d.getDate()+i);lab.push(d.toISOString().slice(5,10).padEnd(30))}rows.push('        '+lab.join(''));return `<div class="chart">${rows.map(r=>esc(r)).join('\n')}</div>`}
+function chart(a,start=D.start){const H=8,W=a.length,m=Math.max(1,...a);const rows=[];for(let r=H;r>=1;r--){let s=String(Math.round(m*r/H)).padStart(6)+' ┤';for(let i=0;i<W;i++){const v=a[i]/m*H;s+=v>=r?'█':v>=r-.5?'▄':' '}rows.push(s)}
+ rows.push('       └'+'─'.repeat(W));const lab=[];for(let i=0;i<W;i+=30){const d=new Date(start+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+i);lab.push(d.toISOString().slice(5,10).padEnd(Math.min(30,W-i)))}rows.push('        '+lab.join(''));return `<div class="chart">${rows.map(r=>esc(r)).join('\n')}</div>`}
 function heat(hm){if(!hm)return '';const G=' ·░▒▓█';const m=Math.max(1,...hm.flat());const days=t('days7').split(' ');
  let out='      '+Array.from({length:24},(_,h)=>String(h).padStart(2,'0')).join(' ')+'\n';
  hm.forEach((row,d)=>{out+=days[d].padEnd(5)+' '+row.map(v=>{const g=v?G[Math.min(5,1+Math.floor(v/m*4.99))]:' ';return g+g}).join(' ')+'\n'});
@@ -233,6 +316,7 @@ function heat(hm){if(!hm)return '';const G=' ·░▒▓█';const m=Math.max(1,
  return `<div class="chart">${esc(out)}</div><div class="mute">${L==='es'?'hora pico':'peak hour'} ${String(peak).padStart(2,'0')}:00 UTC (${(peak+2)%24}:00 Madrid, ${(peak+3)%24}:00 Moscow) · ${L==='es'?'fin de semana / laborable':'weekend / weekday'} ${(we/Math.max(1,wk)).toFixed(2)}</div>`}
 function channel(handle){const c=D.channels.find(x=>x.handle.toLowerCase()===handle.toLowerCase());if(!c){document.getElementById('view').innerHTML='?';return}
  let h=`<h2>${esc(c.title||c.handle)}</h2><div class="ul">${'='.repeat(Math.min(60,(c.title||c.handle).length))}</div>`;
+ h+=`<div><a href="#/search?channel=${esc(encodeURIComponent(c.handle.toLowerCase()))}">[${t('messageSearch')}]</a></div>`;
  h+=`<div class="kv"><div>${t('handle')}</div><div>${link(c)}</div><div>${t('tier')}</div><div>${c.tier[0]} · ${esc(D.tiers[c.tier][L])}</div>`;
  if(c.linked_note)h+=`<div>${t('group')}</div><div>${esc(c.linked_note)}</div>`;
  h+=`<div>${t('subs')}</div><div>${fmt(c.subs)}</div><div>${t('created')}</div><div>${c.created||'—'}</div></div>`;
@@ -253,16 +337,21 @@ function channel(handle){const c=D.channels.find(x=>x.handle.toLowerCase()===han
  document.getElementById('view').innerHTML=h}
 function tiers(){let h=`<h2>${t('tierlist')}</h2><div class="ul">======</div><table>`;for(const [k,v] of Object.entries(D.tiers)){const n=D.channels.filter(c=>c.tier===k).length;h+=`<tr><td>${k[0]}</td><td class="num">${n}</td><td>${esc(v[L])}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
 function sources(){let h=`<h2>${t('sources')}</h2><div class="ul">=======</div><table>`;for(const s of Object.values(D.sources)){const n=D.channels.filter(c=>c.facts.some(f=>f.source===s.key)).length;h+=`<tr><td class="mute">${s.key}</td><td>${s.date}</td><td>${esc(s.publisher)}</td><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a></td><td class="num">${n}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
-function route(){const p=location.hash.replace(/^#\/?/,'');const m=p.match(/^c\/(.+)$/);nav(m?decodeURIComponent(m[1]).toLowerCase():null);
+function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/);const isHome=!p;
+ document.body.classList.toggle('home',isHome);document.documentElement.lang=L;
+ document.getElementById('brand').textContent=t('name');document.getElementById('menu').textContent=`[${t('directory')}]`;document.getElementById('menu').setAttribute('aria-expanded',String(document.body.classList.contains('nav-open')));
+ document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='tiers'?t('tiers'):p==='sources'?t('sources'):t('channels'))}`;
+ if(!isHome)nav(m?decodeURIComponent(m[1]).toLowerCase():null);
  document.getElementById('hdr').textContent=`${fmt(D.channels.length)} ${t('channels')} · ${fmt(D.total)} ${t('messages')}`;
- if(m)channel(decodeURIComponent(m[1]));else if(p==='tiers')tiers();else if(p==='sources')sources();else index();window.scrollTo(0,0)}
-document.getElementById('lang').onclick=()=>{L=L==='en'?'es':'en';localStorage.setItem('lang',L);document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';route()};
+ if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='tiers')tiers();else if(p==='sources')sources();else index();window.scrollTo(0,0)}
+document.getElementById('lang').onclick=()=>{L=L==='en'?'es':'en';localStorage.setItem('lang',L);document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';applyTheme();route()};
 document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';
 const th=document.getElementById('theme');let dark=(localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';
-function applyTheme(){document.documentElement.dataset.theme=dark?'dark':'light';th.textContent=dark?'[light]':'[dark]'}applyTheme();
+function applyTheme(){document.documentElement.dataset.theme=dark?'dark':'light';th.textContent=`[${t(dark?'light':'dark')}]`}applyTheme();
 th.onclick=()=>{dark=!dark;localStorage.setItem('theme',dark?'dark':'light');applyTheme()};
-document.getElementById('menu').onclick=()=>document.body.classList.toggle('nav-open');
+document.getElementById('menu').onclick=()=>{const open=document.body.classList.toggle('nav-open');document.getElementById('menu').setAttribute('aria-expanded',String(open))};
 window.onhashchange=()=>{document.body.classList.remove('nav-open');route()};route();
+let compact=innerWidth<=760;window.onresize=()=>{const next=innerWidth<=760;if(next!==compact){compact=next;if(document.body.classList.contains('home'))home()}};
 </script>
 </body>
 </html>

@@ -282,9 +282,14 @@ async def resolve_name(client: TelegramClient, name: str) -> None:
 async def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("channels", nargs="*")
-    ap.add_argument("--resolve", help="search Telegram for a channel by name")
+    ap.add_argument("--resolve", action="append", help="search Telegram for a channel by name; repeat for multiple names")
     ap.add_argument("--refetch", action="store_true", help="re-read full history of the given channels (fills new columns; no new rows expected)")
+    ap.add_argument("--benchmark-takeout", action="store_true", help="compare normal and Takeout history reads; no archive writes")
+    ap.add_argument("--benchmark-messages", type=int, default=1000)
+    ap.add_argument("--benchmark-rounds", type=int, default=2)
     args = ap.parse_args()
+    if args.benchmark_messages <= 0 or args.benchmark_rounds <= 0:
+        ap.error("benchmark messages and rounds must be positive")
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stderr)
     logging.getLogger("telethon").setLevel(logging.WARNING)
 
@@ -294,8 +299,16 @@ async def main() -> None:
         log.error("not logged in; run login.py first")
         sys.exit(1)
     try:
+        if args.benchmark_takeout:
+            from benchmark import run
+            await run(client, args.channels or ["RybarESP", "infodefSPAIN"],
+                      args.benchmark_messages, args.benchmark_rounds)
+            return
         if args.resolve:
-            await resolve_name(client, args.resolve)
+            for name in args.resolve:
+                print(f"Search: {name}", flush=True)
+                await resolve_name(client, name)
+                await asyncio.sleep(3)
             return
         db = open_db()
         specs = load_watchlist(args.channels)
