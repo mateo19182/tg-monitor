@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS messages (
   views INTEGER, forwards INTEGER, replies INTEGER,
   fwd_from_channel_id INTEGER, fwd_from_msg_id INTEGER, fwd_from_name TEXT, fwd_date TEXT,
   reply_to_msg_id INTEGER, media TEXT, urls TEXT, grouped_id INTEGER,
-  edit_date TEXT, fetched_at TEXT,
+  edit_date TEXT, fetched_at TEXT, sender_id INTEGER,
   PRIMARY KEY (channel_id, msg_id)
 );
 CREATE INDEX IF NOT EXISTS idx_messages_date ON messages(date);
@@ -80,6 +80,9 @@ def open_db() -> sqlite3.Connection:
     cols = {r[1] for r in db.execute("PRAGMA table_info(channels)")}
     if "tier" not in cols:
         db.execute("ALTER TABLE channels ADD COLUMN tier TEXT")
+    cols = {r[1] for r in db.execute("PRAGMA table_info(messages)")}
+    if "sender_id" not in cols:
+        db.execute("ALTER TABLE messages ADD COLUMN sender_id INTEGER")
     cols = {r[1] for r in db.execute("PRAGMA table_info(fwd_sources)")}
     if "participants" not in cols:
         db.execute("ALTER TABLE fwd_sources ADD COLUMN participants INTEGER")
@@ -139,14 +142,15 @@ def row_from(msg, channel_id: int, now: str) -> tuple:
         (msg.reply_to.reply_to_msg_id if msg.reply_to else None),
         media_kind(msg.media), json.dumps(extract_urls(msg)), msg.grouped_id,
         (msg.edit_date.isoformat() if msg.edit_date else None), now,
+        (msg.sender_id if msg.sender_id and msg.sender_id != channel_id else None),  # users in groups; NULL for the channel itself
     )
 
 
 UPSERT = """
-INSERT INTO messages VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+INSERT INTO messages (channel_id,msg_id,date,text,views,forwards,replies,fwd_from_channel_id,fwd_from_msg_id,fwd_from_name,fwd_date,reply_to_msg_id,media,urls,grouped_id,edit_date,fetched_at,sender_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 ON CONFLICT(channel_id, msg_id) DO UPDATE SET
   text=excluded.text, views=excluded.views, forwards=excluded.forwards,
-  replies=excluded.replies, edit_date=excluded.edit_date, fetched_at=excluded.fetched_at
+  replies=excluded.replies, edit_date=excluded.edit_date, fetched_at=excluded.fetched_at, sender_id=excluded.sender_id
 """
 
 

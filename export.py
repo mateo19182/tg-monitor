@@ -15,7 +15,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 DB = HERE / "tg.db"
 
-MSG_COLS = ["channel_id", "msg_id", "date", "text", "views", "forwards", "replies",
+MSG_COLS = ["sender_id", "channel_id", "msg_id", "date", "text", "views", "forwards", "replies",
             "fwd_from_channel_id", "fwd_from_msg_id", "fwd_from_name", "fwd_date",
             "reply_to_msg_id", "media", "urls", "grouped_id", "edit_date", "fetched_at"]
 
