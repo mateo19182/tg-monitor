@@ -17,6 +17,7 @@ Each channel carries a `tier` label so the dataset can be sliced:
 | F_russian_official | Embassies, MFA, TASS and state-media mirrors |
 | G_allied_state_media_es | Allied state media in Spanish (Iran, Syria, Venezuela, Cuba) |
 | H_discovered_es_aggregator | Spanish-language channels surfaced by forward provenance, not in any published list |
+| I_discussion_group | Linked discussion groups of watched channels (audience comments; `sender_id` set; since 2025) |
 
 ## Layout
 

@@ -180,7 +180,8 @@ async def sync_channel(client: TelegramClient, db: sqlite3.Connection, spec: dic
     db.execute("UPDATE sync_state SET last_run=?, last_error=NULL WHERE handle=?", (now, handle))
     db.commit()
 
-    ent = await with_retries(lambda: client.get_entity(handle), handle)
+    target = PeerChannel(int(handle)) if handle.isdigit() else handle  # numeric ids = joined private groups
+    ent = await with_retries(lambda: client.get_entity(target), handle)
     full = await with_retries(lambda: client(functions.channels.GetFullChannelRequest(ent)), handle)
     db.execute(
         "INSERT INTO channels (id, username, title, about, tier, participants, created_at, first_seen, last_synced) "
