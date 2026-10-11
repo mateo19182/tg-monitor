@@ -45,3 +45,38 @@ EmbajadaRusaES,F_russian_official,,dfrlab-2023-03,Russian Embassy in Spain - fla
 embrusiamexico,F_russian_official,,own-2026-10,Russian Embassy in Mexico - LatAm ES feeder
 actualidad_rt,F_russian_official,,own-2026-10,Actualidad RT mirror (unofficial? 2k subs) - verify
 sputnik_espanol1,F_russian_official,,own-2026-10,Sputnik Mundo mirror (unofficial? 4k subs) - verify
+tass_es,F_russian_official,2026-01-01,fwd-discovery,TASS Spanish - 1700 fwds into ROKOT/InfoDefense
+MAERusia,F_russian_official,2026-01-01,fwd-discovery,Russian MFA in Spanish (Zakharova briefings) - 476 fwds
+EmbRusCuba,F_russian_official,,fwd-discovery,Russian Embassy Cuba - 208 fwds
+russiabeyondes,F_russian_official,2026-01-01,fwd-discovery,Russia Beyond ES (state soft power)
+HispanTVcanal,G_allied_state_media_es,2026-01-01,fwd-discovery,HispanTV (Iran) Spanish - 495 fwds into 3 watched
+almayadeenespanol,G_allied_state_media_es,2026-01-01,fwd-discovery,Al Mayadeen Español - 518 fwds
+AgenciasiriaSANA,G_allied_state_media_es,2026-01-01,fwd-discovery,SANA Syria ES - 260 fwds
+teleSUR_tv,G_allied_state_media_es,2026-01-01,fwd-discovery,teleSUR - 228 fwds
+misionverdad,G_allied_state_media_es,2026-01-01,fwd-discovery,Misión Verdad (Venezuela) - 119 fwds
+vakulinchuk,H_discovered_es_aggregator,,fwd-discovery,Vakulinchuk - 812 fwds into 5 watched channels (top ES source)
+liusivaya,H_discovered_es_aggregator,,fwd-discovery,Liu Sivaya (Rybar-linked ES blogger) - 542 fwds into 5
+geopoliticaactual,H_discovered_es_aggregator,,fwd-discovery,Geopolítica actual - 502 fwds
+rusa_alena,H_discovered_es_aggregator,,fwd-discovery,Alena Rusa - 249 fwds into 4
+victorternovsky,H_discovered_es_aggregator,,fwd-discovery,Victor Ternovsky (ex-Sputnik ES correspondent) - 249 fwds into 4
+lineasrojas,H_discovered_es_aggregator,,fwd-discovery,Líneas Rojas - 249 fwds
+CubaXSiempre,H_discovered_es_aggregator,,fwd-discovery,Cuba por siempre - 345 fwds into 3
+nuestraamerica,H_discovered_es_aggregator,,fwd-discovery,Nuestra América - 282 fwds into 3
+smolny7,H_discovered_es_aggregator,,fwd-discovery,mpr21.info - 217 fwds into 3
+Dolar_kaput,H_discovered_es_aggregator,,fwd-discovery,Desdolarización - 160 fwds into 4
+entre_guerras,H_discovered_es_aggregator,,fwd-discovery,ENTRE GUERRAS - 129 fwds into 3
+BlancoAzulRojo,H_discovered_es_aggregator,,fwd-discovery,Blanco azul y rojo - 125 fwds into 4
+BerdaderaH,H_discovered_es_aggregator,,fwd-discovery,Al Otro Lado de la frontera de Ucrania - 111 fwds into 3
+noticiasdesderusia,H_discovered_es_aggregator,,fwd-discovery,Noticias desde Rusia - 111 fwds
+FrentedelEste,H_discovered_es_aggregator,,fwd-discovery,Frente del Este - 98 fwds into 4
+contraelrelato,H_discovered_es_aggregator,,fwd-discovery,Contra el relato - 90 fwds into 3
+lajirafanoticiera,H_discovered_es_aggregator,,fwd-discovery,La Jirafa - 83 fwds into 3 (Rybar ES source)
+informador_global,H_discovered_es_aggregator,,fwd-discovery,El Informador Global - 78 fwds into 3
+InfoRusia,H_discovered_es_aggregator,,fwd-discovery,InfoRusia ZOV
+lisavukovicblog,H_discovered_es_aggregator,,fwd-discovery,Lisa Vuković blog (runs Ucraniando)
+elespiadigital,C_spain_node,,fwd-discovery,GEOESTRATEGIA.EU (Juan Antonio Aguilar - GFCN adviser) - 120 fwds
+ehdonbass,C_spain_node,,fwd-discovery,Euskal Herria-Donbass solidarity committee - Basque Country
+espanolesamigosderusia,C_spain_node,,fwd-discovery,Españoles amigos de Rusia
+AmigosRusia,C_spain_node,,fwd-discovery,Amigos de Rusia
+rafapalreal,C_spain_node,,fwd-discovery,Rafapal - Spanish conspiracist blogger
+adiskidetasuna,C_spain_node,,fwd-discovery,Herrien arteko adiskidetasuna - Basque-language pro-Russia (383 fwds into ROKOT)
