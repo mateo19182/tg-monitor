@@ -21,12 +21,15 @@ TIERS = {
     "A_russian_project_es": {"en": "Spanish-language editions of multilingual Russian channels", "es": "Ediciones en español de canales rusos multilingües"},
     "B_es_aggregator": {"en": "Spanish-language channels listed as frequent sources of the Pravda network's Spanish pages", "es": "Canales en español citados como fuentes frecuentes de las páginas en español de la red Pravda"},
     "C_spain_node": {"en": "Channels whose operators are located in Spain, per published research", "es": "Canales cuyos administradores se sitúan en España, según investigaciones publicadas"},
-    "D_spain_farright_election": {"en": "Spanish political parties, candidates and activists", "es": "Partidos, candidatos y activistas políticos españoles"},
+    "D_spain_farright_election": {"en": "Spanish right-wing and nationalist parties, organisations and activists", "es": "Partidos, organizaciones y activistas españoles de derecha y nacionalistas"},
     "E_russian_parent": {"en": "Russian- or English-language channels of which tier A channels are editions (partial archive)", "es": "Canales en ruso o inglés de los que los canales del nivel A son ediciones (archivo parcial)"},
     "F_russian_official": {"en": "Russian state institutions and state media", "es": "Instituciones y medios estatales rusos"},
     "G_allied_state_media_es": {"en": "Spanish-language state media of other countries (partial archive)", "es": "Medios estatales en español de otros países (archivo parcial)"},
     "H_discovered_es_aggregator": {"en": "Channels not named in the consulted research; included because tracked channels forward them", "es": "Canales no citados en las investigaciones consultadas; incluidos porque los canales seguidos los reenvían"},
     "I_discussion_group": {"en": "Discussion groups linked to tracked channels (from 2025)", "es": "Grupos de debate vinculados a canales seguidos (desde 2025)"},
+    "J_spain_parties": {"en": "Parliamentary Spanish parties and their leaders", "es": "Partidos españoles con representación parlamentaria y sus líderes"},
+    "K_spain_left": {"en": "Spanish left-wing, anti-NATO and solidarity organisations and media", "es": "Organizaciones y medios españoles de izquierda, contrarios a la OTAN y de solidaridad"},
+    "L_spain_media": {"en": "Spanish media outlets and commentators", "es": "Medios de comunicación y comentaristas españoles"},
 }
 
 

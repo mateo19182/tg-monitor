@@ -12,12 +12,15 @@ Each channel carries a `tier` label so the dataset can be sliced:
 | A_russian_project_es | Spanish editions of multilingual Russian projects (Rybar, UKR Leaks, InfoDefense, ROKOT, DD Geopolitics) |
 | B_es_aggregator | Spanish-language pro-Kremlin aggregators/originators, mostly anonymous |
 | C_spain_node | Channels run from inside Spain (Herqles, Eureka News, TSA Noticias...) |
-| D_spain_farright_election | Spanish far-right political actors (Vox-adjacent, SALF, Falange, DN...) |
+| D_spain_farright_election | Spanish right-wing and nationalist parties, organisations and activists (Vox, SALF, Falange, DN, Hazte Oír...) |
 | E_russian_parent | Russian/English parent channels, for translation-lag and provenance (limited `since`) |
 | F_russian_official | Embassies, MFA, TASS and state-media mirrors |
 | G_allied_state_media_es | Allied state media in Spanish (Iran, Syria, Venezuela, Cuba) |
 | H_discovered_es_aggregator | Spanish-language channels surfaced by forward provenance, not in any published list |
 | I_discussion_group | Linked discussion groups of watched channels (audience comments; `sender_id` set; since 2025) |
+| J_spain_parties | Parliamentary Spanish parties and leaders (control) |
+| K_spain_left | Spanish left-wing, anti-NATO and solidarity organisations and media |
+| L_spain_media | Spanish media outlets and commentators |
 
 ## Layout
 
