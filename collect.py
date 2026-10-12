@@ -24,7 +24,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from telethon import TelegramClient, functions
-from telethon.errors import ChannelPrivateError, FloodWaitError, RPCError, UsernameInvalidError, UsernameNotOccupiedError
+from telethon.errors import ChannelPrivateError, FloodWaitError, RPCError, TakeoutInitDelayError, UsernameInvalidError, UsernameNotOccupiedError
 from telethon.tl.types import (
     MessageEntityTextUrl,
     MessageEntityUrl,
@@ -199,7 +199,7 @@ async def with_retries(coro_fn, what: str, tries: int = 3):
             await asyncio.sleep(5 * attempt)
 
 
-async def sync_channel(client: TelegramClient, db: sqlite3.Connection, spec: dict, refetch: bool = False) -> None:
+async def sync_channel(client: TelegramClient, db: sqlite3.Connection, spec: dict, refetch: bool = False, takeout=None) -> None:
     handle = spec["handle"]
     since = None
     if spec.get("since"):
@@ -225,8 +225,13 @@ async def sync_channel(client: TelegramClient, db: sqlite3.Connection, spec: dic
     if refetch:
         last = 0  # walk everything again; UPSERT refreshes columns in place
     n = 0
+    # Full backfills go through a Takeout session when one is open (≈2.5x faster history reads, measured
+    # 2026-10-12); hourly increments use the normal client. Falls back to normal reads if Takeout was refused.
+    reader = takeout if (takeout is not None and last == 0) else client
+    if reader is takeout:
+        log.info("[%s] backfill via takeout", handle)
     # (1) new messages, oldest first so a crash leaves a contiguous prefix
-    async for msg in client.iter_messages(ent, min_id=last, reverse=True, offset_date=since if last == 0 else None):
+    async for msg in reader.iter_messages(ent, min_id=last, reverse=True, offset_date=since if last == 0 else None):
         db.execute(UPSERT, row_from(msg, ent.id, now))
         n += 1
         if n % COMMIT_EVERY == 0:
@@ -285,6 +290,7 @@ async def main() -> None:
     ap.add_argument("--resolve", action="append", help="search Telegram for a channel by name; repeat for multiple names")
     ap.add_argument("--refetch", action="store_true", help="re-read full history of the given channels (fills new columns; no new rows expected)")
     ap.add_argument("--benchmark-takeout", action="store_true", help="compare normal and Takeout history reads; no archive writes")
+    ap.add_argument("--no-takeout", action="store_true", help="do not open a Takeout session for backfills")
     ap.add_argument("--benchmark-messages", type=int, default=1000)
     ap.add_argument("--benchmark-rounds", type=int, default=2)
     args = ap.parse_args()
@@ -312,10 +318,22 @@ async def main() -> None:
             return
         db = open_db()
         specs = load_watchlist(args.channels)
+        takeout = None
+        needs_backfill = any(
+            (db.execute("SELECT 1 FROM sync_state WHERE handle=? AND backfill_done=1", (sp["handle"],)).fetchone() is None) or args.refetch
+            for sp in specs)
+        if needs_backfill and not args.no_takeout:
+            try:
+                takeout = await client.takeout(channels=True, files=False).__aenter__()
+                log.info("takeout session open")
+            except TakeoutInitDelayError as e:
+                log.warning("takeout refused for %ss; using normal reads this run", e.seconds)
+            except RPCError as e:
+                log.warning("takeout unavailable (%s); using normal reads this run", e)
         failed = 0
         for spec in specs:
             try:
-                await sync_channel(client, db, spec, refetch=args.refetch)
+                await sync_channel(client, db, spec, refetch=args.refetch, takeout=takeout)
             except FloodWaitError as e:
                 failed += 1
                 db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"flood wait {e.seconds}s", spec["handle"]))
@@ -333,6 +351,11 @@ async def main() -> None:
                 db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"{type(e).__name__}: {e}", spec["handle"]))
                 db.commit()
                 log.exception("[%s] failed", spec["handle"])
+        if takeout is not None:
+            try:
+                await takeout.__aexit__(None, None, None)
+            except Exception as e:  # noqa: BLE001
+                log.warning("takeout close: %s", e)
         await resolve_fwd_sources(client, db)
         log.info("run complete: %d channels, %d failed", len(specs), failed)
     finally:
