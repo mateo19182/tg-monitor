@@ -291,6 +291,7 @@ async def main() -> None:
     ap.add_argument("--refetch", action="store_true", help="re-read full history of the given channels (fills new columns; no new rows expected)")
     ap.add_argument("--benchmark-takeout", action="store_true", help="compare normal and Takeout history reads; no archive writes")
     ap.add_argument("--no-takeout", action="store_true", help="do not open a Takeout session for backfills")
+    ap.add_argument("--concurrency", type=int, default=3, help="channels fetched in parallel (default 3)")
     ap.add_argument("--benchmark-messages", type=int, default=1000)
     ap.add_argument("--benchmark-rounds", type=int, default=2)
     args = ap.parse_args()
@@ -331,26 +332,32 @@ async def main() -> None:
             except RPCError as e:
                 log.warning("takeout unavailable (%s); using normal reads this run", e)
         failed = 0
-        for spec in specs:
-            try:
-                await sync_channel(client, db, spec, refetch=args.refetch, takeout=takeout)
-            except FloodWaitError as e:
-                failed += 1
-                db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"flood wait {e.seconds}s", spec["handle"]))
-                db.commit()
-                log.error("[%s] flood wait %ss too long; deferred to next run", spec["handle"], e.seconds)
-                if e.seconds > 3600:
-                    break  # account-wide limit, nothing more will work this run
-            except (UsernameInvalidError, UsernameNotOccupiedError, ChannelPrivateError, ValueError) as e:
-                failed += 1
-                db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"unreachable: {e}", spec["handle"]))
-                db.commit()
-                log.error("[%s] unreachable: %s", spec["handle"], e)
-            except (RPCError, ConnectionError, OSError) as e:
-                failed += 1
-                db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"{type(e).__name__}: {e}", spec["handle"]))
-                db.commit()
-                log.exception("[%s] failed", spec["handle"])
+        sem = asyncio.Semaphore(max(1, args.concurrency))
+
+        async def run_one(spec):
+            nonlocal failed
+            async with sem:
+                try:
+                    await sync_channel(client, db, spec, refetch=args.refetch, takeout=takeout)
+                except FloodWaitError as e:
+                    failed += 1
+                    db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"flood wait {e.seconds}s", spec["handle"]))
+                    db.commit()
+                    log.error("[%s] flood wait %ss too long; deferred to next run", spec["handle"], e.seconds)
+                except (UsernameInvalidError, UsernameNotOccupiedError, ChannelPrivateError, ValueError) as e:
+                    failed += 1
+                    db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"unreachable: {e}", spec["handle"]))
+                    db.commit()
+                    log.error("[%s] unreachable: %s", spec["handle"], e)
+                except (RPCError, ConnectionError, OSError) as e:
+                    failed += 1
+                    db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"{type(e).__name__}: {e}", spec["handle"]))
+                    db.commit()
+                    log.exception("[%s] failed", spec["handle"])
+
+        # Channels run a few at a time: a single history read is latency-bound (~100 msgs per round trip,
+        # collector CPU ~4%), so modest concurrency multiplies throughput without touching per-method limits.
+        await asyncio.gather(*(run_one(sp) for sp in specs))
         if takeout is not None:
             try:
                 await takeout.__aexit__(None, None, None)
