@@ -18,6 +18,7 @@ MODEL = "claude-haiku-5-5"
 PRICE_IN, PRICE_OUT = 1.0, 5.0          # USD per million tokens (Haiku list price), batch = half
 N_REPS, REP_CHARS = 8, 400
 LINK_SIM, RELATED_SIM = 0.90, 0.85      # same story continued / related story
+TRIM_FLOOR, TRIM_STD = 0.60, 1.5        # a member stays only if its cosine to the story centroid >= max(floor, mean - k*std)
 BATCH_POLL_S = 20
 
 ARENAS = {r["key"]: r for r in csv.DictReader(open(HERE / "arenas.csv", encoding="utf-8"))}
@@ -36,7 +37,7 @@ Return only a JSON object with these fields:
 - "language": ISO code of the dominant language of the posts.
 - "new_arena": null, or, when no listed theme fits the subject well, an object {"name": short English name, "definition": one sentence saying what it would cover, "closest": the key of the listed theme that comes nearest}.
 
-Rules: describe, do not evaluate. Write as a neutral archivist would: no characterisations of channels, actors or claims (no labels such as propaganda, disinformation, far-right, pro-Russian, regime), no judgement of truth, no loaded verbs for speech. Name actors as the posts name them; keep any loaded term inside a quotation. If the group is mostly channel self-promotion, use the theme "housekeeping"; if it is mostly audience reactions with no shared subject, use "reactions".
+Rules: describe, do not evaluate. Write as a neutral archivist would: no characterisations of channels, actors or claims (no labels such as propaganda, disinformation, far-right, pro-Russian, regime), no judgement of truth, no loaded verbs for speech (touts, slams, admits, boasts). Attribute each claim to the source named in the posts (a ministry, agency, spokesperson, outlet); never describe the channels themselves (not "pro-X channels", not "X-language channels"). If some posts deny or contradict the main claim, say so in a clause. If figures differ between posts, give the range. If the posts share a theme but not one event, title it as a roundup: "Posts on X, Y and Z". Titles in sentence case. If the group is mostly channel self-promotion, use the theme "housekeeping"; if it is mostly audience reactions with no shared subject, use "reactions".
 
 Regions:
 """ + "\n".join(f"- {k}: {ARENAS[k]['en']} — {ARENAS[k]['definition']}" for k in REGIONS) + """
@@ -84,9 +85,15 @@ def cluster(vec, week: str, kind: str, min_size: int):
     if old:  # replace this week's stories; done after clustering so the write lock is held only briefly
         vec.executemany("DELETE FROM story_members WHERE story_id=?", [(i,) for i in old])
         vec.execute("DELETE FROM stories WHERE week=? AND kind=?", (week, kind))
+    trimmed = 0
     for c in sorted(set(labels) - {-1}):
         idx = np.where(labels == c)[0]
         cen = X[idx].mean(0); cen /= np.linalg.norm(cen)
+        sims = X[idx] @ cen
+        keep = sims >= max(TRIM_FLOOR, float(sims.mean() - TRIM_STD * sims.std()))   # drop peripheral members
+        if keep.sum() >= min_size and keep.sum() < len(idx):
+            trimmed += int((~keep).sum()); idx = idx[keep]
+            cen = X[idx].mean(0); cen /= np.linalg.norm(cen)
         order = idx[np.argsort(-(X[idx] @ cen))]
         reps = []; seen = set()
         for i in order:
@@ -106,8 +113,8 @@ def cluster(vec, week: str, kind: str, min_size: int):
         vec.executemany("INSERT OR IGNORE INTO story_members VALUES (?,?,?)", [(cur.lastrowid, cid, mid) for cid, mid in members])
         made += 1
     vec.commit()
-    log.info("%s %s: %d stories, %d/%d texts unassigned (%.0f%%), %d linked to previous week", week, kind, made, n_noise, len(hashes),
-             100 * n_noise / len(hashes), vec.execute("SELECT count(*) FROM stories WHERE week=? AND kind=? AND prev_story IS NOT NULL", (week, kind)).fetchone()[0])
+    log.info("%s %s: %d stories, %d/%d texts unassigned (%.0f%%), %d peripheral members trimmed, %d linked to previous week", week, kind, made, n_noise, len(hashes),
+             100 * n_noise / len(hashes), trimmed, vec.execute("SELECT count(*) FROM stories WHERE week=? AND kind=? AND prev_story IS NOT NULL", (week, kind)).fetchone()[0])
 
 
 def relink(vec, week, kind):

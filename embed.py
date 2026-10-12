@@ -39,6 +39,7 @@ PLATFORMS = re.compile(r"\b(youtube|instagram|facebook|whatsapp|telegram|twitter
 FOOTER_START = re.compile(r"^\W*(síguenos|siguenos|suscríbete|suscribete|únete|unete|canal:|chat:|web \||más noticias|mas noticias|follow us|subscribe)", re.I)
 URL = re.compile(r"https?://\S+|www\.\S+|t\.me/\S+")
 HANDLE_ONLY = re.compile(r"^[\W_]*(@\w+[\W_]*)+$")
+PROMO = re.compile(r"livestream alert|cat[aá]logo de canales|lista de canales|apoya (al|el) canal|support the channel|boosty\.to|patreon\.com|ko-fi\.com|c[oó]digo promocional|promo code|^[\W_]*(suscr[ií]bete|subscribe|únete|unete)\b", re.I)
 
 
 def normalise(text: str) -> str:
@@ -98,7 +99,7 @@ def ingest(vec: sqlite3.Connection, since: str | None, until: str | None, limit:
             h = None
         else:
             h = text_hash(t); rows_t.append((h, t))
-        kind = "comment" if (tiers.get(cid) or "").startswith("I_") else "post"
+        kind = "comment" if (tiers.get(cid) or "").startswith("I_") else ("promo" if (h and PROMO.search(t) and len(t) < 700) else "post")
         rows_m.append((cid, mid, h, date, kind)); n += 1
         if len(rows_m) >= 5000:
             flush(vec, rows_t, rows_m); rows_t, rows_m = [], []
