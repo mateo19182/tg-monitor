@@ -66,7 +66,7 @@ Stories:
 .venv/bin/python stories.py --week 2026-W41 --kind comment   # same for discussion-group comments
 ```
 `stories.sh` runs this for the previous week every Monday at 05:00 (cron). Discussion-group comments are excluded from embedding and stories for now (`embed.py --comments` to include them).
-A story is a group of similar posts within one ISO week; members far from the group's centre are left unassigned, and posts that are channel promotion (livestream alerts, subscribe calls) are kept out of clustering (`kind=promo` in `msg_text`). `=id` marks the same story continued from the previous week (centroid cosine ≥ 0.90), `~id` a related story (0.85–0.90). About a quarter of posts stay unassigned.
+A story is a group of similar posts within one ISO week; members far from the group's centre are left unassigned. Channel promotion (subscribe calls, livestream alerts, catalogues) is labelled with the `housekeeping` bucket and excluded from story counts. `=id` marks the same story continued from the previous week (centroid cosine ≥ 0.90), `~id` a related story (0.85–0.90). About a quarter of posts stay unassigned.
 
 ## Operations
 
