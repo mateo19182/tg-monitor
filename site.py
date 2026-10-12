@@ -30,6 +30,7 @@ TIERS = {
     "J_spain_parties": {"en": "Parliamentary Spanish parties and their leaders", "es": "Partidos españoles con representación parlamentaria y sus líderes"},
     "K_spain_left": {"en": "Spanish left-wing, anti-NATO and solidarity organisations and media", "es": "Organizaciones y medios españoles de izquierda, contrarios a la OTAN y de solidaridad"},
     "L_spain_media": {"en": "Spanish media outlets and commentators", "es": "Medios de comunicación y comentaristas españoles"},
+    "M_public_channels": {"en": "Public channels of individual authors, associations and community publishers", "es": "Canales públicos de autores, asociaciones y comunidades"},
 }
 
 

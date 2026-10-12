@@ -23,6 +23,7 @@ Each channel carries a `tier` label so the dataset can be sliced:
 | J_spain_parties | Parliamentary Spanish parties and leaders (control) |
 | K_spain_left | Spanish left-wing, anti-NATO and solidarity organisations and media |
 | L_spain_media | Spanish media outlets and commentators |
+| M_public_channels | Public channels of individual authors, associations and community publishers |
 
 ## Layout
 
@@ -80,10 +81,10 @@ those ids to names.
 
 ## Known gaps
 
-- Telegram history reads are throttled (~1k msgs/min); a 60k-message channel takes about an hour.
+- The 12 October 2026 paired benchmark measured about 6,300 messages/minute with normal pacing and 16,500 with Takeout. These were short history reads, not sustained collection with database writes. See `./sync.sh --benchmark-takeout`; raw results stay in ignored `data/takeout-benchmark.json`.
 - Channels with hidden history or that are private are recorded in `sync_state.last_error`.
 - Media files are not downloaded, only typed (`photo/video/document/webpage`).
-- Unresolved from the research lists: "Zluka de Novorusia. ZOV", "DMP Geopolítica".
+- `maldita-coverage.csv` records matches and unresolved identities for the 39-channel December 2022 and 25-channel July 2025 samples. Six entries are unavailable, unresolved or awaiting access approval; one existing channel is a probable renamed match. `ZOVNR` is already included. "DMP Geopolítica" remains unresolved in other consulted research.
 
 ## Hosting
 
