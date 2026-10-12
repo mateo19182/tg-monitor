@@ -18,7 +18,9 @@ Files that matter: `channels.csv` (watchlist with tiers), `wiki.csv` (one cited 
 
 **Prefer what the data shows.** Counts, timing, forward provenance, media ids and domains from `tg.db` are facts we can stand behind. Interpretation belongs to the reader.
 
-**No narrative in the frontend.** The site shows channels, facts, sources and numbers. No editorial text. The one exception is the `#/method` page (decided 2026-10-12): factual description of scope, collection, stories, links and limits, in EN and ES, to be reused as the dataset card. Keep it factual and update it when the pipeline changes (thresholds, models, what is stored).
+**No narrative in the frontend.** The site shows channels, numbers and stories. The `#/method` page (decided 2026-10-12) is a terse technical spec (collection, stories, links, limits) in EN and ES, mirrored in `dataset_card.md`; update both when thresholds, models or stored fields change.
+
+**Only papers on the site (decided 2026-10-12).** Channel pages and the dataset's `facts` table show only facts whose source has `kind=paper` in `sources.csv` (academic and research-institute reports). Fact-checker, media, official and other sources stay in the repo as an internal record of why channels were selected, and are not shown. Tier descriptions say what a channel is, without citing anyone.
 
 **Watchlist hygiene.** Verify a handle exists before adding it (curl `https://t.me/<handle>`, check title and subscriber count). Pick the tier by what the channel is, not by what we think of it. Add a `source` saying where the handle came from. Keep `since` on huge channels.
 

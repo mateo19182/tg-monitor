@@ -132,10 +132,10 @@ def build() -> dict:
     arenas = read_csv(HERE / "arenas.csv")
     pq.write_table(pa.Table.from_pylist(arenas), OUT / "arenas.parquet", compression="zstd")
     # published research about channels, each with its source
-    src = {r["key"]: r for r in read_csv(HERE / "sources.csv")}
+    src = {r["key"]: r for r in read_csv(HERE / "sources.csv") if r.get("kind") == "paper"}  # academic / research-institute papers only
     facts = [{"handle": r["handle"], "fact": r["fact"], "source_key": r["source"], "source_publisher": src.get(r["source"], {}).get("publisher"),
               "source_title": src.get(r["source"], {}).get("title"), "source_date": src.get(r["source"], {}).get("date"),
-              "source_url": src.get(r["source"], {}).get("url")} for r in read_csv(HERE / "wiki.csv")]
+              "source_url": src.get(r["source"], {}).get("url")} for r in read_csv(HERE / "wiki.csv") if r["source"] in src]
     pq.write_table(pa.Table.from_pylist(facts), OUT / "facts.parquet", compression="zstd")
     stats["facts"] = len(facts)
 

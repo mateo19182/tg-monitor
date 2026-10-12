@@ -19,13 +19,13 @@ TOP = 12
 
 TIERS = {
     "A_russian_project_es": {"en": "Spanish-language editions of multilingual Russian channels", "es": "Ediciones en español de canales rusos multilingües"},
-    "B_es_aggregator": {"en": "Spanish-language channels listed as frequent sources of the Pravda network's Spanish pages", "es": "Canales en español citados como fuentes frecuentes de las páginas en español de la red Pravda"},
-    "C_spain_node": {"en": "Channels whose operators are located in Spain, per published research", "es": "Canales cuyos administradores se sitúan en España, según investigaciones publicadas"},
+    "B_es_aggregator": {"en": "Spanish-language news aggregator channels", "es": "Canales agregadores de noticias en español"},
+    "C_spain_node": {"en": "Channels operated from Spain", "es": "Canales gestionados desde España"},
     "D_spain_farright_election": {"en": "Spanish right-wing and nationalist parties, organisations and activists", "es": "Partidos, organizaciones y activistas españoles de derecha y nacionalistas"},
     "E_russian_parent": {"en": "Russian- or English-language channels of which tier A channels are editions (partial archive)", "es": "Canales en ruso o inglés de los que los canales del nivel A son ediciones (archivo parcial)"},
     "F_russian_official": {"en": "Russian state institutions and state media", "es": "Instituciones y medios estatales rusos"},
     "G_allied_state_media_es": {"en": "Spanish-language state media of other countries (partial archive)", "es": "Medios estatales en español de otros países (archivo parcial)"},
-    "H_discovered_es_aggregator": {"en": "Channels not named in the consulted research; included because tracked channels forward them", "es": "Canales no citados en las investigaciones consultadas; incluidos porque los canales seguidos los reenvían"},
+    "H_discovered_es_aggregator": {"en": "Channels found through forwards from listed channels", "es": "Canales encontrados a través de reenvíos de canales de la lista"},
     "I_discussion_group": {"en": "Discussion groups linked to tracked channels (from 2025)", "es": "Grupos de debate vinculados a canales seguidos (desde 2025)"},
     "J_spain_parties": {"en": "Parliamentary Spanish parties and their leaders", "es": "Partidos españoles con representación parlamentaria y sus líderes"},
     "K_spain_left": {"en": "Spanish left-wing, anti-NATO and solidarity organisations and media", "es": "Organizaciones y medios españoles de izquierda, contrarios a la OTAN y de solidaridad"},
@@ -35,7 +35,7 @@ TIERS = {
     "O_factchecker": {"en": "Fact-checking organisations", "es": "Organizaciones de verificación"},
     "P_regional_politics": {"en": "Regional and nationalist parties, organisations and media (Catalonia, Basque Country, Galicia, others)", "es": "Partidos, organizaciones y medios regionales y nacionalistas (Cataluña, País Vasco, Galicia, otros)"},
     "Q_mobilisation": {"en": "Unions, housing, civic, professional and diaspora organisations", "es": "Sindicatos y organizaciones de vivienda, cívicas, profesionales y de diáspora"},
-    "R_conspiracy_pivot": {"en": "Channels documented by Maldita.es (2022) as moving from COVID-19 content to the war in Ukraine", "es": "Canales documentados por Maldita.es (2022) como pasando de contenido sobre COVID-19 a la guerra en Ucrania"},
+    "R_conspiracy_pivot": {"en": "Channels that moved from COVID-19 content to the war in Ukraine", "es": "Canales que pasaron de contenido sobre la COVID-19 a la guerra de Ucrania"},
     "S_influencer": {"en": "Individual commentators and streamers", "es": "Comentaristas y streamers individuales"},
     "T_counterpart": {"en": "Ukrainian, EU, Israeli, Moroccan and Algerian official or aligned channels and media", "es": "Canales y medios oficiales o afines de Ucrania, la UE, Israel, Marruecos y Argelia"},
     "U_campaign_2026": {"en": "Candidates, party branches and youth wings around the 29 November 2026 election", "es": "Candidatos, agrupaciones territoriales y juventudes en torno a las elecciones del 29 de noviembre de 2026"},
@@ -76,10 +76,11 @@ def build() -> dict:
     db = sqlite3.connect(DB)
     db.row_factory = sqlite3.Row
     watch = read_csv(HERE / "channels.csv")
+    sources = {r["key"]: r for r in read_csv(HERE / "sources.csv") if r.get("kind") == "paper"}  # only academic / research-institute papers are shown
     wiki = defaultdict(list)
     for r in read_csv(HERE / "wiki.csv"):
-        wiki[r["handle"].lower()].append({"fact": r["fact"], "source": r["source"]})
-    sources = {r["key"]: r for r in read_csv(HERE / "sources.csv")}
+        if r["source"] in sources:
+            wiki[r["handle"].lower()].append({"fact": r["fact"], "source": r["source"]})
     arenas = {r["key"]: {"axis": r["axis"], "en": r["en"], "es": r["es"]} for r in read_csv(HERE / "arenas.csv")} if (HERE / "arenas.csv").exists() else {}
 
     chans = {r["id"]: dict(r) for r in db.execute("SELECT * FROM channels")}
@@ -496,21 +497,43 @@ async function linksView(q){const v=document.getElementById('view');
  h+=`<footer class="home-footer">${t('built')} ${esc(LJ.built)}</footer>`;v.innerHTML=h}
 const METHOD={
  en:c=>`<h2>Method</h2>
-<h3>Scope</h3><p>The archive follows ${c.n} Telegram channels and discussion groups relevant to Spanish politics, in ${c.g} groups (see <a href="#/channels">channels</a>). Each channel is placed in a tier by what it is: who runs it, what it is an edition of, where it is based. Channels come from published research (cited on the channel page), from forwards seen in the archive, and from searches for parties, institutions, media and organisations. The list is maintained by hand. ${c.a} of the ${c.n} are archived so far; the rest are queued.</p>
-<h3>Collection</h3><p>Posts are read every hour through the Telegram API. For each post the archive keeps the text, date, views, forwards, replies, the channel it was forwarded from, its links, and the type and Telegram identifier of any attached media. Media files are not stored. Views and forwards are re-read for seven days after a post appears and then stay as they were. An edit replaces the earlier text. Posts deleted from Telegram after they were archived are kept. For some very large channels, only posts from a set date onward are archived; the channel page shows that date. Times are in UTC.</p>
-<h3>Stories</h3><p>Every week, posts of at least 40 characters are compared by meaning with a multilingual text model (bge-m3), after links, handles and subscription footers are removed. Discussion groups are left out. Posts that are close to each other form a story when there are at least 12 of them (UMAP and HDBSCAN); posts far from the centre of their story are dropped. About a quarter of posts fit no story. A story is linked to one from the previous week when the two are very similar (cosine similarity of 0.90 or more).</p>
-<p>Titles, summaries in English and Spanish, one region and one or two themes are written by a language model (Claude Haiku 5.5) from up to eight representative posts of each story. The model is instructed to describe what the posts say, to attribute claims to the channels, and not to use evaluative words. Regions and themes come from fixed lists. Labels are not checked one by one and can be wrong; every story page lists its posts with links to the originals.</p>
-<h3>Links</h3><p>Links in posts are extracted and normalised (tracking parameters removed). Shortened links are followed to their destination, and page titles are fetched for some pages. Counts include forwarded posts.</p>
-<h3>Published research</h3><p>Channel pages list statements from published research, each with its source and date. They are the findings of those sources, not of this archive. Fact-checkers, governments, researchers and media are cited in the same way, and contrary findings are listed where they exist.</p>
-<h3>Limits</h3><ul><li>Only channels on the list are archived; spread elsewhere on Telegram is not measured.</li><li>Archive start dates differ between channels.</li><li>View counts are reported by Telegram and cannot be verified.</li><li>Reactions and Telegram stories are not collected. Comments are collected only for the discussion groups on the list.</li><li>Which channels are on the list is a selection; the tier descriptions state the criteria.</li></ul>`,
+<h3>Collection</h3><ul>
+<li>Telegram API (MTProto), one user account, every hour.</li>
+<li>${c.n} channels and discussion groups on a hand-maintained list, ${c.a} archived so far; ${c.g} groups, tiers by type of channel.</li>
+<li>Per post: text, date, edit date, views, forwards, replies, forward origin, reply id, album id, links, media type, Telegram media id, size, MIME type, duration, dimensions. No media files.</li>
+<li>Views, forwards and text re-read for 7 days after posting. Deleted posts are kept. Some large channels are archived from a start date. Times in UTC.</li></ul>
+<h3>Stories</h3><ul>
+<li>Input: posts ≥ 40 characters, discussion groups excluded. URLs, handle-only lines and subscription footers removed; identical texts merged.</li>
+<li>Embeddings: BAAI/bge-m3 (multilingual, 1024 dimensions).</li>
+<li>Per ISO week: UMAP (10 dimensions, cosine, 15 neighbours) → HDBSCAN (min. cluster 12, min. samples 5). Members with cosine to the centroid below max(0.60, mean − 1.5 sd) dropped. ~25% of posts unassigned.</li>
+<li>Week to week: centroid cosine ≥ 0.90 = same story; 0.85–0.90 = related.</li>
+<li>Labels: Claude Haiku 5.5 on the 8 posts nearest the centroid (≤ 400 characters each) → title and summary (EN, ES), 1 region of 10, 1–2 themes of 15. Not reviewed one by one.</li></ul>
+<h3>Links</h3><ul>
+<li>URLs from post text and link previews; canonical form: https, no www/m/amp, no tracking parameters, fragments or trailing slash.</li>
+<li>Types: web page, social network, Telegram, shortener. Shorteners followed to the destination; page titles fetched for a subset (1 request/s per domain). Counts include forwards.</li></ul>
+<h3>Limits</h3><ul>
+<li>Only listed channels; start dates differ between channels.</li>
+<li>View counts as reported by Telegram.</li>
+<li>No reactions or Telegram stories; comments only from listed discussion groups.</li></ul>`,
  es:c=>`<h2>Método</h2>
-<h3>Alcance</h3><p>El archivo sigue ${c.n} canales y grupos de debate de Telegram relevantes para la política española, en ${c.g} grupos (ver <a href="#/channels">canales</a>). Cada canal se asigna a un nivel según lo que es: quién lo gestiona, de qué es edición, dónde tiene su base. Los canales proceden de investigaciones publicadas (citadas en la página de cada canal), de reenvíos observados en el archivo y de búsquedas de partidos, instituciones, medios y organizaciones. La lista se mantiene a mano. Hasta ahora están archivados ${c.a} de los ${c.n}; el resto está en cola.</p>
-<h3>Recogida</h3><p>Las publicaciones se leen cada hora a través de la API de Telegram. De cada publicación se guarda el texto, la fecha, las visualizaciones, los reenvíos, las respuestas, el canal del que se reenvió, sus enlaces y el tipo e identificador de Telegram de cualquier archivo adjunto. Los archivos multimedia no se guardan. Las visualizaciones y los reenvíos se vuelven a leer durante siete días tras la publicación y después se quedan como estaban. Una edición sustituye al texto anterior. Las publicaciones borradas de Telegram después de archivarse se conservan. En algunos canales muy grandes solo se archivan publicaciones a partir de una fecha, que se indica en la página del canal. Las horas están en UTC.</p>
-<h3>Historias</h3><p>Cada semana, las publicaciones de al menos 40 caracteres se comparan por su significado con un modelo de texto multilingüe (bge-m3), tras quitar enlaces, nombres de usuario y pies de suscripción. Los grupos de debate quedan fuera. Las publicaciones cercanas entre sí forman una historia cuando son al menos 12 (UMAP y HDBSCAN); las alejadas del centro de su historia se descartan. Alrededor de una cuarta parte de las publicaciones no encaja en ninguna historia. Una historia se enlaza con otra de la semana anterior cuando ambas son muy parecidas (similitud coseno de 0,90 o más).</p>
-<p>Los títulos, los resúmenes en inglés y español, una región y uno o dos temas los redacta un modelo de lenguaje (Claude Haiku 5.5) a partir de hasta ocho publicaciones representativas de cada historia. Se le indica que describa lo que dicen las publicaciones, que atribuya las afirmaciones a los canales y que no use palabras valorativas. Las regiones y los temas salen de listas fijas. Las etiquetas no se revisan una a una y pueden contener errores; cada página de historia enumera sus publicaciones con enlaces a los originales.</p>
-<h3>Enlaces</h3><p>Los enlaces de las publicaciones se extraen y se normalizan (se quitan los parámetros de seguimiento). Los enlaces acortados se siguen hasta su destino y se obtienen los títulos de algunas páginas. Los recuentos incluyen publicaciones reenviadas.</p>
-<h3>Investigaciones publicadas</h3><p>Las páginas de canal recogen afirmaciones de investigaciones publicadas, cada una con su fuente y fecha. Son conclusiones de esas fuentes, no de este archivo. Verificadores, gobiernos, investigadores y medios se citan de la misma manera, y se recogen las conclusiones contrarias cuando existen.</p>
-<h3>Límites</h3><ul><li>Solo se archivan los canales de la lista; la difusión en el resto de Telegram no se mide.</li><li>Las fechas de inicio del archivo varían entre canales.</li><li>Las visualizaciones las informa Telegram y no se pueden verificar.</li><li>No se recogen reacciones ni historias de Telegram. Los comentarios solo se recogen en los grupos de debate de la lista.</li><li>Qué canales están en la lista es una selección; las descripciones de los niveles indican los criterios.</li></ul>`};
+<h3>Recogida</h3><ul>
+<li>API de Telegram (MTProto), una cuenta de usuario, cada hora.</li>
+<li>${c.n} canales y grupos de debate en una lista mantenida a mano, ${c.a} archivados hasta ahora; ${c.g} grupos, niveles según el tipo de canal.</li>
+<li>Por publicación: texto, fecha, fecha de edición, visualizaciones, reenvíos, respuestas, origen del reenvío, id de respuesta, id de álbum, enlaces, tipo de archivo, id de archivo de Telegram, tamaño, tipo MIME, duración, dimensiones. Sin archivos multimedia.</li>
+<li>Visualizaciones, reenvíos y texto se releen durante 7 días tras la publicación. Las publicaciones borradas se conservan. Algunos canales grandes se archivan desde una fecha. Horas en UTC.</li></ul>
+<h3>Historias</h3><ul>
+<li>Entrada: publicaciones de ≥ 40 caracteres, sin grupos de debate. Se quitan URL, líneas solo con usuarios y pies de suscripción; los textos idénticos se agrupan.</li>
+<li>Vectores: BAAI/bge-m3 (multilingüe, 1024 dimensiones).</li>
+<li>Por semana ISO: UMAP (10 dimensiones, coseno, 15 vecinos) → HDBSCAN (grupo mín. 12, muestras mín. 5). Se descartan miembros con coseno al centroide inferior a max(0,60, media − 1,5 de). ~25 % de publicaciones sin asignar.</li>
+<li>Entre semanas: coseno de centroides ≥ 0,90 = misma historia; 0,85–0,90 = relacionada.</li>
+<li>Etiquetas: Claude Haiku 5.5 sobre las 8 publicaciones más cercanas al centroide (≤ 400 caracteres cada una) → título y resumen (EN, ES), 1 región de 10, 1–2 temas de 15. Sin revisión una a una.</li></ul>
+<h3>Enlaces</h3><ul>
+<li>URL del texto y de las vistas previas; forma canónica: https, sin www/m/amp, sin parámetros de seguimiento, fragmentos ni barra final.</li>
+<li>Tipos: página web, red social, Telegram, acortador. Los acortadores se siguen hasta el destino; títulos de página para una parte (1 petición/s por dominio). Los recuentos incluyen reenvíos.</li></ul>
+<h3>Límites</h3><ul>
+<li>Solo canales de la lista; las fechas de inicio varían entre canales.</li>
+<li>Visualizaciones según Telegram.</li>
+<li>Sin reacciones ni historias de Telegram; comentarios solo de los grupos de debate de la lista.</li></ul>`};
 function methodView(){document.getElementById('view').innerHTML=`<div class="prose">${METHOD[L]({n:fmt(D.channels.length),a:fmt(D.channels.filter(c=>c.n).length),g:Object.keys(D.groups).length})}</div>`}
 function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/),sm=p.match(/^s\/(\d+)$/);const isHome=!p;
  document.body.classList.toggle('home',isHome);document.documentElement.lang=L;

@@ -47,7 +47,7 @@ extra_gated_fields:
 
 # Spanish Politics on Telegram
 
-An archive of Telegram channels and discussion groups relevant to Spanish politics, collected ahead of the general election of 29 November 2026. Release of {built}: {messages} messages from {channels} channels and groups ({groups_n} of them discussion groups), {range}, plus {stories} weekly stories ({weeks}) and {facts} attributed statements from published research about the channels.
+An archive of Telegram channels and discussion groups relevant to Spanish politics, collected ahead of the general election of 29 November 2026. Release of {built}: {messages} messages from {channels} channels and groups ({groups_n} of them discussion groups), {range}, plus {stories} weekly stories ({weeks}) and {facts} statements about the channels from academic and research-institute reports.
 
 The same archive is browsable at https://canales.m19182.dev.
 
@@ -60,7 +60,7 @@ The same archive is browsable at https://canales.m19182.dev.
 | `stories` | Weekly groups of similar posts with machine-written title and summary (English and Spanish), one region and one or two themes, and the link to the previous week's story. |
 | `story_members` | The messages in each story (`story_id`, `channel_id`, `msg_id`). |
 | `arenas` | The fixed lists of regions and themes used for stories. |
-| `facts` | Statements from published research about listed channels, each with its source (publisher, title, date, URL). |
+| `facts` | Statements about listed channels from academic and research-institute reports, each with its source (publisher, title, date, URL). |
 | `forward_sources` | Channels that archived posts were forwarded from but that are not archived themselves. |
 
 Join messages to channels on `channel_id`, and stories to messages through `story_members` on (`channel_id`, `msg_id`). A message's original is at `https://t.me/<username>/<msg_id>` for channels with a username.
@@ -71,25 +71,25 @@ Join messages to channels on `channel_id`, and stories to messages through `stor
 
 ## Method
 
-**Scope.** {watchlist} Telegram channels and discussion groups relevant to Spanish politics are on the list; {channels} had been archived at the time of this release, the rest are queued. Each is placed in a tier by what it is (who runs it, what it is an edition of, where it is based), and tiers are grouped into seven groups (`channels.tier`, `channels.group`). Channels come from published research (cited in `facts`), from forwards seen in the archive, and from searches for parties, institutions, media and organisations. The list is maintained by hand.
+**Collection**
+- Telegram API (MTProto), one user account, every hour. {watchlist} channels and groups on a hand-maintained list; {channels} archived at release time. Tiers by type of channel (`channels.tier`), seven groups (`channels.group`).
+- Views, forwards and text re-read for 7 days after posting. Deleted posts are kept. Some large channels are archived from a start date (`channels.archived_from`). No media files. Times in UTC.
+- Discussion groups: sender account ids replaced by HMAC-SHA256 (keyed, truncated), stable across releases. Sender names and usernames not included; message text unchanged and can contain personal details.
 
-**Collection.** Posts are read every hour through the Telegram API. Views and forwards are re-read for seven days after a post appears and then stay as they were. An edit replaces the earlier text. Posts deleted from Telegram after they were archived are kept. For some very large channels only posts from a set date are archived (`channels.archived_from`). Media files are not stored.
+**Stories**
+- Input: posts ≥ 40 characters, discussion groups excluded; URLs, handle-only lines and subscription footers removed; identical texts merged.
+- Embeddings: BAAI/bge-m3. Per ISO week: UMAP (10 dimensions, cosine, 15 neighbours) → HDBSCAN (min. cluster 12, min. samples 5); members with cosine to the centroid below max(0.60, mean − 1.5 sd) dropped. ~25% of posts unassigned.
+- Week to week: centroid cosine ≥ 0.90 → `prev_story`; 0.85–0.90 → `related_story`.
+- Labels (`label_model`) from the 8 posts nearest the centroid: title and summary (EN, ES), 1 region, 1–2 themes from `arenas`. Not reviewed one by one.
 
-**Stories.** Every week, posts of at least 40 characters are compared by meaning with a multilingual text model (BAAI/bge-m3), after links, handles and subscription footers are removed. Discussion groups are left out. Posts close to each other form a story when there are at least 12 of them (UMAP to 10 dimensions, then HDBSCAN); posts far from the centre of their story are dropped. About a quarter of posts fit no story. A story is linked to one from the previous week when the cosine similarity of their centres is 0.90 or more (`prev_story`), and marked as related between 0.85 and 0.90 (`related_story`).
-
-Titles, summaries, region and themes are written by a language model (`label_model`) from up to eight representative posts of each story. The model is instructed to describe what the posts say, to attribute claims to the channels, and not to use evaluative words. Regions and themes come from the fixed lists in `arenas`. Labels are not checked one by one and can be wrong.
-
-**Published research.** `facts` holds statements from published research, journalism and official sources about listed channels, each with its source. They are the findings of those sources, not of this dataset. Fact-checkers, governments, researchers and media are cited in the same way, and contrary findings are included where they exist.
-
-**Pseudonymisation.** In discussion groups, the Telegram account id of each sender is replaced by a keyed hash (HMAC-SHA256, truncated). Display names and usernames of senders are not included. Message text is unchanged and can contain names or other personal details.
+**Facts**
+- `facts`: statements about listed channels from academic and research-institute reports, each with its source.
 
 ## Limits
 
-- Only channels on the list are archived; spread elsewhere on Telegram is not measured.
-- Archive start dates differ between channels.
-- View counts are reported by Telegram and cannot be verified.
-- Reactions and Telegram stories are not collected. Comments are collected only for the discussion groups on the list.
-- Which channels are on the list is a selection; tier descriptions in `channels.tier_description` state the criteria.
+- Only listed channels; start dates differ between channels.
+- View counts as reported by Telegram.
+- No reactions or Telegram stories; comments only from listed discussion groups.
 - Some channels belong to media outlets subject to EU restrictive measures (Council Regulation (EU) No 833/2014). Users are responsible for complying with the rules that apply to them.
 
 ## Licence
