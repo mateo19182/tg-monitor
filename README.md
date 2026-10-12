@@ -45,7 +45,7 @@ Each channel carries a `tier` label so the dataset can be sliced:
 - `benchmark.py`  compares normal and Takeout history reads and records timing, message-id hashes and any initialization delay or retry deadline in `data/takeout-benchmark.json`.
 - `sync.sh`       the only entrypoint (cron + manual). flock-guarded, logs to `sync.log`.
 - `report.py`     `daily`, `sources`, `spikes`, `grep "phrase"`.
-- `export.py`     `data/<handle>.jsonl.gz` + `channels.csv` + `fwd_sources.csv` + `manifest.json`.
+- `export.py`     `data/<handle>.jsonl.gz` + `channels.csv` + `fwd_sources.csv` + `manifest.json`, plus `stories.jsonl.gz` and `arenas.csv` when the story layer exists.
 - `login.py`      two-step login (`send <phone>`, `code <code>`, `password`, `check`).
 - `wiki.csv`, `sources.csv`  cited facts per channel for the site; neutral wording, every fact carries a source key.
 - `site.py`       builds `site/index.html` from the database: an archive homepage, channel browser at `#/channels`, channel pages at `#/c/<handle>`, and message search at `#/search`.
@@ -66,7 +66,7 @@ Stories:
 .venv/bin/python stories.py --week 2026-W41 --kind comment   # same for discussion-group comments
 ```
 `stories.sh` runs this for the previous week every Monday at 05:00 (cron). Discussion-group comments are excluded from embedding and stories for now (`embed.py --comments` to include them).
-A story is a group of similar posts within one ISO week. `=id` marks the same story continued from the previous week (centroid cosine ≥ 0.90), `~id` a related story (0.85–0.90). About a quarter of posts stay unassigned.
+A story is a group of similar posts within one ISO week; members far from the group's centre are left unassigned, and posts that are channel promotion (livestream alerts, subscribe calls) are kept out of clustering (`kind=promo` in `msg_text`). `=id` marks the same story continued from the previous week (centroid cosine ≥ 0.90), `~id` a related story (0.85–0.90). About a quarter of posts stay unassigned.
 
 ## Operations
 
