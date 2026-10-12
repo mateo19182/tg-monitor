@@ -68,6 +68,7 @@ def build() -> dict:
     for r in read_csv(HERE / "wiki.csv"):
         wiki[r["handle"].lower()].append({"fact": r["fact"], "source": r["source"]})
     sources = {r["key"]: r for r in read_csv(HERE / "sources.csv")}
+    arenas = {r["key"]: {"axis": r["axis"], "en": r["en"], "es": r["es"]} for r in read_csv(HERE / "arenas.csv")} if (HERE / "arenas.csv").exists() else {}
 
     chans = {r["id"]: dict(r) for r in db.execute("SELECT * FROM channels")}
     by_handle = {(c["username"] or str(c["id"])).lower(): c for c in chans.values()}
@@ -137,7 +138,7 @@ def build() -> dict:
         "built": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "days": DAYS, "start": start, "total": total[0], "range": [(total[1] or "")[:10], (total[2] or "")[:10]],
         "daily": [sum(counts[i] for counts in daily.values()) for i in range(DAYS)],
-        "tiers": TIERS, "sources": sources, "channels": out,
+        "tiers": TIERS, "sources": sources, "channels": out, "arenas": arenas,
     }
 
 
@@ -210,6 +211,11 @@ body.home main{display:block}body.home #nav,body.home #menu,body.home #hdr{displ
 .message-result{padding:16px 0;border-bottom:1px solid var(--line)}.message-meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px}
 .message-text{white-space:pre-wrap;margin:10px 0;overflow-wrap:anywhere}.message-result .original{font-size:12px}
 mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;margin-top:20px;align-items:center;font-size:13px}
+.story-row{padding:10px 0;border-bottom:1px solid var(--line)}.story-row .meta{font-size:12px;display:flex;flex-wrap:wrap;gap:4px 12px}
+.story-row .meta .tag{color:var(--mute)}.story-row .sum{margin-top:4px}
+.filters{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 16px;font-size:13px}.filters a.on{text-decoration:underline}
+.chain{list-style:none;padding:0;margin:0}.chain li{margin:3px 0}
+.post{padding:10px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:12px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
 @media(max-width:760px){main{grid-template-columns:1fr;gap:12px}nav{display:none;position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:10px}
  body.nav-open nav{display:block}#menu{display:inline}#hdr{display:none}.m-hide{display:none}.wrap{padding:12px}
  .kv{grid-template-columns:1fr;gap:0 0}.kv div:nth-child(odd){margin-top:6px}.big{font-size:18px}
@@ -238,6 +244,7 @@ const T={
   name:'Telegram archive',home:'home',browse:'browse channels',directory:'index',indexed:'channels in index',cited:'cited facts',activity:'messages per day',period:'archive dates',light:'light',dark:'dark',
   messageSearch:'search messages',query:'text',searchGo:'search',queryHint:'Words or "quoted phrases"',allChannels:'all channels',dateFrom:'from (UTC)',dateTo:'to (UTC)',order:'order',relevance:'relevance',newest:'newest',oldest:'oldest',
   loading:'searching…',results:'results',noresults:'no matching messages.',original:'original post',previous:'previous',next:'next',page:'page',
+  stories:'stories',week:'week',region:'region',theme:'theme',all:'all',story:'story',earlier:'earlier weeks',later:'later weeks',related:'related story',nostories:'no stories for this selection.',postsIn:'posts in this story',chans:'channels',showing:'showing',
   invalid_query:'Enter words or balanced "quoted phrases". Maximum 20 terms.',query_too_long:'Search text is limited to 300 characters.',invalid_date:'Enter a valid date.',date_range:'The start date must be on or before the end date.',invalid_sort:'Choose a valid order.',invalid_page:'Choose a valid page.',invalid_channel:'Choose a channel in the index.',invalid_request:'Check the search fields.',search_unavailable:'Search is unavailable. Try again.',search_timeout:'This search took too long. Try more words or a narrower date range.'},
  es:{channels:'canales',messages:'mensajes',archive:'archivo',tiers:'niveles',sources:'fuentes',handle:'usuario',title:'título',tier:'nivel',subs:'suscriptores',posts:'publicaciones',last:'última publicación',days:'últimos %d días',search:'buscar /',
   about:'descripción (tal como la publica el canal)',facts:'investigaciones publicadas',stats:'archivo',created:'canal creado',first:'primera publicación archivada',views:'visualizaciones totales',fwd:'publicaciones que son reenvíos',senders:'remitentes distintos',
@@ -246,6 +253,7 @@ const T={
   name:'Archivo de Telegram',home:'inicio',browse:'ver canales',directory:'índice',indexed:'canales en el índice',cited:'datos con fuentes',activity:'mensajes por día',period:'fechas del archivo',light:'claro',dark:'oscuro',
   messageSearch:'buscar mensajes',query:'texto',searchGo:'buscar',queryHint:'Palabras o "frases entre comillas"',allChannels:'todos los canales',dateFrom:'desde (UTC)',dateTo:'hasta (UTC)',order:'orden',relevance:'relevancia',newest:'más recientes',oldest:'más antiguos',
   loading:'buscando…',results:'resultados',noresults:'no hay mensajes coincidentes.',original:'publicación original',previous:'anterior',next:'siguiente',page:'página',
+  stories:'historias',week:'semana',region:'región',theme:'tema',all:'todas',story:'historia',earlier:'semanas anteriores',later:'semanas posteriores',related:'historia relacionada',nostories:'no hay historias para esta selección.',postsIn:'publicaciones en esta historia',chans:'canales',showing:'mostrando',
   invalid_query:'Introduce palabras o "frases entre comillas" cerradas. Máximo 20 términos.',query_too_long:'El texto de búsqueda está limitado a 300 caracteres.',invalid_date:'Introduce una fecha válida.',date_range:'La fecha inicial debe ser anterior o igual a la final.',invalid_sort:'Elige un orden válido.',invalid_page:'Elige una página válida.',invalid_channel:'Elige un canal del índice.',invalid_request:'Revisa los campos de búsqueda.',search_unavailable:'La búsqueda no está disponible. Inténtalo de nuevo.',search_timeout:'La búsqueda tardó demasiado. Añade palabras o reduce el intervalo de fechas.'}};
 let L=localStorage.getItem('lang')==='es'?'es':'en';
 const t=k=>T[L][k]||k;
@@ -257,7 +265,7 @@ function bar(n,max,w=24){return '<span class="bar">'+'█'.repeat(Math.max(1,Mat
 function link(c){return c.handle?`<a href="https://t.me/${esc(c.handle)}" target="_blank" rel="noopener">@${esc(c.handle)}</a>`:`<span class="mute">id ${c.id}</span>`}
 function chanLink(c){return c.tracked?`<a href="#/c/${esc(c.handle||c.id)}">${esc(c.title||c.handle||c.id)}</a>`:esc(c.title||c.handle||('id '+c.id))}
 function nav(cur){const byT={};D.channels.forEach(c=>(byT[c.tier]=byT[c.tier]||[]).push(c));
- let h=`<input class="search" id="q" aria-label="${t('search')}" placeholder="${t('search')}"><ul><li><a href="#/">${t('home')}</a></li><li><a href="#/search">${t('messageSearch')}</a></li><li><a href="#/channels">${t('channels')}</a></li><li><a href="#/tiers">${t('tiers')}</a></li><li><a href="#/sources">${t('sources')}</a></li></ul>`;
+ let h=`<input class="search" id="q" aria-label="${t('search')}" placeholder="${t('search')}"><ul><li><a href="#/">${t('home')}</a></li><li><a href="#/search">${t('messageSearch')}</a></li><li><a href="#/stories">${t('stories')}</a></li><li><a href="#/channels">${t('channels')}</a></li><li><a href="#/tiers">${t('tiers')}</a></li><li><a href="#/sources">${t('sources')}</a></li></ul>`;
  for(const k of Object.keys(D.tiers)){if(!byT[k])continue;h+=`<h3>${k.slice(0,1)} · ${byT[k].length}</h3><ul>`+byT[k].map(c=>`<li class="${cur===c.handle.toLowerCase()?'cur':''}"><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a></li>`).join('')+'</ul>'}
  document.getElementById('nav').innerHTML=h;
  const q=document.getElementById('q');q.oninput=()=>{const v=q.value.toLowerCase();document.querySelectorAll('#nav li').forEach(li=>{li.style.display=li.textContent.toLowerCase().includes(v)?'':'none'})};
@@ -279,6 +287,7 @@ function home(){
   <dl class="home-stats">${counts.map(([label,n])=>`<div><dt>${label}</dt><dd>${fmt(n)}</dd></div>`).join('')}</dl>
   <div class="home-grid"><section><h3>${t('directory')} /</h3><ul class="archive-tree">
    <li><span class="branch" aria-hidden="true">├── </span><a href="#/search">[${t('messageSearch')}]</a></li>
+   <li><span class="branch" aria-hidden="true">├── </span><a href="#/stories">[${t('stories')}]</a></li>
    <li><span class="branch" aria-hidden="true">├── </span><a href="#/channels">[${t('browse')}]</a></li>
    <li><span class="branch" aria-hidden="true">├── </span><a href="#/tiers">[${t('tiers')}]</a></li>
    <li><span class="branch" aria-hidden="true">└── </span><a href="#/sources">[${t('sources')}]</a></li>
@@ -311,6 +320,49 @@ async function messageSearch(params){
   if(data.page>1||data.has_next){h+='<div class="pagination">';if(data.page>1)h+=`<a href="${esc(searchURL(params,data.page-1))}">[${t('previous')}]</a>`;if(data.has_next)h+=`<a href="${esc(searchURL(params,data.page+1))}">[${t('next')}]</a>`;h+='</div>'}results.innerHTML=h;
  }catch(e){if(e.name!=='AbortError')status.textContent=t('search_unavailable')}
  finally{if(!controller.signal.aborted)results.setAttribute('aria-busy','false')}
+}
+const A=k=>D.arenas[k]?D.arenas[k][L]:k;const TT=s=>(L==='es'&&s.title_es)||s.title||'';const SM=s=>(L==='es'&&s.summary_es)||s.summary||'';
+function storiesURL(p){const q=new URLSearchParams();for(const k of ['week','region','theme'])if(p[k])q.set(k,p[k]);return '#/stories'+(q.size?'?'+q.toString():'')}
+async function storiesView(params){
+ const view=document.getElementById('view');view.innerHTML=`<h2>${t('stories')}</h2><div class="ul">=======</div><div class="mute" role="status">${t('loading')}</div>`;
+ const controller=new AbortController();searchController=controller;
+ try{
+  let week=params.get('week');
+  const wk=await (await fetch('/api/stories',{signal:controller.signal})).json();if(controller.signal.aborted)return;
+  if(!wk.weeks.length){view.innerHTML=`<h2>${t('stories')}</h2><div class="ul">=======</div><p class="mute">${t('nostories')}</p>`;return}
+  if(!week||!wk.weeks.some(w=>w.week===week))week=wk.weeks[0].week;
+  const region=params.get('region')||'',theme=params.get('theme')||'';
+  const data=await (await fetch('/api/stories?'+new URLSearchParams({week,region,theme}),{signal:controller.signal})).json();if(controller.signal.aborted)return;
+  const sel=(k,v)=>storiesURL({week,region:k==='region'?v:region,theme:k==='theme'?v:theme});
+  let h=`<h2>${t('stories')}</h2><div class="ul">=======</div>`;
+  h+=`<div class="filters"><span class="mute">${t('week')}</span>${wk.weeks.map(w=>`<a class="${w.week===week?'on':''}" href="${esc(storiesURL({week:w.week,region,theme}))}">${esc(w.week)} <span class="mute">${fmt(w.n)}</span></a>`).join('')}</div>`;
+  const keys=axis=>Object.keys(D.arenas).filter(k=>D.arenas[k].axis===axis);
+  h+=`<div class="filters"><span class="mute">${t('region')}</span><a class="${region?'':'on'}" href="${esc(sel('region',''))}">${t('all')}</a>${keys('region').filter(k=>data.regions[k]).map(k=>`<a class="${region===k?'on':''}" href="${esc(sel('region',k))}">${esc(A(k))} <span class="mute">${data.regions[k]}</span></a>`).join('')}</div>`;
+  h+=`<div class="filters"><span class="mute">${t('theme')}</span><a class="${theme?'':'on'}" href="${esc(sel('theme',''))}">${t('all')}</a>${keys('theme').concat(keys('bucket')).filter(k=>data.themes[k]).map(k=>`<a class="${theme===k?'on':''}" href="${esc(sel('theme',k))}">${esc(A(k))} <span class="mute">${data.themes[k]}</span></a>`).join('')}</div>`;
+  h+=`<div class="mute">${t('showing')} ${fmt(data.stories.length)} / ${fmt(data.total)} · ${t('posts')}: ${fmt(data.stories.reduce((n,s)=>n+s.size,0))}</div>`;
+  if(!data.stories.length)h+=`<p class="mute">${t('nostories')}</p>`;
+  for(const s of data.stories)h+=`<div class="story-row"><div><a href="#/s/${s.id}">${esc(TT(s))}</a>${s.prev?` <span class="mute" title="${t('earlier')}">⟵</span>`:''}</div><div class="meta"><span>${fmt(s.size)} ${t('posts')} · ${fmt(s.channels)} ${t('chans')}</span><span class="tag">${esc(A(s.region))}</span>${s.themes.map(k=>`<span class="tag">${esc(A(k))}</span>`).join('')}</div></div>`;
+  view.innerHTML=h;
+ }catch(e){if(e.name!=='AbortError')view.innerHTML=`<h2>${t('stories')}</h2><div class="ul">=======</div><p class="mute">${t('search_unavailable')}</p>`}
+}
+async function storyView(id){
+ const view=document.getElementById('view');view.innerHTML=`<div class="mute" role="status">${t('loading')}</div>`;
+ const controller=new AbortController();searchController=controller;
+ try{
+  const r=await fetch('/api/story?id='+encodeURIComponent(id),{signal:controller.signal});if(controller.signal.aborted)return;
+  if(!r.ok){view.innerHTML=`<p class="mute">${t('nostories')}</p>`;return}
+  const s=await r.json();
+  let h=`<h2>${esc(TT(s))}</h2><div class="ul">${'='.repeat(Math.min(60,TT(s).length))}</div>`;
+  h+=`<div class="kv"><div>${t('week')}</div><div><a href="${esc(storiesURL({week:s.week}))}">${esc(s.week)}</a></div><div>${t('region')}</div><div><a href="${esc(storiesURL({week:s.week,region:s.region}))}">${esc(A(s.region))}</a></div><div>${t('theme')}</div><div>${s.themes.map(k=>`<a href="${esc(storiesURL({week:s.week,theme:k}))}">${esc(A(k))}</a>`).join(' · ')}</div><div>${t('posts')}</div><div>${fmt(s.size)} · ${fmt(s.channels_n)} ${t('chans')} · ${s.first?esc(s.first.slice(0,10)):''} → ${s.last?esc(s.last.slice(0,10)):''}</div></div>`;
+  if(SM(s))h+=`<p>${esc(SM(s))}</p>`;
+  if(s.chain.length)h+=`<section><h2>${t('earlier')}</h2><ul class="chain">${s.chain.map(c=>`<li><span class="mute">${esc(c.week)}</span> <a href="#/s/${c.id}">${esc(TT(c))}</a> <span class="mute">${fmt(c.size)}</span></li>`).join('')}</ul></section>`;
+  if(s.next.length)h+=`<section><h2>${t('later')}</h2><ul class="chain">${s.next.map(c=>`<li><span class="mute">${esc(c.week)}</span> <a href="#/s/${c.id}">${esc(TT(c))}</a> <span class="mute">${fmt(c.size)}</span></li>`).join('')}</ul></section>`;
+  const m=s.channels.length?s.channels[0].n:1;
+  h+=`<section><h2>${t('chans')}</h2><div class="tw"><table class="list">${s.channels.map(c=>`<tr><td class="num">${fmt(c.n)}</td><td>${bar(c.n,m,innerWidth<=760?12:24)}</td><td>${c.handle?`<a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a> <span class="mute">@${esc(c.handle)}</span>`:esc(c.title||'')}</td></tr>`).join('')}</table></div></section>`;
+  h+=`<section><h2>${t('postsIn')}</h2>${s.posts.length<s.size?`<div class="mute">${t('showing')} ${fmt(s.posts.length)} / ${fmt(s.size)}</div>`:''}`;
+  h+=s.posts.map(p=>`<article class="post"><div class="meta">${p.handle?`<a href="#/c/${esc(p.handle)}">${esc(p.title||p.handle)}</a>`:esc(p.title||'')}<time class="mute" datetime="${esc(p.date)}">${esc((p.date||'').slice(0,16).replace('T',' '))} UTC</time>${p.views!=null?`<span class="mute">${fmt(p.views)} ${t('views').replace('total ','').replace('visualizaciones totales','visualizaciones')}</span>`:''}</div><div class="txt">${esc(p.text)}${p.text.length>=400?'…':''}</div>${p.url?`<a class="original" href="${esc(p.url)}" target="_blank" rel="noopener">[${t('original')}]</a>`:''}</article>`).join('');
+  h+='</section>';view.innerHTML=h;
+ }catch(e){if(e.name!=='AbortError')view.innerHTML=`<p class="mute">${t('search_unavailable')}</p>`}
 }
 let sortKey='tier',sortDir=1;
 function index(){const rows=[...D.channels].sort((a,b)=>{const x=a[sortKey],y=b[sortKey];return (x==null)-(y==null)||(x>y?1:x<y?-1:0)*sortDir||a.handle.localeCompare(b.handle)});
@@ -351,13 +403,13 @@ function channel(handle){const c=D.channels.find(x=>x.handle.toLowerCase()===han
  document.getElementById('view').innerHTML=h}
 function tiers(){let h=`<h2>${t('tierlist')}</h2><div class="ul">======</div><table>`;for(const [k,v] of Object.entries(D.tiers)){const n=D.channels.filter(c=>c.tier===k).length;h+=`<tr><td>${k[0]}</td><td class="num">${n}</td><td>${esc(v[L])}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
 function sources(){let h=`<h2>${t('sources')}</h2><div class="ul">=======</div><table>`;for(const s of Object.values(D.sources)){const n=D.channels.filter(c=>c.facts.some(f=>f.source===s.key)).length;h+=`<tr><td class="mute">${s.key}</td><td>${s.date}</td><td>${esc(s.publisher)}</td><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a></td><td class="num">${n}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
-function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/);const isHome=!p;
+function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/),sm=p.match(/^s\/(\d+)$/);const isHome=!p;
  document.body.classList.toggle('home',isHome);document.documentElement.lang=L;
  document.getElementById('brand').textContent=t('name');document.getElementById('menu').textContent=`[${t('directory')}]`;document.getElementById('menu').setAttribute('aria-expanded',String(document.body.classList.contains('nav-open')));
- document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='tiers'?t('tiers'):p==='sources'?t('sources'):t('channels'))}`;
+ document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='stories'||sm?t('stories'):p==='tiers'?t('tiers'):p==='sources'?t('sources'):t('channels'))}`;
  if(!isHome)nav(m?decodeURIComponent(m[1]).toLowerCase():null);
  document.getElementById('hdr').textContent=`${fmt(D.channels.length)} ${t('channels')} · ${fmt(D.total)} ${t('messages')}`;
- if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='tiers')tiers();else if(p==='sources')sources();else index();window.scrollTo(0,0)}
+ if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories')storiesView(new URLSearchParams(query));else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='tiers')tiers();else if(p==='sources')sources();else index();window.scrollTo(0,0)}
 document.getElementById('lang').onclick=()=>{L=L==='en'?'es':'en';localStorage.setItem('lang',L);document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';applyTheme();route()};
 document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';
 const th=document.getElementById('theme');let dark=(localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';

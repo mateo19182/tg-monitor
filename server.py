@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 from search import DB, HERE, WATCHLIST, InvalidSearch, SearchRequest, SearchTimeout, SearchUnavailable, ensure_index, search_messages
+import storyapi
 
 log = logging.getLogger(__name__)
 
@@ -47,6 +48,24 @@ class ArchiveHandler(SimpleHTTPRequestHandler):
                 self.send_json(503, {"error": "search_timeout"})
             except SearchUnavailable:
                 log.exception("Search unavailable")
+                self.send_json(503, {"error": "search_unavailable"})
+            else:
+                self.send_json(200, result)
+        elif url.path in ("/api/stories", "/api/story"):
+            try:
+                params = {k: v[0] for k, v in parse_qs(url.query, keep_blank_values=True, max_num_fields=6).items()}
+                if url.path == "/api/story":
+                    result = storyapi.story(int(params.get("id", "")))
+                    if result is None:
+                        self.send_json(404, {"error": "not_found"}); return
+                elif params.get("week"):
+                    result = storyapi.stories(params["week"], params.get("region") or None, params.get("theme") or None)
+                else:
+                    result = storyapi.weeks()
+            except ValueError:
+                self.send_json(400, {"error": "invalid_request"})
+            except Exception:
+                log.exception("Stories unavailable")
                 self.send_json(503, {"error": "search_unavailable"})
             else:
                 self.send_json(200, result)

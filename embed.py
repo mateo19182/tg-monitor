@@ -66,7 +66,7 @@ def open_vec() -> sqlite3.Connection:
     db.execute("PRAGMA synchronous=NORMAL")
     db.executescript(SCHEMA)
     cols = {r[1] for r in db.execute("PRAGMA table_info(stories)")}
-    for col, typ in [("prev_sim", "REAL"), ("related_story", "INTEGER")]:
+    for col, typ in [("prev_sim", "REAL"), ("related_story", "INTEGER"), ("title_es", "TEXT"), ("summary_es", "TEXT")]:
         if col not in cols:
             db.execute(f"ALTER TABLE stories ADD COLUMN {col} {typ}")
     return db

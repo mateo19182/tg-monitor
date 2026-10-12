@@ -30,6 +30,7 @@ SYSTEM = """You describe what a group of Telegram posts has in common. The posts
 Return only a JSON object with these fields:
 - "title": at most 12 words, in English, naming the concrete story or subject the posts share. Say who did or said what, as the posts present it. No verdicts.
 - "summary": one sentence in English. Start with "The posts report", "The posts claim", "The posts comment on" or similar, so that claims stay attributed to the posts.
+- "title_es" and "summary_es": the same title and summary in Spanish.
 - "region": one region key from the list below: where the story happens or whom it concerns.
 - "themes": one or two theme keys from the list below, most fitting first: what the story is about.
 - "language": ISO code of the dominant language of the posts.
@@ -171,8 +172,8 @@ def store_label(vec, sid, j):
     if na and na.get("name"):
         week = vec.execute("SELECT week FROM stories WHERE id=?", (sid,)).fetchone()[0]
         vec.execute("INSERT OR REPLACE INTO arena_proposals VALUES (?,?,?,?,?)", (sid, week, na["name"], na.get("definition"), na.get("closest")))
-    vec.execute("UPDATE stories SET title=?, summary=?, arenas=?, note=?, labelled_at=?, model=? WHERE id=?",
-                (j.get("title"), j.get("summary"), json.dumps(arenas), json.dumps({"language": j.get("language"), "new_arena": j.get("new_arena")}),
+    vec.execute("UPDATE stories SET title=?, summary=?, title_es=?, summary_es=?, arenas=?, note=?, labelled_at=?, model=? WHERE id=?",
+                (j.get("title"), j.get("summary"), j.get("title_es"), j.get("summary_es"), json.dumps(arenas), json.dumps({"language": j.get("language"), "new_arena": j.get("new_arena")}),
                  dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), MODEL, sid))
 
 
@@ -263,7 +264,7 @@ def main():
     if not a.week:
         ap.error("--week is required")
     if a.clear_labels:
-        vec.execute("UPDATE stories SET title=NULL, summary=NULL, arenas=NULL, note=NULL WHERE week=? AND kind=?", (a.week, a.kind)); vec.commit()
+        vec.execute("UPDATE stories SET title=NULL, summary=NULL, title_es=NULL, summary_es=NULL, arenas=NULL, note=NULL WHERE week=? AND kind=?", (a.week, a.kind)); vec.commit()
     if not (a.label or a.show or a.relink or a.clear_labels):
         cluster(vec, a.week, a.kind, a.min_size)
     if a.relink:
