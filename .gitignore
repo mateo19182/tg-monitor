@@ -13,3 +13,4 @@ site/
 vec.db
 vec.db-*
 stories.log
+.embed.lock
