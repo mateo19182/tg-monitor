@@ -1,6 +1,6 @@
 axis,key,en,es,definition
 region,spain,Spain,España,"Events in Spain or about Spanish institutions, parties and society."
-region,maghreb,Morocco and the Maghreb,Marruecos y el Magreb,"Morocco, Western Sahara, Algeria, Tunisia, Libya and Mauritania, including their relations with Spain."
+region,maghreb,Morocco and the Maghreb,Marruecos y el Magreb,"Morocco, Western Sahara, Algeria, Tunisia, Libya and Mauritania, including their relations with Spain and events at the Ceuta and Melilla borders."
 region,europe,Europe and the EU,Europa y la UE,"EU institutions and European countries other than Spain, Russia, Ukraine and Belarus."
 region,russia_ukraine,Russia and Ukraine,Rusia y Ucrania,"Russia, Ukraine and Belarus, including Russian domestic affairs and the war's front lines."
 region,united_states,United States,Estados Unidos,"The United States and its government."
@@ -22,6 +22,7 @@ theme,environment,Environment and disasters,Medio ambiente y desastres,"Natural 
 theme,identity,Identity and religion,Identidad y religión,"Religion, national or cultural identity, gender, historical memory, commemoration, language policy."
 theme,media_tech,Media and technology,Medios y tecnología,"Press, journalists, platforms, censorship and bans, AI, surveillance, technology."
 theme,culture_sport,Culture and sport,Cultura y deporte,"Sport, entertainment, celebrities, tourism, lifestyle, viral curiosities."
+theme,phenomena,Unexplained phenomena and curiosities,Fenómenos inexplicados y curiosidades,"UFO and UAP claims, paranormal or unexplained sightings, and viral science or nature curiosities presented as unusual discoveries."
 theme,protests,Protests and mobilisation,Protestas y movilización,"Demonstrations, strikes, riots, rallies and calls to mobilise. Usually a secondary theme."
 bucket,housekeeping,Channel self-promotion,Autopromoción del canal,"Subscribe calls, donations, cross-promotion, scheduling notices. Excluded from story counts."
 bucket,reactions,Chat reactions,Reacciones del chat,"Audience comments with no story of their own. Excluded from story counts."
