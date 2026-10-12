@@ -154,8 +154,7 @@ HTML = r"""<!doctype html>
 :root[data-theme="dark"]{color-scheme:dark;--bg:#0f0f0e;--fg:#e6e6e0;--mute:#8a8a84;--line:#2a2a28;--dot:#2a2a28;--acc:#e6e6e0;--bar:#e6e6e0}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg)}
-body{font:14px/1.5 ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
- background-image:radial-gradient(var(--dot) .8px,transparent .9px);background-size:14px 14px;min-height:100vh}
+body{font:15px/1.6 ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;min-height:100vh}
 a{color:var(--fg);text-decoration:none}a:hover{text-decoration:underline}
 .wrap{max-width:1180px;margin:0 auto;padding:16px}
 header{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
@@ -164,14 +163,14 @@ header .r{margin-left:auto;display:flex;gap:14px}
 .btn{cursor:pointer;color:var(--mute);background:none;border:0;padding:0;font:inherit}.btn:hover{color:var(--fg)}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:1px dashed var(--fg);outline-offset:4px}
 main{display:grid;grid-template-columns:220px 1fr;gap:28px}main>*{min-width:0}#view{overflow-wrap:anywhere}.tw{overflow-x:auto}
-nav{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto;font-size:13px}
+nav{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto;font-size:14px}
 nav h3{margin:14px 0 4px;font-size:12px;color:var(--mute);font-weight:400}
 nav ul{list-style:none;margin:0;padding:0}nav li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 nav li a{color:var(--fg)}nav li.cur a{text-decoration:underline}
 h2{font-size:14px;margin:0 0 2px;font-weight:700}
 .ul{color:var(--mute);margin-bottom:14px}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{text-align:left;padding:3px 10px 3px 0;vertical-align:top;border-bottom:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:5px 12px 5px 0;vertical-align:top;border-bottom:1px solid var(--line)}
 td.nw{white-space:nowrap}table.list{width:auto}table.list td{padding-right:16px}table.list td:nth-child(2){white-space:nowrap}
 th{color:var(--mute);font-weight:400;cursor:pointer;white-space:nowrap}
 td.num,th.num{text-align:right}
@@ -201,8 +200,8 @@ body.home main{display:block}body.home #nav,body.home #menu,body.home #hdr{displ
 .home-grid{display:grid;grid-template-columns:1fr 2fr;gap:36px}
 .home-page h3{font-size:13px;font-weight:400;color:var(--mute);margin:0 0 12px}
 .archive-tree{list-style:none;margin:0;padding:0}.archive-tree li{margin:8px 0}.archive-tree .branch{color:var(--mute);white-space:pre}
-.home-page .chart{font-size:12px}.home-page .dates{font-size:12px;margin-top:10px}
-.home-footer{border-top:1px dashed var(--line);padding-top:14px;margin-top:24px;font-size:12px;color:var(--mute)}
+.home-page .chart{font-size:13px}.home-page .dates{font-size:13px;margin-top:10px}
+.home-footer{border-top:1px dashed var(--line);padding-top:14px;margin-top:24px;font-size:13px;color:var(--mute)}
 .message-form{margin:20px 0 24px}.message-query{display:flex;gap:16px;align-items:end}.message-query label{flex:1;min-width:0}
 .message-form label{display:block;color:var(--mute);font-size:12px}
 .message-form input,.message-form select{display:block;width:100%;min-width:0;background:var(--bg);color:var(--fg);font:inherit;font-size:14px;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:6px 0}
@@ -211,12 +210,12 @@ body.home main{display:block}body.home #nav,body.home #menu,body.home #hdr{displ
 .message-result{padding:16px 0;border-bottom:1px solid var(--line)}.message-meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px}
 .message-text{white-space:pre-wrap;margin:10px 0;overflow-wrap:anywhere}.message-result .original{font-size:12px}
 mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;margin-top:20px;align-items:center;font-size:13px}
-.story-row{padding:10px 0;border-bottom:1px solid var(--line)}.story-row .meta{font-size:12px;display:flex;flex-wrap:wrap;gap:4px 12px}
+.story-row{padding:12px 0;border-bottom:1px solid var(--line)}.story-row .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}
 .story-row .meta .tag{color:var(--mute)}.story-row .sum{margin-top:4px}
-.filters{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 16px;font-size:13px}.filters a.on{text-decoration:underline}
+.filters{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 16px;font-size:14px}.filters a.on{text-decoration:underline}
 .thread{padding:10px 0;border-bottom:1px solid var(--line)}.thread .wk{display:flex;gap:2px;align-items:flex-end;height:22px;margin-top:4px}.thread .wk span{display:block;width:14px;background:var(--bar);min-height:2px}.thread .wk span.gap{background:transparent;border-bottom:1px dotted var(--line)}
 .chain{list-style:none;padding:0;margin:0}.chain li{margin:3px 0}
-.post{padding:10px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:12px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
+.post{padding:12px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
 @media(max-width:760px){main{grid-template-columns:1fr;gap:12px}nav{display:none;position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:10px}
  body.nav-open nav{display:block}#menu{display:inline}#hdr{display:none}.m-hide{display:none}.wrap{padding:12px}
  .kv{grid-template-columns:1fr;gap:0 0}.kv div:nth-child(odd){margin-top:6px}.big{font-size:18px}
@@ -276,15 +275,7 @@ function home(){
  const n=SP(),daily=D.daily.slice(-n),start=new Date(D.start+'T00:00:00Z');start.setUTCDate(start.getUTCDate()+D.days-n);
  const first=start.toISOString().slice(0,10),last=new Date(start);last.setUTCDate(last.getUTCDate()+n-1);
  document.getElementById('view').innerHTML=`<div class="home-page">
-  <section class="home-heading"><div><h2>${t('name')}</h2><div class="mute">${t('period')}<br>${D.range[0]||'—'} → ${D.range[1]||'—'}</div></div>
-   <pre class="archive-mark" aria-hidden="true">   .------------.
-   |  ________  |
-   | |___[]___| |
-   |  ________  |
-   | |___[]___| |
-   |  ________  |
-   | |___[]___| |
-   '------------'</pre></section>
+  <section class="home-heading"><div><h2>${t('name')}</h2><div class="mute">${t('period')} ${D.range[0]||'—'} → ${D.range[1]||'—'}</div></div></section>
   <dl class="home-stats">${counts.map(([label,n])=>`<div><dt>${label}</dt><dd>${fmt(n)}</dd></div>`).join('')}</dl>
   <div class="home-grid"><section><h3>${t('directory')} /</h3><ul class="archive-tree">
    <li><span class="branch" aria-hidden="true">├── </span><a href="#/search">[${t('messageSearch')}]</a></li>
