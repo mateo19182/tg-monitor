@@ -49,10 +49,23 @@ Each channel carries a `tier` label so the dataset can be sliced:
 - `login.py`      two-step login (`send <phone>`, `code <code>`, `password`, `check`).
 - `wiki.csv`, `sources.csv`  cited facts per channel for the site; neutral wording, every fact carries a source key.
 - `site.py`       builds `site/index.html` from the database: an archive homepage, channel browser at `#/channels`, channel pages at `#/c/<handle>`, and message search at `#/search`.
+- `embed.py`      embeds message texts (≥40 chars after stripping URLs and share footers) with bge-m3 on the GPU into `vec.db`; one vector per distinct text.
+- `stories.py`    groups one week's posts (or discussion-group comments) into stories by similarity, chains them to the previous week's stories, and labels each story through the Message Batches API with a neutral title, a one-line summary and one to three arenas from `arenas.csv`. Spend is tracked in `data/label_ledger.json` and capped with `--cap`.
+- `arenas.csv`    the fixed list of arenas (topic areas) with EN/ES names and definitions. Stories carry their own open labels; the model may propose new arenas (`stories.py --proposals`), which are added here by hand.
 - `search.py`     SQLite FTS5 index and search queries. Insert, text-update and delete triggers keep the index current during collection.
 - `server.py`     serves `site/` and `GET /api/search` on the same origin; `serve.sh` starts it on 127.0.0.1:8788.
 
-Secrets/data never in git: `.env` (TG_API_ID/TG_API_HASH), `tgmon.session*`, `tg.db*`, logs, `data/`.
+Secrets/data never in git: `.env` (TG_API_ID/TG_API_HASH, ANTHROPIC_API_KEY), `tgmon.session*`, `tg.db*`, `vec.db*`, logs, `data/`.
+
+Stories:
+```
+.venv/bin/python embed.py --since 2026-09-28            # embed new texts (hourly runs embed increments)
+.venv/bin/python stories.py --week 2026-W41             # cluster that week's posts into stories
+.venv/bin/python stories.py --week 2026-W41 --label     # label unlabelled stories (batch, cached system prompt)
+.venv/bin/python stories.py --week 2026-W41 --show --full
+.venv/bin/python stories.py --week 2026-W41 --kind comment   # same for discussion-group comments
+```
+A story is a group of similar posts within one ISO week. `=id` marks the same story continued from the previous week (centroid cosine ≥ 0.90), `~id` a related story (0.85–0.90). About a quarter of posts stay unassigned.
 
 ## Operations
 
