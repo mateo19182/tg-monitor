@@ -46,6 +46,12 @@ REFRESH_DAYS = 7
 MAX_FLOOD_WAIT = 600  # sleep through waits up to this; longer ones are deferred to the next run
 
 log = logging.getLogger("collect")
+RESOLVE = {"blocked_until": datetime.min.replace(tzinfo=timezone.utc), "count": 0, "cap": 80, "pause": 3.0}
+
+
+class ResolveDeferred(Exception):
+    """A new handle could not be resolved this run (flood wait or cap); try again next run."""
+
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS channels (
@@ -209,14 +215,47 @@ async def sync_channel(client: TelegramClient, db: sqlite3.Connection, spec: dic
     db.execute("UPDATE sync_state SET last_run=?, last_error=NULL WHERE handle=?", (now, handle))
     db.commit()
 
-    target = PeerChannel(int(handle)) if handle.isdigit() else handle  # numeric ids = joined private groups
-    ent = await with_retries(lambda: client.get_entity(target), handle)
-    full = await with_retries(lambda: client(functions.channels.GetFullChannelRequest(ent)), handle)
+    # Resolve the channel. Username resolution (ResolveUsernameRequest) is the most rate-limited call we make
+    # (a burst of ~150 new handles earned an 11-hour FloodWait on 2026-10-12), so once a channel's id is known we
+    # address it by id, which only touches the session's entity cache. Fresh usernames are resolved with pacing.
+    known = db.execute("SELECT id FROM channels WHERE lower(username)=lower(?)", (handle,)).fetchone()
+    if handle.isdigit():
+        target = PeerChannel(int(handle))  # numeric ids = joined private groups
+    elif known:
+        target = PeerChannel(known[0])
+    else:
+        if RESOLVE["blocked_until"] > datetime.now(timezone.utc):
+            raise ResolveDeferred(f"username resolution blocked until {RESOLVE['blocked_until']:%H:%M} UTC")
+        if RESOLVE["count"] >= RESOLVE["cap"]:
+            raise ResolveDeferred(f"resolve cap {RESOLVE['cap']} reached this run")
+        target = handle
+    try:
+        ent = await with_retries(lambda: client.get_entity(target), handle)
+    except ValueError:  # id not in the session cache (e.g. db restored elsewhere): fall back to the username
+        ent = await with_retries(lambda: client.get_entity(handle), handle)
+    except FloodWaitError as e:
+        if target is handle:
+            RESOLVE["blocked_until"] = datetime.now(timezone.utc) + timedelta(seconds=e.seconds)
+            log.warning("[%s] ResolveUsername flood wait %ss; deferring remaining new handles this run", handle, e.seconds)
+            raise ResolveDeferred(f"flood wait {e.seconds}s on resolve")
+        raise
+    if target is handle:
+        RESOLVE["count"] += 1
+        await asyncio.sleep(RESOLVE["pause"])
+    # Channel metadata: refresh at most once a day unless this is the first fetch (GetFullChannel is cheap but
+    # 470 calls an hour is pointless).
+    stale = db.execute("SELECT last_synced FROM channels WHERE id=? AND last_synced > datetime('now','-1 day')", (ent.id,)).fetchone()
+    if not known or not stale:
+        full = await with_retries(lambda: client(functions.channels.GetFullChannelRequest(ent)), handle)
+        about, participants = full.full_chat.about, full.full_chat.participants_count
+    else:
+        about, participants = None, None
     db.execute(
         "INSERT INTO channels (id, username, title, about, tier, participants, created_at, first_seen, last_synced) "
         "VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET username=excluded.username, title=excluded.title, "
-        "about=excluded.about, tier=excluded.tier, participants=excluded.participants, last_synced=excluded.last_synced",
-        (ent.id, ent.username, ent.title, full.full_chat.about, spec.get("tier"), full.full_chat.participants_count,
+        "about=COALESCE(excluded.about, channels.about), tier=excluded.tier, "
+        "participants=COALESCE(excluded.participants, channels.participants), last_synced=excluded.last_synced",
+        (ent.id, ent.username, ent.title, about, spec.get("tier"), participants,
          ent.date.isoformat() if ent.date else None, now, now),
     )
     db.commit()
@@ -252,7 +291,7 @@ async def sync_channel(client: TelegramClient, db: sqlite3.Connection, spec: dic
         (ent.id, new_last, datetime.now(timezone.utc).isoformat(), n, handle),
     )
     db.commit()
-    log.info("[%s] +%d new, %d total, %s subscribers", handle, n, total, full.full_chat.participants_count)
+    log.info("[%s] +%d new, %d total, %s subscribers", handle, n, total, participants if participants is not None else "cached")
 
 
 async def resolve_fwd_sources(client: TelegramClient, db: sqlite3.Connection, limit: int = 200) -> None:
@@ -292,6 +331,7 @@ async def main() -> None:
     ap.add_argument("--benchmark-takeout", action="store_true", help="compare normal and Takeout history reads; no archive writes")
     ap.add_argument("--takeout", action="store_true", help="read backfills through a Takeout session (measured no faster than normal reads here; off by default)")
     ap.add_argument("--concurrency", type=int, default=3, help="channels fetched in parallel (default 3)")
+    ap.add_argument("--max-resolve", type=int, default=80, help="max new usernames resolved per run (ResolveUsername is heavily rate-limited)")
     ap.add_argument("--benchmark-messages", type=int, default=1000)
     ap.add_argument("--benchmark-rounds", type=int, default=2)
     args = ap.parse_args()
@@ -319,6 +359,7 @@ async def main() -> None:
             return
         db = open_db()
         specs = load_watchlist(args.channels)
+        RESOLVE["cap"] = args.max_resolve
         takeout = None
         needs_backfill = any(
             (db.execute("SELECT 1 FROM sync_state WHERE handle=? AND backfill_done=1", (sp["handle"],)).fetchone() is None) or args.refetch
@@ -351,6 +392,9 @@ async def main() -> None:
             async with sem:
                 try:
                     await sync_channel(client, db, spec, refetch=args.refetch, takeout=takeout)
+                except ResolveDeferred as e:
+                    db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"deferred: {e}", spec["handle"]))
+                    db.commit()
                 except FloodWaitError as e:
                     failed += 1
                     db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"flood wait {e.seconds}s", spec["handle"]))
@@ -376,7 +420,8 @@ async def main() -> None:
             except Exception as e:  # noqa: BLE001
                 log.warning("takeout close: %s", e)
         await resolve_fwd_sources(client, db)
-        log.info("run complete: %d channels, %d failed", len(specs), failed)
+        deferred = db.execute("SELECT COUNT(*) FROM sync_state WHERE last_error LIKE 'deferred:%'").fetchone()[0]
+        log.info("run complete: %d channels, %d failed, %d deferred (new handles awaiting resolution)", len(specs), failed, deferred)
     finally:
         await client.disconnect()
 
