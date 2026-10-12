@@ -31,6 +31,12 @@ Each channel carries a `tier` label so the dataset can be sliced:
 | R_conspiracy_pivot | Channels documented by Maldita.es (2022) as moving from COVID-19 content to the war in Ukraine |
 | S_influencer | Individual commentators and streamers |
 | T_counterpart | Ukrainian, EU, Israeli and Moroccan official or aligned channels |
+| U_campaign_2026 | Candidates, party branches and youth wings around the 29N election |
+| V_civil_society | Civil-society organisations across the spectrum |
+| W_journalist | Journalists' and commentators' channels |
+| X_diaspora | Diaspora and migrant-community channels in Spain |
+| Y_local | Local news, incident and neighbourhood channels |
+| Z_meme_finance | Political humour, libertarian, crypto and prepper channels |
 
 ## Layout
 
