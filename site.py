@@ -47,6 +47,18 @@ TIERS = {
 }
 
 
+GROUPS = {
+    "russia": {"en": "Russian state and Russia-based networks", "es": "Estado ruso y redes con base en Rusia", "tiers": ["A", "E", "F"]},
+    "relays": {"en": "Spanish-language relays and aggregators", "es": "Canales en español que difunden y agregan", "tiers": ["B", "C", "H", "M", "R"]},
+    "politics": {"en": "Spanish parties and political actors", "es": "Partidos y actores políticos españoles", "tiers": ["D", "J", "K", "P", "U"]},
+    "media": {"en": "Spanish media, commentators and fact-checkers", "es": "Medios, comentaristas y verificadores españoles", "tiers": ["L", "O", "S", "W"]},
+    "states": {"en": "Other governments' media and official channels", "es": "Medios y canales oficiales de otros gobiernos", "tiers": ["G", "T"]},
+    "civic": {"en": "Civic, local and diaspora channels", "es": "Canales cívicos, locales y de la diáspora", "tiers": ["N", "Q", "V", "X", "Y", "Z"]},
+    "groups": {"en": "Discussion groups", "es": "Grupos de debate", "tiers": ["I"]},
+}
+GROUP_OF = {t: g for g, v in GROUPS.items() for t in v["tiers"]}
+
+
 def read_csv(p: Path) -> list[dict]:
     with p.open(newline="", encoding="utf-8") as f:
         return [r for r in csv.DictReader(f) if r and not next(iter(r.values())).startswith("#")]
@@ -120,7 +132,7 @@ def build() -> dict:
         cid = c["id"] if c else None
         st = stats.get(cid, {}) if cid else {}
         out.append({
-            "handle": w["handle"], "tier": w["tier"], "since": w.get("since") or None,
+            "handle": w["handle"], "tier": w["tier"], "group": GROUP_OF.get(w["tier"][0], "civic"), "since": w.get("since") or None,
             "id": cid, "title": c["title"] if c else None, "about": c["about"] if c else None,
             "subs": c["participants"] if c else None, "created": (c["created_at"] or "")[:10] if c else None,
             "n": st.get("n", 0), "first": (st.get("lo") or "")[:10], "last": (st.get("hi") or "")[:10],
@@ -134,7 +146,14 @@ def build() -> dict:
             "linked_note": w.get("note") if w["tier"] == "I_discussion_group" else None,
         })
     total = db.execute("SELECT COUNT(*), MIN(date), MAX(date) FROM messages").fetchone()
+    stories = 0
+    if (HERE / "vec.db").exists():
+        try:
+            stories = sqlite3.connect(f"file:{HERE / 'vec.db'}?mode=ro", uri=True).execute("SELECT COUNT(*) FROM stories WHERE kind='post' AND title IS NOT NULL").fetchone()[0]
+        except sqlite3.Error:
+            stories = 0
     return {
+        "stories": stories, "groups": GROUPS,
         "built": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "days": DAYS, "start": start, "total": total[0], "range": [(total[1] or "")[:10], (total[2] or "")[:10]],
         "daily": [sum(counts[i] for counts in daily.values()) for i in range(DAYS)],
@@ -167,8 +186,12 @@ nav{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);over
 nav h3{margin:14px 0 4px;font-size:12px;color:var(--mute);font-weight:400}
 nav ul{list-style:none;margin:0;padding:0}nav li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 nav li a{color:var(--fg)}nav li.cur a{text-decoration:underline}
-h2{font-size:14px;margin:0 0 2px;font-weight:700}
-.ul{color:var(--mute);margin-bottom:14px}
+h2{font-size:15px;margin:0 0 10px;font-weight:700}
+.ul{display:none}
+.prose,.prose p,p.sum,ol.facts,.story-row .sum,.post .txt,.message-text,.about{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;font-size:16px;line-height:1.55}
+.prose{max-width:72ch}.prose p{margin:0 0 12px}
+.tabs{display:flex;gap:18px;margin:0 0 14px;border-bottom:1px solid var(--line)}.tabs a{padding:6px 0;color:var(--mute)}.tabs a.on{color:var(--fg);border-bottom:2px solid var(--fg)}
+details.legend{margin-top:22px}details.legend summary{cursor:pointer;color:var(--mute)}details.legend table{margin-top:8px}
 table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{text-align:left;padding:5px 12px 5px 0;vertical-align:top;border-bottom:1px solid var(--line)}
 td.nw{white-space:nowrap}table.list{width:auto}table.list td{padding-right:16px}table.list td:nth-child(2){white-space:nowrap}
@@ -194,10 +217,9 @@ body.home main{display:block}body.home #nav,body.home #menu,body.home #hdr{displ
 .home-page{max-width:880px;margin:48px auto 24px}
 .home-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:32px}
 .home-heading h2{font-size:clamp(24px,4vw,36px);font-weight:400;line-height:1.2;margin:0 0 12px}
-.archive-mark{font-family:inherit;font-size:12px;white-space:pre;line-height:1.2;color:var(--mute);margin:0;flex-shrink:0}
 .home-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;padding:22px 0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);margin:0 0 32px}
 .home-stats dt{font-size:12px;color:var(--mute)}.home-stats dd{font-size:24px;margin:4px 0 0}
-.home-grid{display:grid;grid-template-columns:1fr 2fr;gap:36px}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:36px}
 .home-page h3{font-size:13px;font-weight:400;color:var(--mute);margin:0 0 12px}
 .archive-tree{list-style:none;margin:0;padding:0}.archive-tree li{margin:8px 0}.archive-tree .branch{color:var(--mute);white-space:pre}
 .home-page .chart{font-size:13px}.home-page .dates{font-size:13px;margin-top:10px}
@@ -219,9 +241,8 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 @media(max-width:760px){main{grid-template-columns:1fr;gap:12px}nav{display:none;position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:10px}
  body.nav-open nav{display:block}#menu{display:inline}#hdr{display:none}.m-hide{display:none}.wrap{padding:12px}
  .kv{grid-template-columns:1fr;gap:0 0}.kv div:nth-child(odd){margin-top:6px}.big{font-size:18px}
- .home-page{margin-top:28px}.home-heading{gap:12px}.archive-mark{font-size:10px}.home-stats{grid-template-columns:repeat(2,1fr);gap:20px}.home-grid{grid-template-columns:1fr;gap:24px}
+ .home-page{margin-top:28px}.home-heading{gap:12px}.home-stats{grid-template-columns:repeat(2,1fr);gap:20px}.home-grid{grid-template-columns:1fr;gap:24px}
  .message-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.message-query{gap:12px}}
-@media(max-width:380px){.archive-mark{display:none}}
 </style>
 </head>
 <body>
@@ -244,7 +265,9 @@ const T={
   name:'Telegram archive',home:'home',browse:'browse channels',directory:'index',indexed:'channels in index',cited:'cited facts',activity:'messages per day',period:'archive dates',light:'light',dark:'dark',
   messageSearch:'search messages',query:'text',searchGo:'search',queryHint:'Words or "quoted phrases"',allChannels:'all channels',dateFrom:'from (UTC)',dateTo:'to (UTC)',order:'order',relevance:'relevance',newest:'newest',oldest:'oldest',
   loading:'searching…',results:'results',noresults:'no matching messages.',original:'original post',previous:'previous',next:'next',page:'page',
-  stories:'stories',firstPost:'first post',tierOrder:'order of tiers',threads:'story threads',weeks:'weeks',minWeeks:'at least %d weeks',week:'week',region:'region',theme:'theme',all:'all',story:'story',earlier:'earlier weeks',later:'later weeks',related:'related story',nostories:'no stories for this selection.',postsIn:'posts in this story',chans:'channels',showing:'showing',
+  stories:'stories',firstPost:'first post',tierOrder:'order of tiers',threads:'story threads',thisWeek:'by week',overTime:'over time',groupLabel:'group',legend:'tiers inside the groups',sections:'sections',aboutPage:'about',
+  aboutText:'<p>An archive of public Telegram channels relevant to Spanish politics: Spanish-language editions of Russian channels, the Spanish-language channels that feed them and are fed by them, parties and political actors, state media of several governments, and the discussion groups attached to them.</p><p>The archive keeps what the channels publish, with a link to each original post, and facts about the channels from published research, each with its source. Posts are also grouped by week into stories, each with a region and themes, so that a subject can be followed across channels and weeks.</p>',
+  secChannels:'index of the channels with description, activity, forwarding links and cited facts',secStories:'posts grouped by week into stories, and the same stories followed over time',secSearch:'full-text search of the archived posts, with links to the originals',weeks:'weeks',minWeeks:'at least %d weeks',week:'week',region:'region',theme:'theme',all:'all',story:'story',earlier:'earlier weeks',later:'later weeks',related:'related story',nostories:'no stories for this selection.',postsIn:'posts in this story',chans:'channels',showing:'showing',
   invalid_query:'Enter words or balanced "quoted phrases". Maximum 20 terms.',query_too_long:'Search text is limited to 300 characters.',invalid_date:'Enter a valid date.',date_range:'The start date must be on or before the end date.',invalid_sort:'Choose a valid order.',invalid_page:'Choose a valid page.',invalid_channel:'Choose a channel in the index.',invalid_request:'Check the search fields.',search_unavailable:'Search is unavailable. Try again.',search_timeout:'This search took too long. Try more words or a narrower date range.'},
  es:{channels:'canales',messages:'mensajes',archive:'archivo',tiers:'niveles',sources:'fuentes',handle:'usuario',title:'título',tier:'nivel',subs:'suscriptores',posts:'publicaciones',last:'última publicación',days:'últimos %d días',search:'buscar /',
   about:'descripción (tal como la publica el canal)',facts:'investigaciones publicadas',stats:'archivo',created:'canal creado',first:'primera publicación archivada',views:'visualizaciones totales',fwd:'publicaciones que son reenvíos',senders:'remitentes distintos',
@@ -253,7 +276,9 @@ const T={
   name:'Archivo de Telegram',home:'inicio',browse:'ver canales',directory:'índice',indexed:'canales en el índice',cited:'datos con fuentes',activity:'mensajes por día',period:'fechas del archivo',light:'claro',dark:'oscuro',
   messageSearch:'buscar mensajes',query:'texto',searchGo:'buscar',queryHint:'Palabras o "frases entre comillas"',allChannels:'todos los canales',dateFrom:'desde (UTC)',dateTo:'hasta (UTC)',order:'orden',relevance:'relevancia',newest:'más recientes',oldest:'más antiguos',
   loading:'buscando…',results:'resultados',noresults:'no hay mensajes coincidentes.',original:'publicación original',previous:'anterior',next:'siguiente',page:'página',
-  stories:'historias',firstPost:'primera publicación',tierOrder:'orden de niveles',threads:'hilos de historias',weeks:'semanas',minWeeks:'al menos %d semanas',week:'semana',region:'región',theme:'tema',all:'todas',story:'historia',earlier:'semanas anteriores',later:'semanas posteriores',related:'historia relacionada',nostories:'no hay historias para esta selección.',postsIn:'publicaciones en esta historia',chans:'canales',showing:'mostrando',
+  stories:'historias',firstPost:'primera publicación',tierOrder:'orden de niveles',threads:'hilos de historias',thisWeek:'por semana',overTime:'en el tiempo',groupLabel:'grupo',legend:'niveles dentro de los grupos',sections:'secciones',aboutPage:'acerca de',
+  aboutText:'<p>Un archivo de canales públicos de Telegram relevantes para la política española: ediciones en español de canales rusos, los canales en español que los alimentan y se alimentan de ellos, partidos y actores políticos, medios estatales de varios gobiernos y los grupos de debate vinculados a ellos.</p><p>El archivo conserva lo que publican los canales, con enlace a cada publicación original, y datos sobre los canales procedentes de investigaciones publicadas, cada uno con su fuente. Las publicaciones se agrupan además por semana en historias, cada una con una región y temas, de modo que un asunto pueda seguirse entre canales y semanas.</p>',
+  secChannels:'índice de los canales con descripción, actividad, reenvíos y datos citados',secStories:'publicaciones agrupadas por semana en historias, y las mismas historias seguidas en el tiempo',secSearch:'búsqueda en el texto completo de las publicaciones archivadas, con enlace a los originales',weeks:'semanas',minWeeks:'al menos %d semanas',week:'semana',region:'región',theme:'tema',all:'todas',story:'historia',earlier:'semanas anteriores',later:'semanas posteriores',related:'historia relacionada',nostories:'no hay historias para esta selección.',postsIn:'publicaciones en esta historia',chans:'canales',showing:'mostrando',
   invalid_query:'Introduce palabras o "frases entre comillas" cerradas. Máximo 20 términos.',query_too_long:'El texto de búsqueda está limitado a 300 caracteres.',invalid_date:'Introduce una fecha válida.',date_range:'La fecha inicial debe ser anterior o igual a la final.',invalid_sort:'Elige un orden válido.',invalid_page:'Elige una página válida.',invalid_channel:'Elige un canal del índice.',invalid_request:'Revisa los campos de búsqueda.',search_unavailable:'La búsqueda no está disponible. Inténtalo de nuevo.',search_timeout:'La búsqueda tardó demasiado. Añade palabras o reduce el intervalo de fechas.'}};
 let L=localStorage.getItem('lang')==='es'?'es':'en';
 const t=k=>T[L][k]||k;
@@ -264,27 +289,28 @@ function spark(a,n=60){const off=a.length-n;a=a.slice(off);const m=Math.max(1,..
 function bar(n,max,w=24){return '<span class="bar">'+'█'.repeat(Math.max(1,Math.round(n/max*w)))+'</span>'}
 function link(c){return c.handle?`<a href="https://t.me/${esc(c.handle)}" target="_blank" rel="noopener">@${esc(c.handle)}</a>`:`<span class="mute">id ${c.id}</span>`}
 function chanLink(c){return c.tracked?`<a href="#/c/${esc(c.handle||c.id)}">${esc(c.title||c.handle||c.id)}</a>`:esc(c.title||c.handle||('id '+c.id))}
-function nav(cur){const byT={};D.channels.forEach(c=>(byT[c.tier]=byT[c.tier]||[]).push(c));
- let h=`<input class="search" id="q" aria-label="${t('search')}" placeholder="${t('search')}"><ul><li><a href="#/">${t('home')}</a></li><li><a href="#/search">${t('messageSearch')}</a></li><li><a href="#/stories">${t('stories')}</a></li><li><a href="#/threads">${t('threads')}</a></li><li><a href="#/channels">${t('channels')}</a></li><li><a href="#/tiers">${t('tiers')}</a></li><li><a href="#/sources">${t('sources')}</a></li></ul>`;
- for(const k of Object.keys(D.tiers)){if(!byT[k])continue;h+=`<h3>${k.slice(0,1)} · ${byT[k].length}</h3><ul>`+byT[k].map(c=>`<li class="${cur===c.handle.toLowerCase()?'cur':''}"><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a></li>`).join('')+'</ul>'}
+const G=k=>D.groups[k]?D.groups[k][L]:k;
+function nav(cur){const byG={};D.channels.forEach(c=>(byG[c.group]=byG[c.group]||[]).push(c));
+ let h=`<input class="search" id="q" aria-label="${t('search')}" placeholder="${t('search')}"><ul><li><a href="#/">${t('aboutPage')}</a></li><li><a href="#/channels">${t('channels')}</a></li><li><a href="#/stories">${t('stories')}</a></li><li><a href="#/search">${t('messageSearch')}</a></li></ul>`;
+ for(const k of Object.keys(D.groups)){if(!byG[k])continue;h+=`<h3>${esc(G(k))} · ${byG[k].length}</h3><ul>`+byG[k].sort((a,b)=>(a.title||a.handle).localeCompare(b.title||b.handle)).map(c=>`<li class="${cur===c.handle.toLowerCase()?'cur':''}"><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a></li>`).join('')+'</ul>'}
  document.getElementById('nav').innerHTML=h;
  const q=document.getElementById('q');q.oninput=()=>{const v=q.value.toLowerCase();document.querySelectorAll('#nav li').forEach(li=>{li.style.display=li.textContent.toLowerCase().includes(v)?'':'none'})};
  document.onkeydown=e=>{if(e.key==='/'&&!e.target.closest('input,textarea,select,[contenteditable]')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();if(innerWidth<=760){document.body.classList.add('nav-open');document.getElementById('menu').setAttribute('aria-expanded','true')}q.focus()}}}
 function home(){
- const counts=[[t('indexed'),D.channels.length],[t('messages'),D.total],[t('cited'),D.channels.reduce((n,c)=>n+c.facts.length,0)],[t('sources'),Object.keys(D.sources).length]];
+ const counts=[[t('channels'),D.channels.length],[t('messages'),D.total],[t('stories'),D.stories],[t('sources'),Object.keys(D.sources).length]];
  const n=SP(),daily=D.daily.slice(-n),start=new Date(D.start+'T00:00:00Z');start.setUTCDate(start.getUTCDate()+D.days-n);
  const first=start.toISOString().slice(0,10),last=new Date(start);last.setUTCDate(last.getUTCDate()+n-1);
+ let src='<table>';for(const x of Object.values(D.sources)){const k=D.channels.filter(c=>c.facts.some(f=>f.source===x.key)).length;src+=`<tr><td class="mute nw">${x.date}</td><td>${esc(x.publisher)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a></td><td class="num">${k}</td></tr>`}src+='</table>';
  document.getElementById('view').innerHTML=`<div class="home-page">
   <section class="home-heading"><div><h2>${t('name')}</h2><div class="mute">${t('period')} ${D.range[0]||'—'} → ${D.range[1]||'—'}</div></div></section>
+  <section class="prose">${t('aboutText')}</section>
   <dl class="home-stats">${counts.map(([label,n])=>`<div><dt>${label}</dt><dd>${fmt(n)}</dd></div>`).join('')}</dl>
-  <div class="home-grid"><section><h3>${t('directory')} /</h3><ul class="archive-tree">
-   <li><span class="branch" aria-hidden="true">├── </span><a href="#/search">[${t('messageSearch')}]</a></li>
-   <li><span class="branch" aria-hidden="true">├── </span><a href="#/stories">[${t('stories')}]</a></li>
-   <li><span class="branch" aria-hidden="true">├── </span><a href="#/threads">[${t('threads')}]</a></li>
-   <li><span class="branch" aria-hidden="true">├── </span><a href="#/channels">[${t('browse')}]</a></li>
-   <li><span class="branch" aria-hidden="true">├── </span><a href="#/tiers">[${t('tiers')}]</a></li>
-   <li><span class="branch" aria-hidden="true">└── </span><a href="#/sources">[${t('sources')}]</a></li>
+  <div class="home-grid"><section><h3>${t('sections')}</h3><ul class="archive-tree">
+   <li><a href="#/channels">[${t('channels')}]</a> <span class="mute">${t('secChannels')}</span></li>
+   <li><a href="#/stories">[${t('stories')}]</a> <span class="mute">${t('secStories')}</span></li>
+   <li><a href="#/search">[${t('messageSearch')}]</a> <span class="mute">${t('secSearch')}</span></li>
   </ul></section><section><h3>${t('activity')} · ${t('days').replace('%d',n)}</h3>${chart(daily,first)}<div class="mute dates">${first} → ${last.toISOString().slice(0,10)}</div></section></div>
+  <section><h3>${t('sources')}</h3><div class="tw">${src}</div></section>
   <footer class="home-footer">${t('built')} ${D.built}</footer></div>`;
  document.onkeydown=e=>{if(e.key==='/'&&!e.target.closest('input,textarea,select,[contenteditable]')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();location.hash='/search'}};
 }
@@ -292,7 +318,7 @@ let searchController=null;
 function searchURL(params,page=1){const p=new URLSearchParams(params);p.delete('page');if(page>1)p.set('page',page);return '#/search'+(p.size?'?'+p.toString():'')}
 async function messageSearch(params){
  const options=D.channels.filter(c=>c.id).sort((a,b)=>(a.title||a.handle).localeCompare(b.title||b.handle));
- document.getElementById('view').innerHTML=`<h2>${t('messageSearch')}</h2><div class="ul">==============</div>
+ document.getElementById('view').innerHTML=`<h2>${t('messageSearch')}</h2>
   <form class="message-form" id="message-form"><div class="message-query"><label>${t('query')}<input type="search" name="q" id="message-q" required maxlength="300" value="${esc(params.get('q')||'')}" autocomplete="off"></label><button class="btn" type="submit">[${t('searchGo')}]</button></div><div class="mute hint">${t('queryHint')}</div>
    <div class="message-filters"><label>${t('channels')}<select name="channel"><option value="">${t('allChannels')}</option>${options.map(c=>`<option value="${esc(c.handle.toLowerCase())}">${esc(c.title||c.handle)} · @${esc(c.handle)}</option>`).join('')}</select></label>
     <label>${t('dateFrom')}<input type="date" name="from" value="${esc(params.get('from')||'')}"></label><label>${t('dateTo')}<input type="date" name="to" value="${esc(params.get('to')||'')}"></label>
@@ -317,17 +343,17 @@ async function messageSearch(params){
 const A=k=>D.arenas[k]?D.arenas[k][L]:k;const TT=s=>(L==='es'&&s.title_es)||s.title||'';const SM=s=>(L==='es'&&s.summary_es)||s.summary||'';
 function storiesURL(p){const q=new URLSearchParams();for(const k of ['week','region','theme'])if(p[k])q.set(k,p[k]);return '#/stories'+(q.size?'?'+q.toString():'')}
 async function storiesView(params){
- const view=document.getElementById('view');view.innerHTML=`<h2>${t('stories')}</h2><div class="ul">=======</div><div class="mute" role="status">${t('loading')}</div>`;
+ const view=document.getElementById('view');view.innerHTML=`<h2>${t('stories')}</h2><div class="mute" role="status">${t('loading')}</div>`;
  const controller=new AbortController();searchController=controller;
  try{
   let week=params.get('week');
   const wk=await (await fetch('/api/stories',{signal:controller.signal})).json();if(controller.signal.aborted)return;
-  if(!wk.weeks.length){view.innerHTML=`<h2>${t('stories')}</h2><div class="ul">=======</div><p class="mute">${t('nostories')}</p>`;return}
+  if(!wk.weeks.length){view.innerHTML=`<h2>${t('stories')}</h2><p class="mute">${t('nostories')}</p>`;return}
   if(!week||!wk.weeks.some(w=>w.week===week))week=wk.weeks[0].week;
   const region=params.get('region')||'',theme=params.get('theme')||'';
   const data=await (await fetch('/api/stories?'+new URLSearchParams({week,region,theme}),{signal:controller.signal})).json();if(controller.signal.aborted)return;
   const sel=(k,v)=>storiesURL({week,region:k==='region'?v:region,theme:k==='theme'?v:theme});
-  let h=`<h2>${t('stories')}</h2><div class="ul">=======</div>`;
+  let h=`<h2>${t('stories')}</h2>`+tabs('week');
   h+=`<div class="filters"><span class="mute">${t('week')}</span>${wk.weeks.map(w=>`<a class="${w.week===week?'on':''}" href="${esc(storiesURL({week:w.week,region,theme}))}">${esc(w.week)} <span class="mute">${fmt(w.n)}</span></a>`).join('')}</div>`;
   const keys=axis=>Object.keys(D.arenas).filter(k=>D.arenas[k].axis===axis);
   h+=`<div class="filters"><span class="mute">${t('region')}</span><a class="${region?'':'on'}" href="${esc(sel('region',''))}">${t('all')}</a>${keys('region').filter(k=>data.regions[k]).map(k=>`<a class="${region===k?'on':''}" href="${esc(sel('region',k))}">${esc(A(k))} <span class="mute">${data.regions[k]}</span></a>`).join('')}</div>`;
@@ -336,16 +362,17 @@ async function storiesView(params){
   if(!data.stories.length)h+=`<p class="mute">${t('nostories')}</p>`;
   for(const s of data.stories)h+=`<div class="story-row"><div><a href="#/s/${s.id}">${esc(TT(s))}</a>${s.prev?` <span class="mute" title="${t('earlier')}">⟵</span>`:''}</div><div class="meta"><span>${fmt(s.size)} ${t('posts')} · ${fmt(s.channels)} ${t('chans')}</span><span class="tag">${esc(A(s.region))}</span>${s.themes.map(k=>`<span class="tag">${esc(A(k))}</span>`).join('')}</div></div>`;
   view.innerHTML=h;
- }catch(e){if(e.name!=='AbortError')view.innerHTML=`<h2>${t('stories')}</h2><div class="ul">=======</div><p class="mute">${t('search_unavailable')}</p>`}
+ }catch(e){if(e.name!=='AbortError')view.innerHTML=`<h2>${t('stories')}</h2><p class="mute">${t('search_unavailable')}</p>`}
 }
+const tabs=cur=>`<div class="tabs"><a class="${cur==='week'?'on':''}" href="#/stories">${t('thisWeek')}</a><a class="${cur==='time'?'on':''}" href="#/stories?view=time">${t('overTime')}</a></div>`;
 async function threadsView(params){
  const view=document.getElementById('view');const min=Math.max(2,parseInt(params.get('min')||'3'));
- view.innerHTML=`<h2>${t('threads')}</h2><div class="ul">=============</div><div class="mute" role="status">${t('loading')}</div>`;
+ view.innerHTML=`<h2>${t('threads')}</h2><div class="mute" role="status">${t('loading')}</div>`;
  const controller=new AbortController();searchController=controller;
  try{
   const d=await (await fetch('/api/threads?min='+min,{signal:controller.signal})).json();if(controller.signal.aborted)return;
   const allWeeks=[...new Set(d.threads.flatMap(x=>x.weeks.map(w=>w.week)))].sort();
-  let h=`<h2>${t('threads')}</h2><div class="ul">=============</div><div class="filters"><span class="mute">${t('weeks')}</span>${[2,3,5,8].map(n=>`<a class="${n===min?'on':''}" href="#/threads?min=${n}">${t('minWeeks').replace('%d',n)}</a>`).join('')}</div>`;
+  let h=`<h2>${t('stories')}</h2>`+tabs('time')+`<div class="filters"><span class="mute">${t('weeks')}</span>${[2,3,5,8].map(n=>`<a class="${n===min?'on':''}" href="#/stories?view=time&min=${n}">${t('minWeeks').replace('%d',n)}</a>`).join('')}</div>`;
   h+=`<div class="mute">${fmt(d.threads.length)} · ${allWeeks[0]||''} → ${allWeeks[allWeeks.length-1]||''}</div>`;
   if(!d.threads.length)h+=`<p class="mute">${t('nostories')}</p>`;
   for(const x of d.threads){const by={};x.weeks.forEach(w=>by[w.week]=w);const m=Math.max(...x.weeks.map(w=>w.size));const first=allWeeks.indexOf(x.weeks[0].week),last=allWeeks.indexOf(x.weeks[x.weeks.length-1].week);
@@ -361,10 +388,10 @@ async function storyView(id){
   const r=await fetch('/api/story?id='+encodeURIComponent(id),{signal:controller.signal});if(controller.signal.aborted)return;
   if(!r.ok){view.innerHTML=`<p class="mute">${t('nostories')}</p>`;return}
   const s=await r.json();
-  let h=`<h2>${esc(TT(s))}</h2><div class="ul">${'='.repeat(Math.min(60,TT(s).length))}</div>`;
+  let h=`<h2>${esc(TT(s))}</h2>`;
   h+=`<div class="kv"><div>${t('week')}</div><div><a href="${esc(storiesURL({week:s.week}))}">${esc(s.week)}</a></div><div>${t('region')}</div><div><a href="${esc(storiesURL({week:s.week,region:s.region}))}">${esc(A(s.region))}</a></div><div>${t('theme')}</div><div>${s.themes.map(k=>`<a href="${esc(storiesURL({week:s.week,theme:k}))}">${esc(A(k))}</a>`).join(' · ')}</div><div>${t('posts')}</div><div>${fmt(s.size)} · ${fmt(s.channels_n)} ${t('chans')} · ${s.first?esc(s.first.slice(0,10)):''} → ${s.last?esc(s.last.slice(0,10)):''}</div></div>`;
   if(s.first_post)h+=`<div class="kv"><div>${t('firstPost')}</div><div><a href="#/c/${esc(s.first_post.handle||'')}">${esc(s.first_post.title||s.first_post.handle||'')}</a> <span class="mute">${esc(s.first_post.tier)} · ${esc((s.first_post.date||'').slice(0,16).replace('T',' '))} UTC</span></div><div>${t('tierOrder')}</div><div>${s.tier_order.map(x=>`<span title="${esc((x.date||'').slice(0,16).replace('T',' '))} UTC">${esc(x.tier)}</span>`).join(' → ')}</div></div>`;
-  if(SM(s))h+=`<p>${esc(SM(s))}</p>`;
+  if(SM(s))h+=`<p class="sum">${esc(SM(s))}</p>`;
   if(s.chain.length)h+=`<section><h2>${t('earlier')}</h2><ul class="chain">${s.chain.map(c=>`<li><span class="mute">${esc(c.week)}</span> <a href="#/s/${c.id}">${esc(TT(c))}</a> <span class="mute">${fmt(c.size)}</span></li>`).join('')}</ul></section>`;
   if(s.next.length)h+=`<section><h2>${t('later')}</h2><ul class="chain">${s.next.map(c=>`<li><span class="mute">${esc(c.week)}</span> <a href="#/s/${c.id}">${esc(TT(c))}</a> <span class="mute">${fmt(c.size)}</span></li>`).join('')}</ul></section>`;
   const m=s.channels.length?s.channels[0].n:1;
@@ -374,13 +401,18 @@ async function storyView(id){
   h+='</section>';view.innerHTML=h;
  }catch(e){if(e.name!=='AbortError')view.innerHTML=`<p class="mute">${t('search_unavailable')}</p>`}
 }
-let sortKey='tier',sortDir=1;
-function index(){const rows=[...D.channels].sort((a,b)=>{const x=a[sortKey],y=b[sortKey];return (x==null)-(y==null)||(x>y?1:x<y?-1:0)*sortDir||a.handle.localeCompare(b.handle)});
+let sortKey='group',sortDir=1;
+let groupFilter='';
+function index(){const rows=[...D.channels].filter(c=>!groupFilter||c.group===groupFilter).sort((a,b)=>{const x=a[sortKey],y=b[sortKey];return (x==null)-(y==null)||(x>y?1:x<y?-1:0)*sortDir||a.handle.localeCompare(b.handle)});
  const th=(k,l,cls='')=>`<th class="${cls}" data-k="${k}">${l}${sortKey===k?(sortDir>0?' ▴':' ▾'):''}</th>`;
- let h=`<p class="big">${fmt(D.channels.length)} ${t('channels')} · ${fmt(D.total)} ${t('messages')}</p><div class="ul">${t('archive')} ${D.range[0]} → ${D.range[1]} · ${t('built')} ${D.built}</div>`;
- h+=`<div class="tw"><table><tr>${th('tier',t('tier'))}${th('title',t('title'))}${th('subs',t('subs'),'num m-hide')}${th('n',t('posts'),'num')}${th('last',t('last'),'m-hide')}<th>${t('days').replace('%d',SP())}</th></tr>`;
- for(const c of rows)h+=`<tr><td class="mute">${c.tier[0]}</td><td><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a> <span class="mute">@${esc(c.handle)}</span></td><td class="num m-hide">${fmt(c.subs)}</td><td class="num">${c.n?fmt(c.n):'<span class="mute">—</span>'}</td><td class="nw m-hide">${c.last||'<span class="mute">'+t('notyet')+'</span>'}</td><td>${spark(c.daily,SP())}</td></tr>`;
- h+='</table></div>';document.getElementById('view').innerHTML=h;
+ let h=`<p class="big">${fmt(D.channels.length)} ${t('channels')} · ${fmt(D.total)} ${t('messages')}</p><div class="mute">${t('archive')} ${D.range[0]} → ${D.range[1]} · ${t('built')} ${D.built}</div>`;
+ h+=`<div class="filters"><span class="mute">${t('groupLabel')}</span><a class="${groupFilter?'':'on'}" href="#" data-g="">${t('all')}</a>${Object.keys(D.groups).map(k=>`<a class="${groupFilter===k?'on':''}" href="#" data-g="${k}">${esc(G(k))} <span class="mute">${D.channels.filter(c=>c.group===k).length}</span></a>`).join('')}</div>`;
+ h+=`<div class="tw"><table><tr>${th('group',t('groupLabel'))}${th('title',t('title'))}${th('subs',t('subs'),'num m-hide')}${th('n',t('posts'),'num')}${th('last',t('last'),'m-hide')}<th>${t('days').replace('%d',SP())}</th></tr>`;
+ for(const c of rows)h+=`<tr><td class="mute nw" title="${esc(D.tiers[c.tier][L])}">${esc(G(c.group))}</td><td><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a> <span class="mute">@${esc(c.handle)}</span></td><td class="num m-hide">${fmt(c.subs)}</td><td class="num">${c.n?fmt(c.n):'<span class="mute">—</span>'}</td><td class="nw m-hide">${c.last||'<span class="mute">'+t('notyet')+'</span>'}</td><td>${spark(c.daily,SP())}</td></tr>`;
+ h+='</table></div>';
+ h+=`<details class="legend"><summary>${t('legend')}</summary><table>${Object.keys(D.groups).map(g=>D.groups[g].tiers.filter(x=>Object.keys(D.tiers).some(k=>k[0]===x)).map(x=>{const k=Object.keys(D.tiers).find(k=>k[0]===x);const n=D.channels.filter(c=>c.tier===k).length;return n?`<tr><td class="mute nw">${esc(G(g))}</td><td class="mute">${x}</td><td class="num">${n}</td><td>${esc(D.tiers[k][L])}</td></tr>`:''}).join('')).join('')}</table></details>`;
+ document.getElementById('view').innerHTML=h;
+ document.querySelectorAll('.filters a[data-g]').forEach(a=>a.onclick=e=>{e.preventDefault();groupFilter=a.dataset.g;index()});
  document.querySelectorAll('th[data-k]').forEach(e=>e.onclick=()=>{const k=e.dataset.k;if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=1}index()})}
 function chart(a,start=D.start){const H=8,W=a.length,m=Math.max(1,...a);const rows=[];for(let r=H;r>=1;r--){let s=String(Math.round(m*r/H)).padStart(6)+' ┤';for(let i=0;i<W;i++){const v=a[i]/m*H;s+=v>=r?'█':v>=r-.5?'▄':' '}rows.push(s)}
  rows.push('       └'+'─'.repeat(W));const lab=[];for(let i=0;i<W;i+=30){const d=new Date(start+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+i);lab.push(d.toISOString().slice(5,10).padEnd(Math.min(30,W-i)))}rows.push('        '+lab.join(''));return `<div class="chart">${rows.map(r=>esc(r)).join('\n')}</div>`}
@@ -391,9 +423,9 @@ function heat(hm){if(!hm)return '';const G=' ·░▒▓█';const m=Math.max(1,
  const peak=byH.indexOf(Math.max(...byH));const wk=hm.slice(0,5).flat().reduce((a,b)=>a+b,0)/5,we=hm.slice(5).flat().reduce((a,b)=>a+b,0)/2;
  return `<div class="chart">${esc(out)}</div><div class="mute">${L==='es'?'hora pico':'peak hour'} ${String(peak).padStart(2,'0')}:00 UTC (${(peak+2)%24}:00 Madrid, ${(peak+3)%24}:00 Moscow) · ${L==='es'?'fin de semana / laborable':'weekend / weekday'} ${(we/Math.max(1,wk)).toFixed(2)}</div>`}
 function channel(handle){const c=D.channels.find(x=>x.handle.toLowerCase()===handle.toLowerCase());if(!c){document.getElementById('view').innerHTML='?';return}
- let h=`<h2>${esc(c.title||c.handle)}</h2><div class="ul">${'='.repeat(Math.min(60,(c.title||c.handle).length))}</div>`;
+ let h=`<h2>${esc(c.title||c.handle)}</h2>`;
  h+=`<div><a href="#/search?channel=${esc(encodeURIComponent(c.handle.toLowerCase()))}">[${t('messageSearch')}]</a></div>`;
- h+=`<div class="kv"><div>${t('handle')}</div><div>${link(c)}</div><div>${t('tier')}</div><div>${c.tier[0]} · ${esc(D.tiers[c.tier][L])}</div>`;
+ h+=`<div class="kv"><div>${t('handle')}</div><div>${link(c)}</div><div>${t('groupLabel')}</div><div>${esc(G(c.group))}</div><div>${t('tier')}</div><div>${c.tier[0]} · ${esc(D.tiers[c.tier][L])}</div>`;
  if(c.linked_note)h+=`<div>${t('group')}</div><div>${esc(c.linked_note)}</div>`;
  h+=`<div>${t('subs')}</div><div>${fmt(c.subs)}</div><div>${t('created')}</div><div>${c.created||'—'}</div></div>`;
  if(c.about)h+=`<section><h2>${t('about')}</h2><div class="about">${esc(c.about)}</div></section>`;
@@ -411,15 +443,15 @@ function channel(handle){const c=D.channels.find(x=>x.handle.toLowerCase()===han
  list(t('fwdto'),c.fwd_to,i=>chanLink(i));
  list(t('domains'),c.domains.map(([d,n])=>({d,n})),i=>esc(i.d));
  document.getElementById('view').innerHTML=h}
-function tiers(){let h=`<h2>${t('tierlist')}</h2><div class="ul">======</div><table>`;for(const [k,v] of Object.entries(D.tiers)){const n=D.channels.filter(c=>c.tier===k).length;h+=`<tr><td>${k[0]}</td><td class="num">${n}</td><td>${esc(v[L])}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
-function sources(){let h=`<h2>${t('sources')}</h2><div class="ul">=======</div><table>`;for(const s of Object.values(D.sources)){const n=D.channels.filter(c=>c.facts.some(f=>f.source===s.key)).length;h+=`<tr><td class="mute">${s.key}</td><td>${s.date}</td><td>${esc(s.publisher)}</td><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a></td><td class="num">${n}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
+function tiers(){let h=`<h2>${t('tierlist')}</h2><table>`;for(const [k,v] of Object.entries(D.tiers)){const n=D.channels.filter(c=>c.tier===k).length;h+=`<tr><td>${k[0]}</td><td class="num">${n}</td><td>${esc(v[L])}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
+function sources(){let h=`<h2>${t('sources')}</h2><table>`;for(const s of Object.values(D.sources)){const n=D.channels.filter(c=>c.facts.some(f=>f.source===s.key)).length;h+=`<tr><td class="mute">${s.key}</td><td>${s.date}</td><td>${esc(s.publisher)}</td><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a></td><td class="num">${n}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
 function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/),sm=p.match(/^s\/(\d+)$/);const isHome=!p;
  document.body.classList.toggle('home',isHome);document.documentElement.lang=L;
  document.getElementById('brand').textContent=t('name');document.getElementById('menu').textContent=`[${t('directory')}]`;document.getElementById('menu').setAttribute('aria-expanded',String(document.body.classList.contains('nav-open')));
- document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='stories'||sm?t('stories'):p==='threads'?t('threads'):p==='tiers'?t('tiers'):p==='sources'?t('sources'):t('channels'))}`;
+ document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='stories'||p==='threads'||sm?t('stories'):t('channels'))}`;
  if(!isHome)nav(m?decodeURIComponent(m[1]).toLowerCase():null);
  document.getElementById('hdr').textContent=`${fmt(D.channels.length)} ${t('channels')} · ${fmt(D.total)} ${t('messages')}`;
- if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories')storiesView(new URLSearchParams(query));else if(p==='threads')threadsView(new URLSearchParams(query));else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='tiers')tiers();else if(p==='sources')sources();else index();window.scrollTo(0,0)}
+ if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories'||p==='threads'){const q=new URLSearchParams(query);(p==='threads'||q.get('view')==='time')?threadsView(q):storiesView(q)}else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='sources')home();else index();window.scrollTo(0,0)}
 document.getElementById('lang').onclick=()=>{L=L==='en'?'es':'en';localStorage.setItem('lang',L);document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';applyTheme();route()};
 document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';
 const th=document.getElementById('theme');let dark=(localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';
