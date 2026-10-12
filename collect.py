@@ -225,8 +225,8 @@ async def sync_channel(client: TelegramClient, db: sqlite3.Connection, spec: dic
     if refetch:
         last = 0  # walk everything again; UPSERT refreshes columns in place
     n = 0
-    # Full backfills go through a Takeout session when one is open (≈2.5x faster history reads, measured
-    # 2026-10-12); hourly increments use the normal client. Falls back to normal reads if Takeout was refused.
+    # With --takeout, full backfills go through a Takeout session; hourly increments always use the normal
+    # client. Measured 2026-10-12: no gain over normal reads here (the collector is latency-bound), so off by default.
     reader = takeout if (takeout is not None and last == 0) else client
     if reader is takeout:
         log.info("[%s] backfill via takeout", handle)
@@ -290,7 +290,7 @@ async def main() -> None:
     ap.add_argument("--resolve", action="append", help="search Telegram for a channel by name; repeat for multiple names")
     ap.add_argument("--refetch", action="store_true", help="re-read full history of the given channels (fills new columns; no new rows expected)")
     ap.add_argument("--benchmark-takeout", action="store_true", help="compare normal and Takeout history reads; no archive writes")
-    ap.add_argument("--no-takeout", action="store_true", help="do not open a Takeout session for backfills")
+    ap.add_argument("--takeout", action="store_true", help="read backfills through a Takeout session (measured no faster than normal reads here; off by default)")
     ap.add_argument("--concurrency", type=int, default=3, help="channels fetched in parallel (default 3)")
     ap.add_argument("--benchmark-messages", type=int, default=1000)
     ap.add_argument("--benchmark-rounds", type=int, default=2)
@@ -323,14 +323,26 @@ async def main() -> None:
         needs_backfill = any(
             (db.execute("SELECT 1 FROM sync_state WHERE handle=? AND backfill_done=1", (sp["handle"],)).fetchone() is None) or args.refetch
             for sp in specs)
-        if needs_backfill and not args.no_takeout:
+        if needs_backfill and args.takeout:
             try:
                 takeout = await client.takeout(channels=True, files=False).__aenter__()
                 log.info("takeout session open")
+            except ValueError:  # a previous run was killed with its takeout still open
+                try:
+                    await client.end_takeout(success=False)
+                    takeout = await client.takeout(channels=True, files=False).__aenter__()
+                    log.info("takeout session open (stale one closed)")
+                except Exception as e:  # noqa: BLE001
+                    log.warning("takeout unavailable (%s); using normal reads this run", e)
             except TakeoutInitDelayError as e:
                 log.warning("takeout refused for %ss; using normal reads this run", e.seconds)
             except RPCError as e:
                 log.warning("takeout unavailable (%s); using normal reads this run", e)
+        elif not args.takeout:
+            try:  # clear any stale takeout left by an interrupted run so later --takeout runs work
+                await client.end_takeout(success=False)
+            except Exception:  # noqa: BLE001
+                pass
         failed = 0
         sem = asyncio.Semaphore(max(1, args.concurrency))
 
