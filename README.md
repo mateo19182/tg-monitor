@@ -70,6 +70,10 @@ Stories:
 `stories.sh` runs this for the previous week every Monday at 05:00 (cron). Discussion-group comments are excluded from embedding and stories for now (`embed.py --comments` to include them).
 A story is a group of similar posts within one ISO week; members far from the group's centre are left unassigned. Channel promotion (subscribe calls, livestream alerts, catalogues) is labelled with the `housekeeping` bucket and excluded from story counts. `=id` marks the same story continued from the previous week (centroid cosine ≥ 0.90), `~id` a related story (0.85–0.90). About a quarter of posts stay unassigned.
 
+## Dataset release
+
+`release.py build` writes `data/release/` (Parquet + README card from `dataset_card.md`); `release.py upload` pushes it to https://huggingface.co/datasets/mateo-19182/spanish-politics-telegram (private + gated; `--public` makes it visible, downloads stay gated). Needs `HF_TOKEN` in `.env`; `HF_SALT` is generated on first build and keeps sender pseudonyms stable across releases. Never publish the salt.
+
 ## Operations
 
 ```
