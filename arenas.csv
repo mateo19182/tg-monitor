@@ -9,7 +9,7 @@ region,middle_east,Middle East,Oriente Medio,"Israel, Palestine, Lebanon, Syria,
 region,africa,Sub-Saharan Africa,África subsahariana,"Africa south of the Sahara, including the Sahel."
 region,asia_pacific,Asia and the Pacific,Asia y el Pacífico,"China, India, Korea, Japan, Southeast Asia and Oceania."
 region,global,Global or several regions,Global o varias regiones,"Stories spanning several regions, international organisations, or relations between two of the regions above (e.g. US–Russia talks)."
-theme,election_29n,Spain's 29-N election,Elecciones del 29-N,"Spain's general election of 29 November 2026: calling, candidacies, lists, census and voting rules, campaign events, polls, results."
+theme,election_29n,Spain's 29-N election,Elecciones del 29-N,"Spain's general election of 29 November 2026: calling, candidacies, lists, census and voting rules, campaign events, polls, results. Only this Spanish election: elections in other countries are politics, never election_29n."
 theme,politics,Government and politics,Gobierno y política,"Governments, parliaments, parties, leaders, institutions and elections other than Spain's 29-N."
 theme,war_defence,War and defence,Guerra y defensa,"Armed conflict, strikes, front lines, casualties, armed forces, weapons, arms deals, intelligence and sabotage."
 theme,diplomacy_sanctions,Diplomacy and sanctions,Diplomacia y sanciones,"Foreign relations, negotiations, summits, sanctions, alliances such as NATO, international organisations."

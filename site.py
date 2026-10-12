@@ -4,6 +4,7 @@
   python site.py [--out site]
 """
 import argparse
+import html
 import csv
 import json
 import sqlite3
@@ -72,6 +73,74 @@ def domain(u: str) -> str | None:
     return h.lower().removeprefix("www.") or None
 
 
+ELECTION_DAY = "2026-11-29"
+ELECTION_FROM = "2026-08-01"
+ELECTION_TERMS = ["elecciones generales", "29N", "29-N", "29 de noviembre", "voto por correo", "campaña electoral", "Junta Electoral"]
+
+
+def election(db, chans: dict, tier_of: dict, watch: list) -> dict:
+    """29N page: daily posts matching ELECTION_TERMS by group, election_29n stories, party/candidate channels, linked pages."""
+    q = " OR ".join('"' + t.replace("-", " ") + '"' for t in ELECTION_TERMS)
+    start = date.fromisoformat(ELECTION_FROM); n_days = (date.today() - start).days + 1
+    daily = defaultdict(lambda: [0] * n_days); hits = defaultdict(int); recent = set()
+    since14 = (date.today() - timedelta(days=13)).isoformat()
+    try:
+        rows = db.execute("SELECT m.channel_id, m.msg_id, substr(m.date,1,10) FROM message_search s JOIN messages m ON m.rowid = s.rowid "
+                          "WHERE message_search MATCH ? AND m.date >= ?", (q, ELECTION_FROM)).fetchall()
+    except sqlite3.Error:
+        rows = []
+    for cid, mid, d in rows:
+        i = (date.fromisoformat(d) - start).days
+        if 0 <= i < n_days:
+            g = GROUP_OF.get((tier_of.get(cid) or "?")[0], "other")
+            daily[g][i] += 1; daily[""][i] += 1
+        if d >= (date.today() - timedelta(days=29)).isoformat():
+            hits[cid] += 1
+        if d >= since14:
+            recent.add((cid, mid))
+    out = {"day": ELECTION_DAY, "start": ELECTION_FROM, "terms": ELECTION_TERMS, "daily": dict(daily), "stories": [], "parties": [], "pages": []}
+    if (HERE / "vec.db").exists():
+        try:
+            vec = sqlite3.connect(f"file:{HERE / 'vec.db'}?mode=ro", uri=True)
+            # the label model sometimes tags other countries' elections with election_29n: keep region spain only
+            out["stories"] = [{"id": i, "week": w, "title": t, "title_es": te, "size": n, "channels": c} for i, w, t, te, n, c, ar in vec.execute(
+                "SELECT id, week, title, title_es, size, n_channels, arenas FROM stories WHERE kind='post' AND title IS NOT NULL AND arenas LIKE '%\"election_29n\"%' "
+                "ORDER BY week DESC, size DESC LIMIT 100") if (json.loads(ar) or [None])[0] in ("spain", "maghreb")][:60]
+        except sqlite3.Error:
+            pass
+    # parliamentary parties (J) and campaign channels (U)
+    weeks = 8; w0 = date.today() - timedelta(days=7 * weeks - 1)
+    wk = defaultdict(lambda: [0] * weeks)
+    for cid, d, n in db.execute("SELECT channel_id, substr(date,1,10), COUNT(*) FROM messages WHERE date >= ? GROUP BY 1, 2", (w0.isoformat(),)):
+        if (tier_of.get(cid) or "")[:1] in ("J", "U"):
+            wk[cid][min(weeks - 1, (date.fromisoformat(d) - w0).days // 7)] += n
+    views = dict(db.execute("SELECT channel_id, AVG(views) FROM messages WHERE date >= ? AND fwd_from_channel_id IS NULL GROUP BY 1",
+                            ((date.today() - timedelta(days=30)).isoformat(),)))
+    by_handle = {(c["username"] or str(c["id"])).lower(): c for c in chans.values()}
+    for w in watch:
+        if w["tier"][:1] not in ("J", "U"):
+            continue
+        c = by_handle.get(w["handle"].lower()); cid = c["id"] if c else None
+        out["parties"].append({"handle": w["handle"], "title": c["title"] if c else None, "tier": w["tier"][0], "archived": bool(c),
+                               "weeks": wk[cid] if cid else None, "views": round(views[cid]) if cid and views.get(cid) is not None else None, "hits": hits.get(cid, 0)})
+    out["parties"].sort(key=lambda r: (not r["archived"], -(r["weeks"] or [0])[-1], (r["title"] or r["handle"]).lower()))
+    # pages linked from matching posts, last 14 days
+    if recent and (HERE / "links.db").exists():
+        try:
+            ldb = sqlite3.connect(f"file:{HERE / 'links.db'}?mode=ro", uri=True)
+            agg = defaultdict(lambda: [0, set(), "", None])
+            for cid, mid, canon, dom, title in ldb.execute(
+                    "SELECT l.channel_id, l.msg_id, l.canon, l.domain, p.title FROM links l LEFT JOIN pages p ON p.canon = l.canon "
+                    "WHERE l.date >= ? AND l.kind = 'content'", (since14,)):
+                if (cid, mid) in recent and urlsplit(canon).path not in ("", "/"):  # outlet homepages are mostly post footers
+                    a = agg[canon]; a[0] += 1; a[1].add(cid); a[2] = dom; a[3] = title
+            out["pages"] = [{"url": u, "n": a[0], "channels": len(a[1]), "domain": a[2], "title": html.unescape(a[3]) if a[3] else None}
+                            for u, a in sorted(agg.items(), key=lambda x: (-len(x[1][1]), -x[1][0]))[:25]]
+        except sqlite3.Error:
+            pass
+    return out
+
+
 def build() -> dict:
     db = sqlite3.connect(DB)
     db.row_factory = sqlite3.Row
@@ -85,6 +154,7 @@ def build() -> dict:
 
     chans = {r["id"]: dict(r) for r in db.execute("SELECT * FROM channels")}
     by_handle = {(c["username"] or str(c["id"])).lower(): c for c in chans.values()}
+    tier_by_id = {by_handle[w["handle"].lower()]["id"]: w["tier"] for w in watch if w["handle"].lower() in by_handle}
     fwd_names = {r["channel_id"]: dict(r) for r in db.execute("SELECT * FROM fwd_sources")}
 
     today = date.today()
@@ -198,6 +268,7 @@ def build() -> dict:
         "days": DAYS, "start": start, "total": total[0], "range": [(total[1] or "")[:10], (total[2] or "")[:10]],
         "daily": [sum(counts[i] for counts in daily.values()) for i in range(DAYS)],
         "tiers": TIERS, "sources": sources, "channels": out, "arenas": arenas,
+        "election": election(db, chans, tier_by_id, watch),
     }
 
 
@@ -307,7 +378,7 @@ const T={
   loading:'searching…',results:'results',noresults:'no matching messages.',original:'original post',previous:'previous',next:'next',page:'page',
   stories:'stories',firstPost:'first post',tierOrder:'order of tiers',threads:'story threads',thisWeek:'by week',overTime:'over time',groupLabel:'group',legend:'tiers inside the groups',sections:'sections',aboutPage:'about',
   aboutText:'<p>A public archive of Telegram channels relevant to Spanish politics.</p>',weeks:'weeks',minWeeks:'at least %d weeks',week:'week',region:'region',theme:'theme',all:'all',story:'story',earlier:'earlier weeks',later:'later weeks',related:'related story',nostories:'no stories for this selection.',postsIn:'posts in this story',chans:'channels',showing:'showing',
-  invalid_query:'Enter words or balanced "quoted phrases". Maximum 20 terms.',query_too_long:'Search text is limited to 300 characters.',invalid_date:'Enter a valid date.',date_range:'The start date must be on or before the end date.',invalid_sort:'Choose a valid order.',invalid_page:'Choose a valid page.',invalid_channel:'Choose a channel in the index.',invalid_request:'Check the search fields.',search_unavailable:'Search is unavailable. Try again.',search_timeout:'This search took too long. Try more words or a narrower date range.',monthly:'posts per month · full archive',views30:'average views per own post, last 30 days',withMedia:'posts with photo, video or file',withLinks:'posts with links',storiesIn:'appears in %d stories',byRegion:'posts in stories by region',byTheme:'posts in stories by theme',recentStories:'latest stories',links:'links',method:'method',linkKinds:'links by type',content:'web pages',social:'social networks',telegram:'Telegram',shortener:'shortened links',colLinks:'links',kind:'type',sharedUrls:'pages linked by the most channels · last 7 days · all groups',tmeRefs:'Telegram channels outside the list, linked by the most listed channels',w7:'7 days',w30:'30 days',wall:'all',allGroups:'all groups',lastRef:'last',window:'period',noLinks:'link statistics are not available yet.'},
+  invalid_query:'Enter words or balanced "quoted phrases". Maximum 20 terms.',query_too_long:'Search text is limited to 300 characters.',invalid_date:'Enter a valid date.',date_range:'The start date must be on or before the end date.',invalid_sort:'Choose a valid order.',invalid_page:'Choose a valid page.',invalid_channel:'Choose a channel in the index.',invalid_request:'Check the search fields.',search_unavailable:'Search is unavailable. Try again.',search_timeout:'This search took too long. Try more words or a narrower date range.',monthly:'posts per month · full archive',views30:'average views per own post, last 30 days',withMedia:'posts with photo, video or file',withLinks:'posts with links',storiesIn:'appears in %d stories',byRegion:'posts in stories by region',byTheme:'posts in stories by theme',recentStories:'latest stories',links:'links',method:'method',linkKinds:'links by type',content:'web pages',social:'social networks',telegram:'Telegram',shortener:'shortened links',colLinks:'links',kind:'type',sharedUrls:'pages linked by the most channels · last 7 days · all groups',tmeRefs:'Telegram channels outside the list, linked by the most listed channels',w7:'7 days',w30:'30 days',wall:'all',allGroups:'all groups',lastRef:'last',window:'period',noLinks:'link statistics are not available yet.',e29n:'29N',eTitle:'General election · 29 November 2026',daysTo:'%d days to go',eDay:'election day',daysSince:'%d days since the election',ePosts:'posts containing election terms, per day',eTerms:'terms',eByGroup:'by group',last7:'last 7 days',sinceStart:'since %s',eStories:'stories with the theme “29N election”',eParties:'parties and candidates',perWeek:'posts per week, last 8 weeks',avgViews:'avg views, 30 days',eHits:'posts with election terms, 30 days',queued:'queued',ePages:'pages linked from posts with election terms · last 14 days',noneYet:'none yet.'},
  es:{channels:'canales',messages:'mensajes',archive:'archivo',tiers:'niveles',sources:'fuentes',handle:'usuario',title:'título',tier:'nivel',subs:'suscriptores',posts:'publicaciones',last:'última publicación',days:'últimos %d días',search:'buscar /',
   about:'descripción (tal como la publica el canal)',facts:'investigaciones publicadas',stats:'archivo',created:'canal creado',first:'primera publicación archivada',views:'visualizaciones totales',fwd:'publicaciones que son reenvíos',senders:'remitentes distintos',
   fwdfrom:'más reenviado desde',fwdto:'reenviado por canales seguidos',domains:'dominios más enlazados',none:'ninguno',notyet:'aún no archivado',perday:'publicaciones por día',tracked:'seguido',untracked:'no seguido',
@@ -317,7 +388,7 @@ const T={
   loading:'buscando…',results:'resultados',noresults:'no hay mensajes coincidentes.',original:'publicación original',previous:'anterior',next:'siguiente',page:'página',
   stories:'historias',firstPost:'primera publicación',tierOrder:'orden de niveles',threads:'hilos de historias',thisWeek:'por semana',overTime:'en el tiempo',groupLabel:'grupo',legend:'niveles dentro de los grupos',sections:'secciones',aboutPage:'acerca de',
   aboutText:'<p>Un archivo público de canales de Telegram relevantes para la política española.</p>',weeks:'semanas',minWeeks:'al menos %d semanas',week:'semana',region:'región',theme:'tema',all:'todas',story:'historia',earlier:'semanas anteriores',later:'semanas posteriores',related:'historia relacionada',nostories:'no hay historias para esta selección.',postsIn:'publicaciones en esta historia',chans:'canales',showing:'mostrando',
-  invalid_query:'Introduce palabras o "frases entre comillas" cerradas. Máximo 20 términos.',query_too_long:'El texto de búsqueda está limitado a 300 caracteres.',invalid_date:'Introduce una fecha válida.',date_range:'La fecha inicial debe ser anterior o igual a la final.',invalid_sort:'Elige un orden válido.',invalid_page:'Elige una página válida.',invalid_channel:'Elige un canal del índice.',invalid_request:'Revisa los campos de búsqueda.',search_unavailable:'La búsqueda no está disponible. Inténtalo de nuevo.',search_timeout:'La búsqueda tardó demasiado. Añade palabras o reduce el intervalo de fechas.',monthly:'publicaciones por mes · archivo completo',views30:'visualizaciones medias por publicación propia, últimos 30 días',withMedia:'publicaciones con foto, vídeo o archivo',withLinks:'publicaciones con enlaces',storiesIn:'aparece en %d historias',byRegion:'publicaciones en historias por región',byTheme:'publicaciones en historias por tema',recentStories:'historias más recientes',links:'enlaces',method:'método',linkKinds:'enlaces por tipo',content:'páginas web',social:'redes sociales',telegram:'Telegram',shortener:'enlaces acortados',colLinks:'enlaces',kind:'tipo',sharedUrls:'páginas enlazadas por más canales · últimos 7 días · todos los grupos',tmeRefs:'Canales de Telegram fuera de la lista, enlazados por más canales de la lista',w7:'7 días',w30:'30 días',wall:'todo',allGroups:'todos los grupos',lastRef:'último',window:'periodo',noLinks:'las estadísticas de enlaces aún no están disponibles.'}};
+  invalid_query:'Introduce palabras o "frases entre comillas" cerradas. Máximo 20 términos.',query_too_long:'El texto de búsqueda está limitado a 300 caracteres.',invalid_date:'Introduce una fecha válida.',date_range:'La fecha inicial debe ser anterior o igual a la final.',invalid_sort:'Elige un orden válido.',invalid_page:'Elige una página válida.',invalid_channel:'Elige un canal del índice.',invalid_request:'Revisa los campos de búsqueda.',search_unavailable:'La búsqueda no está disponible. Inténtalo de nuevo.',search_timeout:'La búsqueda tardó demasiado. Añade palabras o reduce el intervalo de fechas.',monthly:'publicaciones por mes · archivo completo',views30:'visualizaciones medias por publicación propia, últimos 30 días',withMedia:'publicaciones con foto, vídeo o archivo',withLinks:'publicaciones con enlaces',storiesIn:'aparece en %d historias',byRegion:'publicaciones en historias por región',byTheme:'publicaciones en historias por tema',recentStories:'historias más recientes',links:'enlaces',method:'método',linkKinds:'enlaces por tipo',content:'páginas web',social:'redes sociales',telegram:'Telegram',shortener:'enlaces acortados',colLinks:'enlaces',kind:'tipo',sharedUrls:'páginas enlazadas por más canales · últimos 7 días · todos los grupos',tmeRefs:'Canales de Telegram fuera de la lista, enlazados por más canales de la lista',w7:'7 días',w30:'30 días',wall:'todo',allGroups:'todos los grupos',lastRef:'último',window:'periodo',noLinks:'las estadísticas de enlaces aún no están disponibles.',e29n:'29N',eTitle:'Elecciones generales · 29 de noviembre de 2026',daysTo:'faltan %d días',eDay:'día de las elecciones',daysSince:'%d días desde las elecciones',ePosts:'publicaciones con términos electorales, por día',eTerms:'términos',eByGroup:'por grupo',last7:'últimos 7 días',sinceStart:'desde %s',eStories:'historias con el tema «elecciones 29N»',eParties:'partidos y candidatos',perWeek:'publicaciones por semana, últimas 8 semanas',avgViews:'visualizaciones medias, 30 días',eHits:'publicaciones con términos electorales, 30 días',queued:'en cola',ePages:'páginas enlazadas desde publicaciones con términos electorales · últimos 14 días',noneYet:'aún ninguna.'}};
 let L=localStorage.getItem('lang')==='es'?'es':'en';
 const t=k=>T[L][k]||k;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -328,7 +399,7 @@ function bar(n,max,w=24){return '<span class="bar">'+'█'.repeat(Math.max(1,Mat
 function link(c){return c.handle?`<a href="https://t.me/${esc(c.handle)}" target="_blank" rel="noopener">@${esc(c.handle)}</a>`:`<span class="mute">id ${c.id}</span>`}
 function chanLink(c){return c.tracked?`<a href="#/c/${esc(c.handle||c.id)}">${esc(c.title||c.handle||c.id)}</a>`:esc(c.title||c.handle||('id '+c.id))}
 const G=k=>D.groups[k]?D.groups[k][L]:k;
-function nav(cur){document.getElementById('top').innerHTML=[['',t('aboutPage')],['channels',t('channels')],['stories',t('stories')],['links',t('links')],['search',t('messageSearch')],['method',t('method')]].map(([k,l])=>`<a class="${cur===k?'on':''}" href="#/${k}">${l}</a>`).join('')}
+function nav(cur){document.getElementById('top').innerHTML=[['',t('aboutPage')],['29n',t('e29n')],['channels',t('channels')],['stories',t('stories')],['links',t('links')],['search',t('messageSearch')],['method',t('method')]].map(([k,l])=>`<a class="${cur===k?'on':''}" href="#/${k}">${l}</a>`).join('')}
 function home(){
  const counts=[[t('channels'),D.channels.length],[t('messages'),D.total],[t('stories'),D.stories]];
  const n=SP(),daily=D.daily.slice(-n),start=new Date(D.start+'T00:00:00Z');start.setUTCDate(start.getUTCDate()+D.days-n);
@@ -535,12 +606,25 @@ const METHOD={
 <li>Visualizaciones según Telegram.</li>
 <li>Sin reacciones ni historias de Telegram; comentarios solo de los grupos de debate de la lista.</li></ul>`};
 function methodView(){document.getElementById('view').innerHTML=`<div class="prose">${METHOD[L]({n:fmt(D.channels.length),a:fmt(D.channels.filter(c=>c.n).length),g:Object.keys(D.groups).length})}</div>`}
+function electionView(){const E=D.election,v=document.getElementById('view');if(!E){v.innerHTML='';return}
+ const today=new Date(new Date().toISOString().slice(0,10)+'T00:00:00Z'),dd=Math.round((new Date(E.day+'T00:00:00Z')-today)/864e5);
+ const cd=dd>0?t('daysTo').replace('%d',dd):dd===0?t('eDay'):t('daysSince').replace('%d',-dd);
+ const all=E.daily['']||[],bw=innerWidth<=760?12:24;
+ let h=`<h2>${t('eTitle')}</h2><p class="big">${cd}</p>`;
+ h+=`<section><div class="mute">${t('ePosts')} · ${t('sinceStart').replace('%s',E.start)}</div>${chart(all,E.start)}<div class="mute" style="font-size:13px;margin-top:8px">${t('eTerms')}: ${E.terms.map(x=>`<a href="#/search?q=${encodeURIComponent('"'+x+'"')}">"${esc(x)}"</a>`).join(' · ')}</div></section>`;
+ const gs=Object.keys(D.groups).filter(g=>E.daily[g]).map(g=>({g,w:E.daily[g].slice(-7).reduce((a,b)=>a+b,0),n:E.daily[g].reduce((a,b)=>a+b,0)})).sort((a,b)=>b.w-a.w||b.n-a.n),gm=Math.max(1,...gs.map(x=>x.w));
+ h+=`<section><h2>${t('eByGroup')}</h2><div class="tw"><table><tr><th></th><th class="num">${t('last7')}</th><th></th><th class="num">${t('sinceStart').replace('%s',E.start)}</th></tr>${gs.map(x=>`<tr><td>${esc(G(x.g))}</td><td class="num">${fmt(x.w)}</td><td>${bar(x.w||0,gm,bw)}</td><td class="num">${fmt(x.n)}</td></tr>`).join('')}</table></div></section>`;
+ h+=`<section><h2>${t('eStories')}</h2>${E.stories.length?E.stories.map(s=>`<div class="story-row"><div class="meta"><span class="tag">${esc(s.week)}</span><span class="tag">${fmt(s.size)} ${t('posts')}</span><span class="tag">${fmt(s.channels)} ${t('chans')}</span></div><a href="#/s/${s.id}">${esc((L==='es'&&s.title_es)||s.title)}</a></div>`).join(''):`<p class="mute">${t('noneYet')}</p>`}</section>`;
+ const wk=a=>'<span class="spark">'+(a||[]).map(v=>{const m=Math.max(1,...a);return v?BL[Math.min(7,Math.floor(v/m*7.99))]:'·'}).join('')+'</span>';
+ h+=`<section><h2>${t('eParties')}</h2><div class="tw"><table><tr><th></th><th>${t('tier')}</th><th>${t('perWeek')}</th><th class="num">${t('avgViews')}</th><th class="num">${t('eHits')}</th></tr>${E.parties.map(p=>`<tr><td>${p.archived?`<a href="#/c/${esc(p.handle)}">${esc(p.title||p.handle)}</a>`:`${esc(p.handle)} <span class="mute">· ${t('queued')}</span>`}</td><td class="mute">${esc(p.tier)}</td><td>${p.archived?wk(p.weeks):''}</td><td class="num">${p.archived?fmt(p.views):''}</td><td class="num">${p.archived?fmt(p.hits):''}</td></tr>`).join('')}</table></div></section>`;
+ h+=`<section><h2>${t('ePages')}</h2>${E.pages.length?E.pages.map(u=>`<div class="story-row"><div class="meta"><span class="tag">${fmt(u.channels)} ${t('chans')}</span><span class="tag">${fmt(u.n)} ${t('posts')}</span><span class="tag">${esc(u.domain)}</span></div><a href="${esc(u.url)}" target="_blank" rel="noopener nofollow">${esc(u.title||u.url)}</a></div>`).join(''):`<p class="mute">${t('noneYet')}</p>`}</section>`;
+ v.innerHTML=h}
 function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/),sm=p.match(/^s\/(\d+)$/);const isHome=!p;
  document.body.classList.toggle('home',isHome);document.documentElement.lang=L;
  {const b=document.getElementById('brand');b.setAttribute('aria-label',t('name'));b.title=t('name')}
- document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='links'?t('links'):p==='method'?t('method'):p==='stories'||p==='threads'||sm?t('stories'):t('channels'))}`;
- nav(isHome?'':(m?'channels':p==='search'||p==='links'||p==='method'?p:(p==='stories'||p==='threads'||sm)?'stories':'channels'));
- if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories'||p==='threads'){const q=new URLSearchParams(query);(p==='threads'||q.get('view')==='time')?threadsView(q):storiesView(q)}else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='links')linksView(new URLSearchParams(query));else if(p==='method')methodView();else index();window.scrollTo(0,0)}
+ document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='links'?t('links'):p==='29n'?t('e29n'):p==='method'?t('method'):p==='stories'||p==='threads'||sm?t('stories'):t('channels'))}`;
+ nav(isHome?'':(m?'channels':p==='search'||p==='links'||p==='method'||p==='29n'?p:(p==='stories'||p==='threads'||sm)?'stories':'channels'));
+ if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories'||p==='threads'){const q=new URLSearchParams(query);(p==='threads'||q.get('view')==='time')?threadsView(q):storiesView(q)}else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='links')linksView(new URLSearchParams(query));else if(p==='method')methodView();else if(p==='29n')electionView();else index();window.scrollTo(0,0)}
 document.getElementById('lang').onclick=()=>{L=L==='en'?'es':'en';localStorage.setItem('lang',L);document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';applyTheme();route()};
 document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';
 const th=document.getElementById('theme');let dark=(localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';
