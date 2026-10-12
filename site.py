@@ -181,7 +181,8 @@ header h1{font-size:14px;margin:0;font-weight:700}
 header .r{margin-left:auto;display:flex;gap:14px}
 .btn{cursor:pointer;color:var(--mute);background:none;border:0;padding:0;font:inherit}.btn:hover{color:var(--fg)}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:1px dashed var(--fg);outline-offset:4px}
-main{display:grid;grid-template-columns:220px 1fr;gap:28px}main>*{min-width:0}#view{overflow-wrap:anywhere}.tw{overflow-x:auto}
+main{display:block}#view{overflow-wrap:anywhere}.tw{overflow-x:auto}.tw table{min-width:640px}td,th{overflow-wrap:normal}
+#top{display:flex;gap:16px}#top a{color:var(--mute)}#top a.on{color:var(--fg);text-decoration:underline}
 nav{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto;font-size:14px}
 nav h3{margin:14px 0 4px;font-size:12px;color:var(--mute);font-weight:400}
 nav ul{list-style:none;margin:0;padding:0}nav li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -212,12 +213,11 @@ section{margin-bottom:26px}
 .chart{white-space:pre;line-height:1.15;overflow:auto;color:var(--bar);position:relative}
 .chart .lbl{color:var(--mute)}
 .tip{position:absolute;pointer-events:none;background:var(--bg);border:1px solid var(--line);padding:2px 6px;font-size:12px;display:none}
-#menu{display:none}
-body.home main{display:block}body.home #nav,body.home #menu,body.home #hdr{display:none}
+body.home main{display:block}
 .home-page{max-width:880px;margin:48px auto 24px}
 .home-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:32px}
 .home-heading h2{font-size:clamp(24px,4vw,36px);font-weight:400;line-height:1.2;margin:0 0 12px}
-.home-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;padding:22px 0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);margin:0 0 32px}
+.home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:22px 0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);margin:0 0 32px}
 .home-stats dt{font-size:12px;color:var(--mute)}.home-stats dd{font-size:24px;margin:4px 0 0}
 .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:36px}
 .home-page h3{font-size:13px;font-weight:400;color:var(--mute);margin:0 0 12px}
@@ -238,8 +238,7 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 .thread{padding:10px 0;border-bottom:1px solid var(--line)}.thread .wk{display:flex;gap:2px;align-items:flex-end;height:22px;margin-top:4px}.thread .wk span{display:block;width:14px;background:var(--bar);min-height:2px}.thread .wk span.gap{background:transparent;border-bottom:1px dotted var(--line)}
 .chain{list-style:none;padding:0;margin:0}.chain li{margin:3px 0}
 .post{padding:12px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
-@media(max-width:760px){main{grid-template-columns:1fr;gap:12px}nav{display:none;position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:10px}
- body.nav-open nav{display:block}#menu{display:inline}#hdr{display:none}.m-hide{display:none}.wrap{padding:12px}
+@media(max-width:760px){.m-hide{display:none}.wrap{padding:12px}#top{width:100%;order:3;gap:14px}
  .kv{grid-template-columns:1fr;gap:0 0}.kv div:nth-child(odd){margin-top:6px}.big{font-size:18px}
  .home-page{margin-top:28px}.home-heading{gap:12px}.home-stats{grid-template-columns:repeat(2,1fr);gap:20px}.home-grid{grid-template-columns:1fr;gap:24px}
  .message-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.message-query{gap:12px}}
@@ -249,10 +248,10 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 <div class="wrap">
 <header>
  <h1><a href="#/" id="brand">Telegram archive</a></h1>
- <span class="mute" id="hdr"></span>
- <span class="r"><button class="btn" id="menu" type="button" aria-controls="nav" aria-expanded="false">[index]</button><button class="btn" id="lang" type="button">[es]</button><button class="btn" id="theme" type="button">[dark]</button></span>
+ <span id="top"></span>
+ <span class="r"><button class="btn" id="lang" type="button">[es]</button><button class="btn" id="theme" type="button">[dark]</button></span>
 </header>
-<main><nav id="nav"></nav><div id="view"></div></main>
+<main><div id="view"></div></main>
 </div>
 <script id="data" type="application/json">__DATA__</script>
 <script>
@@ -266,8 +265,7 @@ const T={
   messageSearch:'search messages',query:'text',searchGo:'search',queryHint:'Words or "quoted phrases"',allChannels:'all channels',dateFrom:'from (UTC)',dateTo:'to (UTC)',order:'order',relevance:'relevance',newest:'newest',oldest:'oldest',
   loading:'searching…',results:'results',noresults:'no matching messages.',original:'original post',previous:'previous',next:'next',page:'page',
   stories:'stories',firstPost:'first post',tierOrder:'order of tiers',threads:'story threads',thisWeek:'by week',overTime:'over time',groupLabel:'group',legend:'tiers inside the groups',sections:'sections',aboutPage:'about',
-  aboutText:'<p>An archive of public Telegram channels relevant to Spanish politics: Spanish-language editions of Russian channels, the Spanish-language channels that feed them and are fed by them, parties and political actors, state media of several governments, and the discussion groups attached to them.</p><p>The archive keeps what the channels publish, with a link to each original post, and facts about the channels from published research, each with its source. Posts are also grouped by week into stories, each with a region and themes, so that a subject can be followed across channels and weeks.</p>',
-  secChannels:'index of the channels with description, activity, forwarding links and cited facts',secStories:'posts grouped by week into stories, and the same stories followed over time',secSearch:'full-text search of the archived posts, with links to the originals',weeks:'weeks',minWeeks:'at least %d weeks',week:'week',region:'region',theme:'theme',all:'all',story:'story',earlier:'earlier weeks',later:'later weeks',related:'related story',nostories:'no stories for this selection.',postsIn:'posts in this story',chans:'channels',showing:'showing',
+  aboutText:'<p>A public archive of Telegram channels relevant to Spanish politics: what they publish, with a link to each original post, facts about them from published research, and their posts grouped by week into stories.</p>',weeks:'weeks',minWeeks:'at least %d weeks',week:'week',region:'region',theme:'theme',all:'all',story:'story',earlier:'earlier weeks',later:'later weeks',related:'related story',nostories:'no stories for this selection.',postsIn:'posts in this story',chans:'channels',showing:'showing',
   invalid_query:'Enter words or balanced "quoted phrases". Maximum 20 terms.',query_too_long:'Search text is limited to 300 characters.',invalid_date:'Enter a valid date.',date_range:'The start date must be on or before the end date.',invalid_sort:'Choose a valid order.',invalid_page:'Choose a valid page.',invalid_channel:'Choose a channel in the index.',invalid_request:'Check the search fields.',search_unavailable:'Search is unavailable. Try again.',search_timeout:'This search took too long. Try more words or a narrower date range.'},
  es:{channels:'canales',messages:'mensajes',archive:'archivo',tiers:'niveles',sources:'fuentes',handle:'usuario',title:'título',tier:'nivel',subs:'suscriptores',posts:'publicaciones',last:'última publicación',days:'últimos %d días',search:'buscar /',
   about:'descripción (tal como la publica el canal)',facts:'investigaciones publicadas',stats:'archivo',created:'canal creado',first:'primera publicación archivada',views:'visualizaciones totales',fwd:'publicaciones que son reenvíos',senders:'remitentes distintos',
@@ -277,8 +275,7 @@ const T={
   messageSearch:'buscar mensajes',query:'texto',searchGo:'buscar',queryHint:'Palabras o "frases entre comillas"',allChannels:'todos los canales',dateFrom:'desde (UTC)',dateTo:'hasta (UTC)',order:'orden',relevance:'relevancia',newest:'más recientes',oldest:'más antiguos',
   loading:'buscando…',results:'resultados',noresults:'no hay mensajes coincidentes.',original:'publicación original',previous:'anterior',next:'siguiente',page:'página',
   stories:'historias',firstPost:'primera publicación',tierOrder:'orden de niveles',threads:'hilos de historias',thisWeek:'por semana',overTime:'en el tiempo',groupLabel:'grupo',legend:'niveles dentro de los grupos',sections:'secciones',aboutPage:'acerca de',
-  aboutText:'<p>Un archivo de canales públicos de Telegram relevantes para la política española: ediciones en español de canales rusos, los canales en español que los alimentan y se alimentan de ellos, partidos y actores políticos, medios estatales de varios gobiernos y los grupos de debate vinculados a ellos.</p><p>El archivo conserva lo que publican los canales, con enlace a cada publicación original, y datos sobre los canales procedentes de investigaciones publicadas, cada uno con su fuente. Las publicaciones se agrupan además por semana en historias, cada una con una región y temas, de modo que un asunto pueda seguirse entre canales y semanas.</p>',
-  secChannels:'índice de los canales con descripción, actividad, reenvíos y datos citados',secStories:'publicaciones agrupadas por semana en historias, y las mismas historias seguidas en el tiempo',secSearch:'búsqueda en el texto completo de las publicaciones archivadas, con enlace a los originales',weeks:'semanas',minWeeks:'al menos %d semanas',week:'semana',region:'región',theme:'tema',all:'todas',story:'historia',earlier:'semanas anteriores',later:'semanas posteriores',related:'historia relacionada',nostories:'no hay historias para esta selección.',postsIn:'publicaciones en esta historia',chans:'canales',showing:'mostrando',
+  aboutText:'<p>Un archivo público de canales de Telegram relevantes para la política española: lo que publican, con enlace a cada publicación original, datos sobre ellos procedentes de investigaciones publicadas, y sus publicaciones agrupadas por semana en historias.</p>',weeks:'semanas',minWeeks:'al menos %d semanas',week:'semana',region:'región',theme:'tema',all:'todas',story:'historia',earlier:'semanas anteriores',later:'semanas posteriores',related:'historia relacionada',nostories:'no hay historias para esta selección.',postsIn:'publicaciones en esta historia',chans:'canales',showing:'mostrando',
   invalid_query:'Introduce palabras o "frases entre comillas" cerradas. Máximo 20 términos.',query_too_long:'El texto de búsqueda está limitado a 300 caracteres.',invalid_date:'Introduce una fecha válida.',date_range:'La fecha inicial debe ser anterior o igual a la final.',invalid_sort:'Elige un orden válido.',invalid_page:'Elige una página válida.',invalid_channel:'Elige un canal del índice.',invalid_request:'Revisa los campos de búsqueda.',search_unavailable:'La búsqueda no está disponible. Inténtalo de nuevo.',search_timeout:'La búsqueda tardó demasiado. Añade palabras o reduce el intervalo de fechas.'}};
 let L=localStorage.getItem('lang')==='es'?'es':'en';
 const t=k=>T[L][k]||k;
@@ -290,27 +287,16 @@ function bar(n,max,w=24){return '<span class="bar">'+'█'.repeat(Math.max(1,Mat
 function link(c){return c.handle?`<a href="https://t.me/${esc(c.handle)}" target="_blank" rel="noopener">@${esc(c.handle)}</a>`:`<span class="mute">id ${c.id}</span>`}
 function chanLink(c){return c.tracked?`<a href="#/c/${esc(c.handle||c.id)}">${esc(c.title||c.handle||c.id)}</a>`:esc(c.title||c.handle||('id '+c.id))}
 const G=k=>D.groups[k]?D.groups[k][L]:k;
-function nav(cur){const byG={};D.channels.forEach(c=>(byG[c.group]=byG[c.group]||[]).push(c));
- let h=`<input class="search" id="q" aria-label="${t('search')}" placeholder="${t('search')}"><ul><li><a href="#/">${t('aboutPage')}</a></li><li><a href="#/channels">${t('channels')}</a></li><li><a href="#/stories">${t('stories')}</a></li><li><a href="#/search">${t('messageSearch')}</a></li></ul>`;
- for(const k of Object.keys(D.groups)){if(!byG[k])continue;h+=`<h3>${esc(G(k))} · ${byG[k].length}</h3><ul>`+byG[k].sort((a,b)=>(a.title||a.handle).localeCompare(b.title||b.handle)).map(c=>`<li class="${cur===c.handle.toLowerCase()?'cur':''}"><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a></li>`).join('')+'</ul>'}
- document.getElementById('nav').innerHTML=h;
- const q=document.getElementById('q');q.oninput=()=>{const v=q.value.toLowerCase();document.querySelectorAll('#nav li').forEach(li=>{li.style.display=li.textContent.toLowerCase().includes(v)?'':'none'})};
- document.onkeydown=e=>{if(e.key==='/'&&!e.target.closest('input,textarea,select,[contenteditable]')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();if(innerWidth<=760){document.body.classList.add('nav-open');document.getElementById('menu').setAttribute('aria-expanded','true')}q.focus()}}}
+function nav(cur){document.getElementById('top').innerHTML=[['',t('aboutPage')],['channels',t('channels')],['stories',t('stories')],['search',t('messageSearch')]].map(([k,l])=>`<a class="${cur===k?'on':''}" href="#/${k}">${l}</a>`).join('')}
 function home(){
- const counts=[[t('channels'),D.channels.length],[t('messages'),D.total],[t('stories'),D.stories],[t('sources'),Object.keys(D.sources).length]];
+ const counts=[[t('channels'),D.channels.length],[t('messages'),D.total],[t('stories'),D.stories]];
  const n=SP(),daily=D.daily.slice(-n),start=new Date(D.start+'T00:00:00Z');start.setUTCDate(start.getUTCDate()+D.days-n);
  const first=start.toISOString().slice(0,10),last=new Date(start);last.setUTCDate(last.getUTCDate()+n-1);
- let src='<table>';for(const x of Object.values(D.sources)){const k=D.channels.filter(c=>c.facts.some(f=>f.source===x.key)).length;src+=`<tr><td class="mute nw">${x.date}</td><td>${esc(x.publisher)}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a></td><td class="num">${k}</td></tr>`}src+='</table>';
  document.getElementById('view').innerHTML=`<div class="home-page">
-  <section class="home-heading"><div><h2>${t('name')}</h2><div class="mute">${t('period')} ${D.range[0]||'—'} → ${D.range[1]||'—'}</div></div></section>
+  <section class="home-heading"><div><h2>${t('name')}</h2><div class="mute">${D.range[0]||'—'} → ${D.range[1]||'—'}</div></div></section>
   <section class="prose">${t('aboutText')}</section>
   <dl class="home-stats">${counts.map(([label,n])=>`<div><dt>${label}</dt><dd>${fmt(n)}</dd></div>`).join('')}</dl>
-  <div class="home-grid"><section><h3>${t('sections')}</h3><ul class="archive-tree">
-   <li><a href="#/channels">[${t('channels')}]</a> <span class="mute">${t('secChannels')}</span></li>
-   <li><a href="#/stories">[${t('stories')}]</a> <span class="mute">${t('secStories')}</span></li>
-   <li><a href="#/search">[${t('messageSearch')}]</a> <span class="mute">${t('secSearch')}</span></li>
-  </ul></section><section><h3>${t('activity')} · ${t('days').replace('%d',n)}</h3>${chart(daily,first)}<div class="mute dates">${first} → ${last.toISOString().slice(0,10)}</div></section></div>
-  <section><h3>${t('sources')}</h3><div class="tw">${src}</div></section>
+  <section><h3>${t('activity')} · ${t('days').replace('%d',n)}</h3>${chart(daily,first)}<div class="mute dates">${first} → ${last.toISOString().slice(0,10)}</div></section>
   <footer class="home-footer">${t('built')} ${D.built}</footer></div>`;
  document.onkeydown=e=>{if(e.key==='/'&&!e.target.closest('input,textarea,select,[contenteditable]')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();location.hash='/search'}};
 }
@@ -407,8 +393,8 @@ function index(){const rows=[...D.channels].filter(c=>!groupFilter||c.group===gr
  const th=(k,l,cls='')=>`<th class="${cls}" data-k="${k}">${l}${sortKey===k?(sortDir>0?' ▴':' ▾'):''}</th>`;
  let h=`<p class="big">${fmt(D.channels.length)} ${t('channels')} · ${fmt(D.total)} ${t('messages')}</p><div class="mute">${t('archive')} ${D.range[0]} → ${D.range[1]} · ${t('built')} ${D.built}</div>`;
  h+=`<div class="filters"><span class="mute">${t('groupLabel')}</span><a class="${groupFilter?'':'on'}" href="#" data-g="">${t('all')}</a>${Object.keys(D.groups).map(k=>`<a class="${groupFilter===k?'on':''}" href="#" data-g="${k}">${esc(G(k))} <span class="mute">${D.channels.filter(c=>c.group===k).length}</span></a>`).join('')}</div>`;
- h+=`<div class="tw"><table><tr>${th('group',t('groupLabel'))}${th('title',t('title'))}${th('subs',t('subs'),'num m-hide')}${th('n',t('posts'),'num')}${th('last',t('last'),'m-hide')}<th>${t('days').replace('%d',SP())}</th></tr>`;
- for(const c of rows)h+=`<tr><td class="mute nw" title="${esc(D.tiers[c.tier][L])}">${esc(G(c.group))}</td><td><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a> <span class="mute">@${esc(c.handle)}</span></td><td class="num m-hide">${fmt(c.subs)}</td><td class="num">${c.n?fmt(c.n):'<span class="mute">—</span>'}</td><td class="nw m-hide">${c.last||'<span class="mute">'+t('notyet')+'</span>'}</td><td>${spark(c.daily,SP())}</td></tr>`;
+ h+=`<div class="tw"><table><tr>${th('group',t('groupLabel'),'m-hide')}${th('title',t('title'))}${th('subs',t('subs'),'num m-hide')}${th('n',t('posts'),'num')}${th('last',t('last'),'m-hide')}<th>${t('days').replace('%d',SP())}</th></tr>`;
+ for(const c of rows)h+=`<tr><td class="mute nw m-hide" title="${esc(D.tiers[c.tier][L])}">${esc(G(c.group))}</td><td class="nw"><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a> <span class="mute m-hide">@${esc(c.handle)}</span></td><td class="num m-hide">${fmt(c.subs)}</td><td class="num">${c.n?fmt(c.n):'<span class="mute">—</span>'}</td><td class="nw m-hide">${c.last||'<span class="mute">'+t('notyet')+'</span>'}</td><td>${spark(c.daily,SP())}</td></tr>`;
  h+='</table></div>';
  h+=`<details class="legend"><summary>${t('legend')}</summary><table>${Object.keys(D.groups).map(g=>D.groups[g].tiers.filter(x=>Object.keys(D.tiers).some(k=>k[0]===x)).map(x=>{const k=Object.keys(D.tiers).find(k=>k[0]===x);const n=D.channels.filter(c=>c.tier===k).length;return n?`<tr><td class="mute nw">${esc(G(g))}</td><td class="mute">${x}</td><td class="num">${n}</td><td>${esc(D.tiers[k][L])}</td></tr>`:''}).join('')).join('')}</table></details>`;
  document.getElementById('view').innerHTML=h;
@@ -447,18 +433,16 @@ function tiers(){let h=`<h2>${t('tierlist')}</h2><table>`;for(const [k,v] of Obj
 function sources(){let h=`<h2>${t('sources')}</h2><table>`;for(const s of Object.values(D.sources)){const n=D.channels.filter(c=>c.facts.some(f=>f.source===s.key)).length;h+=`<tr><td class="mute">${s.key}</td><td>${s.date}</td><td>${esc(s.publisher)}</td><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a></td><td class="num">${n}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
 function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/),sm=p.match(/^s\/(\d+)$/);const isHome=!p;
  document.body.classList.toggle('home',isHome);document.documentElement.lang=L;
- document.getElementById('brand').textContent=t('name');document.getElementById('menu').textContent=`[${t('directory')}]`;document.getElementById('menu').setAttribute('aria-expanded',String(document.body.classList.contains('nav-open')));
+ document.getElementById('brand').textContent=t('name');
  document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='stories'||p==='threads'||sm?t('stories'):t('channels'))}`;
- if(!isHome)nav(m?decodeURIComponent(m[1]).toLowerCase():null);
- document.getElementById('hdr').textContent=`${fmt(D.channels.length)} ${t('channels')} · ${fmt(D.total)} ${t('messages')}`;
- if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories'||p==='threads'){const q=new URLSearchParams(query);(p==='threads'||q.get('view')==='time')?threadsView(q):storiesView(q)}else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='sources')home();else index();window.scrollTo(0,0)}
+ nav(isHome?'':(m?'channels':p==='search'?'search':(p==='stories'||p==='threads'||sm)?'stories':'channels'));
+ if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories'||p==='threads'){const q=new URLSearchParams(query);(p==='threads'||q.get('view')==='time')?threadsView(q):storiesView(q)}else if(p==='search')messageSearch(new URLSearchParams(query));else index();window.scrollTo(0,0)}
 document.getElementById('lang').onclick=()=>{L=L==='en'?'es':'en';localStorage.setItem('lang',L);document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';applyTheme();route()};
 document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';
 const th=document.getElementById('theme');let dark=(localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';
 function applyTheme(){document.documentElement.dataset.theme=dark?'dark':'light';th.textContent=`[${t(dark?'light':'dark')}]`}applyTheme();
 th.onclick=()=>{dark=!dark;localStorage.setItem('theme',dark?'dark':'light');applyTheme()};
-document.getElementById('menu').onclick=()=>{const open=document.body.classList.toggle('nav-open');document.getElementById('menu').setAttribute('aria-expanded',String(open))};
-window.onhashchange=()=>{document.body.classList.remove('nav-open');route()};route();
+window.onhashchange=()=>route();route();
 let compact=innerWidth<=760;window.onresize=()=>{const next=innerWidth<=760;if(next!==compact){compact=next;if(document.body.classList.contains('home'))home()}};
 </script>
 </body>
