@@ -93,7 +93,19 @@ def story(sid: int) -> dict | None:
                  "SELECT c.username handle, c.title ctitle, x.date, x.msg_id, x.views, x.forwards, x.text FROM story_members m "
                  "JOIN tg.messages x ON x.channel_id=m.channel_id AND x.msg_id=m.msg_id JOIN tg.channels c ON c.id=m.channel_id "
                  "WHERE m.story_id=? ORDER BY x.date LIMIT ?", (sid, MAX_POSTS))]
+    # provenance: who posted first, and the order in which tiers picked the story up
+    tiers = dict(db.execute("SELECT id, tier FROM tg.channels"))
+    seq = db.execute("SELECT m.channel_id, x.date FROM story_members m JOIN tg.messages x ON x.channel_id=m.channel_id AND x.msg_id=m.msg_id "
+                     "WHERE m.story_id=? ORDER BY x.date", (sid,)).fetchall()
+    first = None; tier_order = []
+    if seq:
+        c0 = db.execute("SELECT username, title FROM tg.channels WHERE id=?", (seq[0][0],)).fetchone()
+        first = {"handle": c0["username"], "title": c0["title"], "date": seq[0][1], "tier": (tiers.get(seq[0][0]) or "?")[:1]}
+        for cid, d in seq:
+            t = (tiers.get(cid) or "?")[:1]
+            if t not in [x["tier"] for x in tier_order]:
+                tier_order.append({"tier": t, "date": d})
     return {"id": r["id"], "week": r["week"], "size": r["size"], "channels_n": r["n_channels"], "title": r["title"], "summary": r["summary"],
-            "title_es": r["title_es"], "summary_es": r["summary_es"],
+            "title_es": r["title_es"], "summary_es": r["summary_es"], "first_post": first, "tier_order": tier_order,
             "region": reg, "themes": ths, "prev": r["prev_story"], "related": r["related_story"], "chain": chain, "next": nxt,
             "channels": chans, "posts": posts, "first": posts[0]["date"] if posts else None, "last": posts[-1]["date"] if posts else None}

@@ -14,3 +14,5 @@ vec.db
 vec.db-*
 stories.log
 .embed.lock
+links.db
+links.db-*
