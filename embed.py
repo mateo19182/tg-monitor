@@ -168,6 +168,7 @@ def main():
     e = embed_missing(vec, a.batch)
     log.info("embedded %d new texts; totals: %s texts, %s messages", e,
              vec.execute("SELECT count(*) FROM vectors").fetchone()[0], vec.execute("SELECT count(*) FROM msg_text").fetchone()[0])
+    vec.execute("PRAGMA wal_checkpoint(TRUNCATE)")   # a large backfill otherwise leaves a WAL as big as the new vectors
 
 
 if __name__ == "__main__":

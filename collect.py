@@ -138,11 +138,11 @@ def media_info(m) -> tuple:
     if isinstance(m, MessageMediaDocument) and m.document:
         d = m.document
         dur = w = h = None
-        for a in d.attributes or []:
+        for a in getattr(d, "attributes", None) or []:   # DocumentEmpty (deleted file) has only an id
             dur = getattr(a, "duration", dur)
             w = getattr(a, "w", w)
             h = getattr(a, "h", h)
-        return (d.id, d.size, d.mime_type, dur, w, h)
+        return (d.id, getattr(d, "size", None), getattr(d, "mime_type", None), dur, w, h)
     return (None, None, None, None, None, None)
 
 
@@ -408,6 +408,11 @@ async def main() -> None:
                 except (RPCError, ConnectionError, OSError) as e:
                     failed += 1
                     db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"{type(e).__name__}: {e}", spec["handle"]))
+                    db.commit()
+                    log.exception("[%s] failed", spec["handle"])
+                except Exception as e:  # noqa: BLE001 - one channel's bad message must not end the whole run
+                    failed += 1
+                    db.execute("UPDATE sync_state SET last_error=? WHERE handle=?", (f"{type(e).__name__}: {e}"[:300], spec["handle"]))
                     db.commit()
                     log.exception("[%s] failed", spec["handle"])
 
