@@ -2,6 +2,7 @@
 
 ## 2026-10-12
 
+- Site restructured into four sections: about (replaces the home page; sources table at the bottom), channels (tiers shown as seven groups with a legend of the tiers inside each), stories (tabs "by week" and "over time"), search. Running text in a sans face at 16px; decorative ASCII removed. Ten channels added from the t.me discovery feed.
 - Links archive (`links.py`, `links.db`): 2.96M URL mentions from 1.37M messages indexed by canonical URL, domain and kind; t.me references (1.1M) kept as a discovery feed of channels referenced but not watched; shortener resolution and title fetching run on demand. Story pages show provenance: the first channel to post and the order in which tiers picked the story up.
 - Watchlist trimmed from 471 to 297 channels to keep the focus on politics and disinformation: mainstream media except eight reference outlets, institutions, unions and civil-society groups, diaspora community channels, provincial party branches, regional media, Latin American embassies and local channels moved to `channels_cut.csv` with a reason each. None of the removed channels had been archived yet.
 - Stories on the site: `#/stories` (week, region and theme filters), `#/s/<id>` (summary, chain across weeks, channels, member posts with Telegram links) and `#/threads` (story chains of at least N weeks with per-week bars). EN/ES titles and summaries. Weeks 33–41 labelled (about 240 stories per week, a quarter of posts unassigned); labelling runs through the Batches API with thinking disabled, $0.0013 per story.
