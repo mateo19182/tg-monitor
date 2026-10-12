@@ -21,20 +21,27 @@ LINK_SIM, RELATED_SIM = 0.90, 0.85      # same story continued / related story
 BATCH_POLL_S = 20
 
 ARENAS = {r["key"]: r for r in csv.DictReader(open(HERE / "arenas.csv", encoding="utf-8"))}
+REGIONS = [k for k, r in ARENAS.items() if r["axis"] == "region"]
+THEMES = [k for k, r in ARENAS.items() if r["axis"] == "theme"]
+BUCKETS = [k for k, r in ARENAS.items() if r["axis"] == "bucket"]
 
 SYSTEM = """You describe what a group of Telegram posts has in common. The posts were grouped automatically by similarity; they come from several channels and may be in Spanish, Russian, English or other languages.
 
 Return only a JSON object with these fields:
 - "title": at most 12 words, in English, naming the concrete story or subject the posts share. Say who did or said what, as the posts present it. No verdicts.
 - "summary": one sentence in English. Start with "The posts report", "The posts claim", "The posts comment on" or similar, so that claims stay attributed to the posts.
-- "arenas": a list of one to three arena keys from the list below, most fitting first.
+- "region": one region key from the list below: where the story happens or whom it concerns.
+- "themes": one or two theme keys from the list below, most fitting first: what the story is about.
 - "language": ISO code of the dominant language of the posts.
-- "new_arena": null, or a short English name for an arena that would fit better than any listed.
+- "new_arena": null, or, when no listed theme fits the subject well, an object {"name": short English name, "definition": one sentence saying what it would cover, "closest": the key of the listed theme that comes nearest}.
 
-Rules: describe, do not evaluate. Never use words such as propaganda, disinformation, fake, hoax, clickbait, conspiracy, far-right, far-left, ultra, pro-Russian, pro-Kremlin, pro-Western, pro-Ukrainian, regime, terrorist, attack (for speech), smear, as your own description; keep them only inside a quotation if the posts use them. Do not state whether anything is true. Name actors as the posts name them. If the group is mostly channel self-promotion, use arena "housekeeping". If it is mostly audience reactions with no shared subject, use "reactions".
+Rules: describe, do not evaluate. Write as a neutral archivist would: no characterisations of channels, actors or claims (no labels such as propaganda, disinformation, far-right, pro-Russian, regime), no judgement of truth, no loaded verbs for speech. Name actors as the posts name them; keep any loaded term inside a quotation. If the group is mostly channel self-promotion, use the theme "housekeeping"; if it is mostly audience reactions with no shared subject, use "reactions".
 
-Arenas:
-""" + "\n".join(f"- {k}: {r['en']} — {r['definition']}" for k, r in ARENAS.items())
+Regions:
+""" + "\n".join(f"- {k}: {ARENAS[k]['en']} — {ARENAS[k]['definition']}" for k in REGIONS) + """
+
+Themes:
+""" + "\n".join(f"- {k}: {ARENAS[k]['en']} — {ARENAS[k]['definition']}" for k in THEMES + BUCKETS)
 
 
 def week_bounds(week: str):
@@ -156,7 +163,14 @@ def parse_reply(msg):
 
 
 def store_label(vec, sid, j):
-    arenas = [a for a in j.get("arenas", []) if a in ARENAS] or ["?"]
+    region = j.get("region") if j.get("region") in REGIONS else "?"
+    themes = [t for t in (j.get("themes") or []) if t in THEMES + BUCKETS][:2] or ["?"]
+    arenas = [region] + themes        # stored as [region, theme, (theme)]
+    na = j.get("new_arena")
+    if isinstance(na, str): na = {"name": na}
+    if na and na.get("name"):
+        week = vec.execute("SELECT week FROM stories WHERE id=?", (sid,)).fetchone()[0]
+        vec.execute("INSERT OR REPLACE INTO arena_proposals VALUES (?,?,?,?,?)", (sid, week, na["name"], na.get("definition"), na.get("closest")))
     vec.execute("UPDATE stories SET title=?, summary=?, arenas=?, note=?, labelled_at=?, model=? WHERE id=?",
                 (j.get("title"), j.get("summary"), json.dumps(arenas), json.dumps({"language": j.get("language"), "new_arena": j.get("new_arena")}),
                  dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), MODEL, sid))
@@ -208,15 +222,19 @@ def label(vec, week, kind, cap):
 
 
 def proposals(vec):
-    """Arena names the model proposed, grouped, so they can be promoted into arenas.csv."""
-    c = Counter(); ex = {}
-    for sid, title, note in vec.execute("SELECT id, title, note FROM stories WHERE note IS NOT NULL"):
-        na = (json.loads(note) or {}).get("new_arena")
-        if na:
-            k = re.sub(r"[^a-z ]", "", na.lower()).strip(); c[k] += 1; ex.setdefault(k, []).append(f"{sid}: {title}")
-    for k, n in c.most_common():
-        print(f"{n:3d}  {k}"); [print("       " + e[:90]) for e in ex[k][:3]]
-    if not c: print("no proposals")
+    """Arena names the model proposed, grouped by name, with definitions, weeks and example stories. Promote by adding a row to arenas.csv."""
+    groups: dict[str, list] = {}
+    for sid, week, name, definition, closest, title in vec.execute(
+            "SELECT p.story_id, p.week, p.name, p.definition, p.closest, s.title FROM arena_proposals p JOIN stories s ON s.id=p.story_id"):
+        k = re.sub(r"[^a-z ]", "", (name or "").lower()).strip()
+        groups.setdefault(k, []).append((week, name, definition, closest, sid, title))
+    for k, items in sorted(groups.items(), key=lambda kv: -len(kv[1])):
+        weeks = sorted({i[0] for i in items}); closest = Counter(i[3] for i in items if i[3]).most_common(1)
+        print(f"\n{len(items):3d}× {items[0][1]}   weeks: {', '.join(weeks)}   closest listed: {closest[0][0] if closest else '-'}")
+        defs = [i[2] for i in items if i[2]]
+        if defs: print(f"      def: {defs[0][:160]}")
+        for i in items[:3]: print(f"      {i[4]}: {(i[5] or '')[:100]}")
+    if not groups: print("no proposals")
 
 
 def show(vec, week, kind, full=False):

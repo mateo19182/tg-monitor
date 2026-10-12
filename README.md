@@ -51,7 +51,7 @@ Each channel carries a `tier` label so the dataset can be sliced:
 - `site.py`       builds `site/index.html` from the database: an archive homepage, channel browser at `#/channels`, channel pages at `#/c/<handle>`, and message search at `#/search`.
 - `embed.py`      embeds message texts (≥40 chars after stripping URLs and share footers) with bge-m3 on the GPU into `vec.db`; one vector per distinct text.
 - `stories.py`    groups one week's posts (or discussion-group comments) into stories by similarity, chains them to the previous week's stories, and labels each story through the Message Batches API with a neutral title, a one-line summary and one to three arenas from `arenas.csv`. Spend is tracked in `data/label_ledger.json` and capped with `--cap`.
-- `arenas.csv`    the fixed list of arenas (topic areas) with EN/ES names and definitions. Stories carry their own open labels; the model may propose new arenas (`stories.py --proposals`), which are added here by hand.
+- `arenas.csv`    two fixed axes with EN/ES names and definitions: 10 regions (where a story happens) and 14 themes (what it is about), plus two buckets (housekeeping, reactions). Each story gets one region and one or two themes. Stories carry their own open labels; the model may propose new themes (`stories.py --proposals`), which are added here by hand.
 - `search.py`     SQLite FTS5 index and search queries. Insert, text-update and delete triggers keep the index current during collection.
 - `server.py`     serves `site/` and `GET /api/search` on the same origin; `serve.sh` starts it on 127.0.0.1:8788.
 
@@ -65,6 +65,7 @@ Stories:
 .venv/bin/python stories.py --week 2026-W41 --show --full
 .venv/bin/python stories.py --week 2026-W41 --kind comment   # same for discussion-group comments
 ```
+`stories.sh` runs this for the previous week every Monday at 05:00 (cron). Discussion-group comments are excluded from embedding and stories for now (`embed.py --comments` to include them).
 A story is a group of similar posts within one ISO week. `=id` marks the same story continued from the previous week (centroid cosine ≥ 0.90), `~id` a related story (0.85–0.90). About a quarter of posts stay unassigned.
 
 ## Operations

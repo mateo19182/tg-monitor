@@ -1,7 +1,8 @@
 """Embed archived message texts with bge-m3 into vec.db (separate from tg.db).
 
 Each distinct normalised text is embedded once. Messages map to a text hash.
-Usage: embed.py [--since YYYY-MM-DD] [--until YYYY-MM-DD] [--limit N] [--batch 64]
+Usage: embed.py [--since YYYY-MM-DD] [--until YYYY-MM-DD] [--limit N] [--batch 64] [--comments]
+Discussion-group comments (tier I) are skipped unless --comments is given.
 """
 import argparse, hashlib, logging, re, sqlite3, sys, time
 from pathlib import Path
@@ -27,6 +28,8 @@ CREATE TABLE IF NOT EXISTS stories (
   centroid BLOB, rep_hashes TEXT, title TEXT, summary TEXT, arenas TEXT, note TEXT,
   prev_story INTEGER, prev_sim REAL, related_story INTEGER, labelled_at TEXT, model TEXT);
 CREATE INDEX IF NOT EXISTS idx_stories_week ON stories(week, kind);
+CREATE TABLE IF NOT EXISTS arena_proposals (
+  story_id INTEGER PRIMARY KEY, week TEXT, name TEXT, definition TEXT, closest TEXT);
 CREATE TABLE IF NOT EXISTS story_members (
   story_id INTEGER, channel_id INTEGER, msg_id INTEGER, PRIMARY KEY (story_id, channel_id, msg_id));
 CREATE INDEX IF NOT EXISTS idx_story_members_msg ON story_members(channel_id, msg_id);
@@ -69,7 +72,7 @@ def open_vec() -> sqlite3.Connection:
     return db
 
 
-def ingest(vec: sqlite3.Connection, since: str | None, until: str | None, limit: int | None) -> int:
+def ingest(vec: sqlite3.Connection, since: str | None, until: str | None, limit: int | None, comments: bool = False) -> int:
     """Map messages (not yet mapped) to normalised text hashes. Returns number of messages mapped."""
     tg = sqlite3.connect(f"file:{TG_DB}?mode=ro", uri=True, timeout=60)
     tiers = dict(tg.execute("SELECT id, tier FROM channels"))
@@ -78,6 +81,10 @@ def ingest(vec: sqlite3.Connection, since: str | None, until: str | None, limit:
          "LEFT JOIN msg_text x ON x.channel_id=m.channel_id AND x.msg_id=m.msg_id "
          "WHERE x.hash IS NULL AND length(coalesce(m.text,'')) >= ?")
     args: list = [MIN_CHARS]
+    if not comments:
+        groups = [cid for cid, t in tiers.items() if (t or "").startswith("I_")]
+        if groups:
+            q += f" AND m.channel_id NOT IN ({','.join('?' * len(groups))})"; args += groups
     if since:
         q += " AND m.date >= ?"; args.append(since)
     if until:
@@ -139,11 +146,11 @@ def load_vectors(vec: sqlite3.Connection, hashes: list[str]) -> np.ndarray:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--since"); ap.add_argument("--until"); ap.add_argument("--limit", type=int)
-    ap.add_argument("--batch", type=int, default=64)
+    ap.add_argument("--batch", type=int, default=64); ap.add_argument("--comments", action="store_true")
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stdout)
     vec = open_vec()
-    n = ingest(vec, a.since, a.until, a.limit)
+    n = ingest(vec, a.since, a.until, a.limit, a.comments)
     log.info("mapped %d messages", n)
     e = embed_missing(vec, a.batch)
     log.info("embedded %d new texts; totals: %s texts, %s messages", e,
