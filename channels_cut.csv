@@ -1,0 +1,175 @@
+handle,tier,since,source,note,cut_reason
+roscongressesp,F_russian_official,,discovery-2026-10,Spanish channel of the state Roscongress Foundation,outside politics/disinformation focus
+embajadarusaven,F_russian_official,2025-01-01,discovery-2026-10,Russian Embassy in Venezuela,outside politics/disinformation focus
+rusiaenperu,F_russian_official,2025-01-01,discovery-2026-10,Russian Embassy in Peru,outside politics/disinformation focus
+EmbRusChile,F_russian_official,2025-01-01,discovery-2026-10,Russian Embassy in Chile,outside politics/disinformation focus
+EmbRusBolivia,F_russian_official,2025-01-01,discovery-2026-10,Russian Embassy in Bolivia,outside politics/disinformation focus
+EmbRusNic,F_russian_official,2025-01-01,discovery-2026-10,Russian Embassy in Nicaragua; linked 56 times across watched previews,outside politics/disinformation focus
+EmbRusUruguay,F_russian_official,2025-01-01,discovery-2026-10,Russian Embassy in Uruguay,outside politics/disinformation focus
+EmbRusPar,F_russian_official,2025-01-01,discovery-2026-10,Russian Embassy in Paraguay,outside politics/disinformation focus
+EmbRusPan,F_russian_official,2025-01-01,discovery-2026-10,Russian Embassy in Panama,outside politics/disinformation focus
+casarusalima,F_russian_official,2025-01-01,discovery-2026-10,Rossotrudnichestvo Lima,outside politics/disinformation focus
+casarusacaracas,F_russian_official,2025-01-01,discovery-2026-10,Rossotrudnichestvo Caracas,outside politics/disinformation focus
+UkraineNowSpanish,T_counterpart,,discovery-2026-10-12,Spanish edition of the Ukrainian government's Ukraine NOW channel; last post 2025-11-24,last post Nov 2025
+Ukraine_MFA,T_counterpart,2026-01-01,discovery-2026-10-12,Ministry of Foreign Affairs of Ukraine official channel (Ukrainian); verified,Ukrainian-language
+V_Zelenskiy_official,T_counterpart,2026-01-01,discovery-2026-10-12,Official channel of the President of Ukraine; verified,"Ukrainian/English, parent material only"
+ukrinform_news,T_counterpart,2026-01-01,discovery-2026-10-12,Ukrinform state news agency (Ukrainian); linked from ukrinform.es,Ukrainian-language agency
+aurora_israel,T_counterpart,,discovery-2026-10-12,Spanish-language newspaper published in Israel; official channel per description,"Israeli Spanish-language paper, low relevance"
+hespress,T_counterpart,2026-01-01,discovery-2026-10-12,Moroccan outlet Hespress (Arabic); verified,"Arabic-language Moroccan outlet, no Spanish politics"
+policianacional,N_spain_institution,,discovery-2026-10-12,Policía Nacional channel; verified,outside politics/disinformation focus
+congresodelosdiputados,N_spain_institution,,discovery-2026-10-12,Congress channel; linked from congreso.es; verified,outside politics/disinformation focus
+senadoesp,N_spain_institution,,discovery-2026-10-12,Senate channel; linked from senado.es,outside politics/disinformation focus
+sanidadgob,N_spain_institution,2026-01-01,discovery-2026-10-12,Ministry of Health channel; verified,outside politics/disinformation focus
+MinisterioTrabajo,N_spain_institution,,discovery-2026-10-12,Ministry of Labour channel,outside politics/disinformation focus
+mefpdtelegram,N_spain_institution,,discovery-2026-10-12,Ministry of Education channel; verified,outside politics/disinformation focus
+consumogob,N_spain_institution,,discovery-2026-10-12,Consumer-affairs secretariat channel,outside politics/disinformation focus
+mitecogob,N_spain_institution,,discovery-2026-10-12,Ministry for Ecological Transition channel,outside politics/disinformation focus
+minecogob,N_spain_institution,,discovery-2026-10-12,Ministry of Economy channel,outside politics/disinformation focus
+elmundoes,L_spain_media,,discovery-2026-10-12,El Mundo channel; verified; last post 2024-03-22,outside politics/disinformation focus
+OKDiarioOficial,L_spain_media,,discovery-2026-10-12,OKDiario channel; verified; last post 2025-01-10,outside politics/disinformation focus
+esdiario,L_spain_media,,discovery-2026-10-12,ESdiario channel; linked from site; verified,outside politics/disinformation focus
+diario_LaRazon,L_spain_media,,discovery-2026-10-12,La Razón front page and headlines channel; not linked from larazon.es,outside politics/disinformation focus
+noticias_20minutos,L_spain_media,,discovery-2026-10-12,20minutos channel; not linked from 20minutos.es,outside politics/disinformation focus
+A3Noticias,L_spain_media,,discovery-2026-10-12,Antena 3 Noticias channel; verified,outside politics/disinformation focus
+radiocope,L_spain_media,,discovery-2026-10-12,COPE channel; linked from cope.es; last post 2025-01-08,outside politics/disinformation focus
+infoLibre_es,L_spain_media,,discovery-2026-10-12,infoLibre channel; linked from infolibre.es,outside politics/disinformation focus
+ctxtes,L_spain_media,,discovery-2026-10-12,CTXT (Revista Contexto) channel,outside politics/disinformation focus
+elsaltodiario,L_spain_media,,discovery-2026-10-12,El Salto channel; linked from site,outside politics/disinformation focus
+Diario16Info,L_spain_media,,discovery-2026-10-12,Diario16 handle now titled DiarioSabemos posting Diario16+ articles,outside politics/disinformation focus
+LaVanguardia_es,L_spain_media,,discovery-2026-10-12,La Vanguardia news channel; not linked from lavanguardia.com; last post 2026-04-24,outside politics/disinformation focus
+elnacionalcat,P_regional_politics,,discovery-2026-10-12,ElNacional.cat channel (Catalan media),outside politics/disinformation focus
+naciodigital,P_regional_politics,,discovery-2026-10-12,Nació Digital channel; verified,outside politics/disinformation focus
+vilaweb,P_regional_politics,,discovery-2026-10-12,VilaWeb channel; last post 2025-08-07,outside politics/disinformation focus
+elperiodico,L_spain_media,,discovery-2026-10-12,El Periódico politics channel; last post 2024-08-09,outside politics/disinformation focus
+elpuntavui,P_regional_politics,,discovery-2026-10-12,Breaking-news channel of the Catalan daily El Punt Avui,outside politics/disinformation focus
+catalunyaradio,P_regional_politics,,discovery-2026-10-12,Catalan public broadcaster channel,outside politics/disinformation focus
+ladirecta,P_regional_politics,,discovery-2026-10-12,Catalan cooperative media outlet,outside politics/disinformation focus
+llibertatcat,P_regional_politics,,discovery-2026-10-12,Catalan independence news site channel,outside politics/disinformation focus
+prazapublica,P_regional_politics,,discovery-2026-10-12,Galician-language digital daily,outside politics/disinformation focus
+teruel_existe,P_regional_politics,,discovery-2026-10-12,Citizens' movement; linked from teruelexiste.info,outside politics/disinformation focus
+soriaya,P_regional_politics,,discovery-2026-10-12,España Vaciada platform channel,outside politics/disinformation focus
+naiz_info,P_regional_politics,,discovery-2026-10-12,Basque daily NAIZ/Gara; linked from naiz.eus,outside politics/disinformation focus
+pahbarcelona,Q_mobilisation,,discovery-2026-10-12,PAH Barcelona channel; linked from afectadosporlahipoteca.com,outside politics/disinformation focus
+ugt_es,Q_mobilisation,,discovery-2026-10-12,UGT news channel; linked from ugt.es,outside politics/disinformation focus
+serviciosccoo,Q_mobilisation,,discovery-2026-10-12,CCOO Federación de Servicios channel,outside politics/disinformation focus
+ccoomadrid,Q_mobilisation,,discovery-2026-10-12,CCOO Madrid regional channel,outside politics/disinformation focus
+cgtcatalunya,Q_mobilisation,,discovery-2026-10-12,Self-described official CGT Catalunya channel,outside politics/disinformation focus
+CNTes,Q_mobilisation,,discovery-2026-10-12,Official CNT channel; linked from cnt.es,outside politics/disinformation focus
+cnt_ait,Q_mobilisation,,discovery-2026-10-12,Self-described official channel of the CNT-AIT,outside politics/disinformation focus
+elasindikatua,Q_mobilisation,,discovery-2026-10-12,Basque union ELA channel,outside politics/disinformation focus
+intersindicalvalenciana,Q_mobilisation,,discovery-2026-10-12,Valencian union channel,outside politics/disinformation focus
+plataforma6f,Q_mobilisation,,discovery-2026-10-12,Farmers' protest platform channel,outside politics/disinformation focus
+elitetaxicat,Q_mobilisation,,discovery-2026-10-12,Self-described official channel of Élite Taxi Catalunya,outside politics/disinformation focus
+venezolanosenespana,Q_mobilisation,,discovery-2026-10-12,Information channel for Venezuelans in Spain per its description,outside politics/disinformation focus
+cibercuba,Q_mobilisation,2026-01-01,discovery-2026-10-12,Spain-based Cuban news outlet,outside politics/disinformation focus
+diario14ymedio,Q_mobilisation,,discovery-2026-10-12,Cuban independent daily; linked from 14ymedio.com,outside politics/disinformation focus
+spanishrevolution,Q_mobilisation,,discovery-2026-10-12,Activist media page,outside politics/disinformation focus
+asaja_nacional,V_civil_society,,discovery-2026-10-12b,Farmers' organisation ASAJA official channel; linked from asaja.com,outside politics/disinformation focus
+ecologistas,V_civil_society,,discovery-2026-10-12b,Ecologistas en Acción confederation channel,outside politics/disinformation focus
+xrebellion_esp,V_civil_society,,discovery-2026-10-12b,Extinction Rebellion Spain; linked from site,outside politics/disinformation focus
+rebelioncientifica,V_civil_society,,discovery-2026-10-12b,Scientist Rebellion Spain; linked from site,outside politics/disinformation focus
+fffmadrid,V_civil_society,,discovery-2026-10-12b,Self-described official FFF Madrid channel,outside politics/disinformation focus
+greenpeace_esp,V_civil_society,,discovery-2026-10-12b,Greenpeace España channel,outside politics/disinformation focus
+prensaSEOBirdLife,V_civil_society,,discovery-2026-10-12b,SEO/BirdLife news channel; listed on seo.org,outside politics/disinformation focus
+amnistiaespana,V_civil_society,,discovery-2026-10-12b,Amnesty International Spain digital-activism channel,outside politics/disinformation focus
+partidopacma,V_civil_society,,discovery-2026-10-12b,Animal-rights party; linked from pacma.es,outside politics/disinformation focus
+arribalasbarriguitas,V_civil_society,,discovery-2026-10-12b,Comisión 8M del Movimiento Feminista de Madrid channel,outside politics/disinformation focus
+comisionabortomadrid,V_civil_society,,discovery-2026-10-12b,Madrid abortion-rights commission,outside politics/disinformation focus
+ContraBorrado,V_civil_society,,discovery-2026-10-12b,Alianza Contra el Borrado de las Mujeres channel,outside politics/disinformation focus
+PartidoFeministaES,V_civil_society,,discovery-2026-10-12b,Official PFE channel,outside politics/disinformation focus
+pensionistas,V_civil_society,,discovery-2026-10-12b,Coordinadora Estatal en Defensa del Sistema Público de Pensiones,outside politics/disinformation focus
+menysturismemesvida,V_civil_society,,discovery-2026-10-12b,Mallorca tourism-degrowth platform,outside politics/disinformation focus
+plataformaperlallengua,V_civil_society,,discovery-2026-10-12b,Catalan-language advocacy NGO; linked from site,outside politics/disinformation focus
+aturemelpais,V_civil_society,,discovery-2026-10-12b,Catalan pro-independence mobilisation platform,outside politics/disinformation focus
+asociacionenraizados,V_civil_society,,discovery-2026-10-12b,Catholic association; linked from site,outside politics/disinformation focus
+cdvsur,V_civil_society,,discovery-2026-10-12b,Liberal-conservative civic association,outside politics/disinformation focus
+sosracisme,V_civil_society,,discovery-2026-10-12b,SOS Racisme Catalunya channel,outside politics/disinformation focus
+fundacomunes,V_civil_society,,discovery-2026-10-12b,Network of cooperatives and social centres,outside politics/disinformation focus
+madridconpalestina,V_civil_society,,discovery-2026-10-12b,Asamblea Madrid con Palestina call-outs channel,outside politics/disinformation focus
+encierropalestinamadrid,V_civil_society,,discovery-2026-10-12b,Marea Palestina Madrid diffusion channel,outside politics/disinformation focus
+PalestinaHoy,V_civil_society,2026-01-01,discovery-2026-10-12b,Spanish-language Palestine news channel; operator location not confirmed,outside politics/disinformation focus
+FADSPU,V_civil_society,,discovery-2026-10-12b,Federación de Asociaciones para la Defensa de la Sanidad Pública,outside politics/disinformation focus
+mareaverdemadrid,V_civil_society,,discovery-2026-10-12b,Madrid education assembly channel,outside politics/disinformation focus
+MenosLectivas,V_civil_society,,discovery-2026-10-12b,Madrid public-school teachers' assembly network,outside politics/disinformation focus
+SinPegatinaDGT,V_civil_society,,discovery-2026-10-12b,Motorists' association against low-emission-zone restrictions,outside politics/disinformation focus
+jysoficial,V_civil_society,,discovery-2026-10-12b,Official channel of hunting magazine Jara y Sedal,outside politics/disinformation focus
+facua,V_civil_society,,discovery-2026-10-12b,Consumer organisation; linked from facua.org,outside politics/disinformation focus
+canalccoo,V_civil_society,,discovery-2026-10-12b,Official channel of the CCOO confederation,outside politics/disinformation focus
+federacionbastaya,V_civil_society,,discovery-2026-10-12b,Socio-political federation Basta Ya,outside politics/disinformation focus
+Canal_FEDEHU,V_civil_society,,discovery-2026-10-12b,Federación Española de Defensa de los Derechos Humanos,outside politics/disinformation focus
+CanalVientoSur,V_civil_society,,discovery-2026-10-12b,Magazine linked to Anticapitalistas,outside politics/disinformation focus
+kaosenlared,V_civil_society,,discovery-2026-10-12b,Left media portal; linked from site,outside politics/disinformation focus
+antoniomaestre,W_journalist,,discovery-2026-10-12b,Journalist's personal channel,outside politics/disinformation focus
+lacafetera,W_journalist,,discovery-2026-10-12b,Fernando Berlín's programme channel (Radiocable),outside politics/disinformation focus
+carnecruda,W_journalist,,discovery-2026-10-12b,Javier Gallego's programme channel; linked from site,outside politics/disinformation focus
+bertrandmyd,W_journalist,,discovery-2026-10-12b,Periodista Digital reporter; handle matches his X account,outside politics/disinformation focus
+navedelmisterio,W_journalist,,discovery-2026-10-12b,Iker Jiménez's programmes channel; linked from site,outside politics/disinformation focus
+JaimeBayly0,W_journalist,,discovery-2026-10-12b,Self-described sole official channel,outside politics/disinformation focus
+russpaincom,X_diaspora,,discovery-2026-10-12b,Russian-language news channel of the russpain.com portal for Russian speakers in Spain,outside politics/disinformation focus
+novostispain,X_diaspora,,discovery-2026-10-12b,Russian-language news channel focused on Costa del Sol; created 2018,outside politics/disinformation focus
+spain4ru,X_diaspora,,discovery-2026-10-12b,Russian-language community channel,outside politics/disinformation focus
+ispania_novosti,X_diaspora,,discovery-2026-10-12b,Russian-language Spain news and classifieds; created Dec 2023,outside politics/disinformation focus
+dlspain,X_diaspora,,discovery-2026-10-12b,Russian-language relocation blog tied to the DreamLife Spain agency,outside politics/disinformation focus
+barcelona_actual,X_diaspora,,discovery-2026-10-12b,Russian-language Barcelona/Catalonia channel for expats,outside politics/disinformation focus
+rusbarcelona,X_diaspora,,discovery-2026-10-12b,Russpain network Barcelona channel,outside politics/disinformation focus
+rusalicante,X_diaspora,,discovery-2026-10-12b,Russpain network Alicante channel,outside politics/disinformation focus
+rustorrevieja,X_diaspora,,discovery-2026-10-12b,Russpain network Torrevieja channel,outside politics/disinformation focus
+russbenidorm,X_diaspora,,discovery-2026-10-12b,Russpain network Benidorm channel,outside politics/disinformation focus
+rusvalencia,X_diaspora,,discovery-2026-10-12b,Russpain network Valencia channel,outside politics/disinformation focus
+torreviejarusa,X_diaspora,,discovery-2026-10-12b,Russian-language Torrevieja community channel,outside politics/disinformation focus
+ispaniya_barselona,X_diaspora,,discovery-2026-10-12b,Ukrainian-language channel describing itself as the largest Ukrainian community channel in Spain,outside politics/disinformation focus
+infohelpBCN,X_diaspora,,discovery-2026-10-12b,Ukrainian-language events channel for Ukrainians in Barcelona,outside politics/disinformation focus
+dopomoga_spaine,X_diaspora,,discovery-2026-10-12b,Ukrainian-language information channel for Ukrainians in Spain,outside politics/disinformation focus
+ukrcentrbcn,X_diaspora,,discovery-2026-10-12b,Ukrainian Community in Barcelona civic initiative; created Oct 2022,outside politics/disinformation focus
+espanaenarabe,X_diaspora,,discovery-2026-10-12b,Arabic-language channel publishing Spanish news for Arabic speakers in Spain,outside politics/disinformation focus
+peruanosenspanaa,X_diaspora,,discovery-2026-10-12b,Information channel for Peruvians in Spain,outside politics/disinformation focus
+inmimadrid,X_diaspora,,discovery-2026-10-12b,Channel by a Venezuelan blogger for foreigners in Madrid,outside politics/disinformation focus
+empleosenespana,X_diaspora,,discovery-2026-10-12b,Jobs and migration channel of the venezolanosporespana.com operator,outside politics/disinformation focus
+venezolanosespana,X_diaspora,,discovery-2026-10-12b,Jobs,outside politics/disinformation focus
+legalizados,X_diaspora,,discovery-2026-10-12b,Migration-law YouTube brand channel aimed at Latin American migrants in Spain,outside politics/disinformation focus
+okupa_y_resiste,Y_local,,discovery-2026-10-12b,Squatting-movement channel,outside politics/disinformation focus
+okupemvlc,Y_local,,discovery-2026-10-12b,Catalan-language channel of the Valencia housing-rights encampment,outside politics/disinformation focus
+alertasolidaria,Y_local,,discovery-2026-10-12b,Anti-repression organisation of the Esquerra Independentista,outside politics/disinformation focus
+alertagorriairratia,Y_local,,discovery-2026-10-12b,Basque radical-left radio project channel,outside politics/disinformation focus
+AlertaPuntoRojoLosAlcazares,Y_local,,discovery-2026-10-12b,Neighbourhood incident-alert channel for Los Alcázares (Murcia),outside politics/disinformation focus
+zaragozaentelegram,Y_local,,discovery-2026-10-12b,Resident-run Zaragoza community channel,outside politics/disinformation focus
+EmergenciasSevilla,Y_local,,discovery-2026-10-12b,Seville city council emergency services channel,outside politics/disinformation focus
+canariasahora,Y_local,,discovery-2026-10-12b,Alerts channel of the eldiario.es Canarias Ahora edition,outside politics/disinformation focus
+AlmeriaNoticias,Y_local,,discovery-2026-10-12b,Almería province news channel,outside politics/disinformation focus
+cuidadbarcelona,Y_local,,discovery-2026-10-12b,Spanish-language Barcelona channel of the Russpain media network,outside politics/disinformation focus
+CuidadAlicante,Y_local,,discovery-2026-10-12b,Spanish-language Alicante channel of the Russpain media network,outside politics/disinformation focus
+malagaporlaverdad,Y_local,,discovery-2026-10-12b,Málaga local mobilisation channel created during the pandemic,outside politics/disinformation focus
+LosMeconios,Z_meme_finance,,discovery-2026-10-12b,Musical-parody YouTube duo channel,outside politics/disinformation focus
+emprendolibre,Z_meme_finance,,discovery-2026-10-12b,Bitcoin and crypto channel of the Emprendo Libre YouTube brand,outside politics/disinformation focus
+desupervivenciaoficial,Z_meme_finance,,discovery-2026-10-12b,Preparacionismo channel of the desupervivencia.store shop,outside politics/disinformation focus
+catalunyaac,U_campaign_2026,,discovery-2026-10-12b,Party channel linked from a section website; El Plural reports the party will not stand on 29N,outside politics/disinformation focus
+CJCtelegram,U_campaign_2026,,discovery-2026-10-12b,CJC channel linked from juventudcomunista.es,outside politics/disinformation focus
+VOXRRSSMadridTelegram,U_campaign_2026,,discovery-2026-10-12b,Vox Madrid channel linked from its YouTube page,outside politics/disinformation focus
+voxcantabria,U_campaign_2026,,discovery-2026-10-12b,Self-described official channel; not externally confirmed,outside politics/disinformation focus
+voxmurciaoficial,U_campaign_2026,,discovery-2026-10-12b,Self-described official channel; not externally confirmed,outside politics/disinformation focus
+VOX_Malaga,U_campaign_2026,,discovery-2026-10-12b,Broadcast channel reposting @vox_malaga; not externally confirmed,outside politics/disinformation focus
+VOXZaragozaOficial,U_campaign_2026,,discovery-2026-10-12b,Provincial channel; not externally confirmed,outside politics/disinformation focus
+VOXLasPalmas,U_campaign_2026,,discovery-2026-10-12b,Provincial channel; not externally confirmed,outside politics/disinformation focus
+VOXLanzarote,U_campaign_2026,,discovery-2026-10-12b,Self-described official channel; not externally confirmed,outside politics/disinformation focus
+VOXFuerteventura,U_campaign_2026,,discovery-2026-10-12b,Information channel; not externally confirmed,outside politics/disinformation focus
+VOXAlmeria,U_campaign_2026,,discovery-2026-10-12b,News channel; not externally confirmed,outside politics/disinformation focus
+VOXCordobaOficial,U_campaign_2026,,discovery-2026-10-12b,Self-described official channel; not externally confirmed,outside politics/disinformation focus
+VOXBurgos,U_campaign_2026,,discovery-2026-10-12b,Provincial channel; not externally confirmed,outside politics/disinformation focus
+VOXHuesca,U_campaign_2026,,discovery-2026-10-12b,Self-described official channel; not externally confirmed,outside politics/disinformation focus
+podemosmadrid,U_campaign_2026,,discovery-2026-10-12b,Self-described channel; not externally confirmed,outside politics/disinformation focus
+podemosmalaga,U_campaign_2026,,discovery-2026-10-12b,Self-described official channel; not externally confirmed,outside politics/disinformation focus
+podemosextremadura,U_campaign_2026,,discovery-2026-10-12b,Self-described channel; not externally confirmed,outside politics/disinformation focus
+podemosnavarra,U_campaign_2026,,discovery-2026-10-12b,Channel posting 29N primaries instructions; not externally confirmed,outside politics/disinformation focus
+podemosmurcia,U_campaign_2026,,discovery-2026-10-12b,Self-described official municipal channel; not externally confirmed,outside politics/disinformation focus
+sumarcanarias,U_campaign_2026,,discovery-2026-10-12b,Self-described official channel; not externally confirmed,outside politics/disinformation focus
+ehbildubizkaia,U_campaign_2026,,discovery-2026-10-12b,Territorial channel; not externally confirmed,outside politics/disinformation focus
+bngvigo,U_campaign_2026,,discovery-2026-10-12b,Local channel reposting vigo.bng.gal; not externally confirmed,outside politics/disinformation focus
+psoeleon,U_campaign_2026,,discovery-2026-10-12b,Self-described local socialist group channel; not externally confirmed,outside politics/disinformation focus
+psoemurcia,U_campaign_2026,,discovery-2026-10-12b,Municipal news channel; not externally confirmed,outside politics/disinformation focus
+gencat,N_spain_institution,2026-01-01,discovery-2026-10-12b,Generalitat de Catalunya citizen channel named in a 2018 Govern press release,outside politics/disinformation focus
+salutcat,N_spain_institution,2026-01-01,discovery-2026-10-12b,Self-described official channel of Salut (Generalitat de Catalunya),outside politics/disinformation focus
+ComunidadMadrid,N_spain_institution,2026-01-01,discovery-2026-10-12b,Government channel linked from comunidad.madrid,outside politics/disinformation focus
+avisosjuntaandalucia,N_spain_institution,,discovery-2026-10-12b,Notices channel linked from the Junta's portal,outside politics/disinformation focus
+ParlamentodeAndalucia,N_spain_institution,,discovery-2026-10-12b,Self-described channel; not externally confirmed,outside politics/disinformation focus
+som3catinfo,N_spain_institution,,discovery-2026-10-12b,3Cat news channel linked from the broadcaster's site,outside politics/disinformation focus
+apunt_ntc,N_spain_institution,,discovery-2026-10-12b,À Punt news channel linked from apuntmedia.es,outside politics/disinformation focus

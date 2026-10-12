@@ -41,6 +41,7 @@ Each channel carries a `tier` label so the dataset can be sliced:
 ## Layout
 
 - `channels.csv`  watchlist: `handle,tier,since,source,note`. `since` bounds the initial backfill for huge channels.
+- `channels_cut.csv`  channels removed from the watchlist on 2026-10-12 to keep the focus on politics and disinformation (same columns plus `cut_reason`); move a row back to `channels.csv` to collect it again.
 - `collect.py`    resumable collector → `tg.db` (SQLite, WAL). First run = full history; later runs = new posts + 7-day engagement refresh. Per-channel errors are recorded in `sync_state` and never stop the run.
 - `benchmark.py`  compares normal and Takeout history reads and records timing, message-id hashes and any initialization delay or retry deadline in `data/takeout-benchmark.json`.
 - `sync.sh`       the only entrypoint (cron + manual). flock-guarded, logs to `sync.log`.
