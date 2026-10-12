@@ -32,7 +32,7 @@ Return only a JSON object with these fields:
 - "summary": one sentence in English. Start with "The posts report", "The posts claim", "The posts comment on" or similar, so that claims stay attributed to the posts.
 - "title_es" and "summary_es": the same title and summary in Spanish.
 - "region": one region key from the list below: where the story happens or whom it concerns.
-- "themes": one or two theme keys from the list below, most fitting first: what the story is about.
+- "themes": one or two theme keys from the list below, most fitting first: what the story is about. "election_29n" is only for Spain's own 29 November election; elections elsewhere are "politics".
 - "language": ISO code of the dominant language of the posts.
 - "new_arena": null, or, when no listed theme fits the subject well, an object {"name": short English name, "definition": one sentence saying what it would cover, "closest": the key of the listed theme that comes nearest}.
 
@@ -76,14 +76,14 @@ def cluster(vec, week: str, kind: str, min_size: int):
     labels = HDBSCAN(min_cluster_size=min_size, min_samples=5).fit_predict(U)
     texts = dict(vec.execute(f"SELECT hash, text FROM texts WHERE hash IN ({','.join('?'*len(hashes))})", hashes)) if len(hashes) < 30000 else None
     tiers = dict(sqlite3.connect(f"file:{TG_DB}?mode=ro", uri=True).execute("SELECT id, tier FROM channels"))
-    old = [r[0] for r in vec.execute("SELECT id FROM stories WHERE week=? AND kind=?", (week, kind))]
-    if old:
-        vec.executemany("DELETE FROM story_members WHERE story_id=?", [(i,) for i in old])
-        vec.execute("DELETE FROM stories WHERE week=? AND kind=?", (week, kind))
     prev = vec.execute("SELECT id, centroid FROM stories WHERE week=? AND kind=?", (prev_week(week), kind)).fetchall()
     prev_ids = [p[0] for p in prev]
     prev_c = np.stack([np.frombuffer(p[1], np.float32) for p in prev]) if prev else None
     n_noise = int((labels < 0).sum()); made = 0
+    old = [r[0] for r in vec.execute("SELECT id FROM stories WHERE week=? AND kind=?", (week, kind))]
+    if old:  # replace this week's stories; done after clustering so the write lock is held only briefly
+        vec.executemany("DELETE FROM story_members WHERE story_id=?", [(i,) for i in old])
+        vec.execute("DELETE FROM stories WHERE week=? AND kind=?", (week, kind))
     for c in sorted(set(labels) - {-1}):
         idx = np.where(labels == c)[0]
         cen = X[idx].mean(0); cen /= np.linalg.norm(cen)
@@ -166,6 +166,10 @@ def parse_reply(msg):
 def store_label(vec, sid, j):
     region = j.get("region") if j.get("region") in REGIONS else "?"
     themes = [t for t in (j.get("themes") or []) if t in THEMES + BUCKETS][:2] or ["?"]
+    if region in ("latin_america", "united_states", "asia_pacific", "africa", "middle_east", "russia_ukraine") and "election_29n" in themes:
+        # the 29-N theme is Spain's election only; elections elsewhere are "politics" (diaspora stories keep it via spain/maghreb/europe/global)
+        themes = [t for t in themes if t != "election_29n"] + (["politics"] if "politics" not in themes else [])
+        themes = themes[:2] or ["politics"]
     arenas = [region] + themes        # stored as [region, theme, (theme)]
     na = j.get("new_arena")
     if isinstance(na, str): na = {"name": na}

@@ -108,10 +108,16 @@ def ingest(vec: sqlite3.Connection, since: str | None, until: str | None, limit:
 
 
 def flush(vec, rows_t, rows_m):
-    vec.executemany("INSERT INTO texts(hash, text, n) VALUES (?,?,0) ON CONFLICT(hash) DO NOTHING", rows_t)
-    vec.executemany("INSERT OR REPLACE INTO msg_text VALUES (?,?,?,?,?)", rows_m)
-    vec.executemany("UPDATE texts SET n = n + 1 WHERE hash = ?", [(r[0],) for r in rows_t])
-    vec.commit()
+    for attempt in range(10):  # another writer (stories.py) may hold the lock for a while
+        try:
+            vec.executemany("INSERT INTO texts(hash, text, n) VALUES (?,?,0) ON CONFLICT(hash) DO NOTHING", rows_t)
+            vec.executemany("INSERT OR REPLACE INTO msg_text VALUES (?,?,?,?,?)", rows_m)
+            vec.executemany("UPDATE texts SET n = n + 1 WHERE hash = ?", [(r[0],) for r in rows_t])
+            vec.commit(); return
+        except sqlite3.OperationalError as e:
+            if "locked" not in str(e) or attempt == 9:
+                raise
+            log.warning("vec.db locked, retrying (%d)", attempt + 1); vec.rollback(); time.sleep(10)
 
 
 def embed_missing(vec: sqlite3.Connection, batch: int) -> int:
@@ -127,8 +133,15 @@ def embed_missing(vec: sqlite3.Connection, batch: int) -> int:
     for i in range(0, len(todo), 2048):
         chunk = todo[i:i + 2048]
         embs = model.encode([t for _, t in chunk], batch_size=batch, normalize_embeddings=True, convert_to_numpy=True, show_progress_bar=False)
-        vec.executemany("INSERT OR REPLACE INTO vectors VALUES (?,?)", [(h, embs[j].astype(np.float16).tobytes()) for j, (h, _) in enumerate(chunk)])
-        vec.commit(); done += len(chunk)
+        rows = [(h, embs[j].astype(np.float16).tobytes()) for j, (h, _) in enumerate(chunk)]
+        for attempt in range(10):
+            try:
+                vec.executemany("INSERT OR REPLACE INTO vectors VALUES (?,?)", rows); vec.commit(); break
+            except sqlite3.OperationalError as e:
+                if "locked" not in str(e) or attempt == 9:
+                    raise
+                log.warning("vec.db locked, retrying (%d)", attempt + 1); vec.rollback(); time.sleep(10)
+        done += len(chunk)
         log.info("embedded %d/%d (%.0f/s)", done, len(todo), done / (time.time() - t0))
     return done
 
