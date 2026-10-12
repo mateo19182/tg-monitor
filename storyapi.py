@@ -47,6 +47,29 @@ def stories(week: str, region: str | None = None, theme: str | None = None) -> d
     return {"week": week, "stories": out, "regions": regions, "themes": themes, "total": sum(regions.values())}
 
 
+def threads(min_weeks: int = 3, limit: int = 300) -> dict:
+    """Chains of stories linked week to week (prev_story), longest first."""
+    db = _open()
+    rows = db.execute("SELECT id, week, size, title, title_es, arenas, prev_story FROM stories WHERE kind='post' AND title IS NOT NULL").fetchall()
+    by_id = {r["id"]: r for r in rows}
+    has_next = {r["prev_story"] for r in rows if r["prev_story"]}
+    out = []
+    for r in rows:
+        if r["id"] in has_next:
+            continue  # not the head (latest) of its chain
+        chain, cur, seen = [], r["id"], set()
+        while cur in by_id and cur not in seen:
+            seen.add(cur); c = by_id[cur]
+            chain.append({"id": c["id"], "week": c["week"], "size": c["size"]}); cur = c["prev_story"]
+        if len(chain) < min_weeks:
+            continue
+        reg, ths = _arenas(r["arenas"])
+        out.append({"id": r["id"], "title": r["title"], "title_es": r["title_es"], "region": reg, "themes": ths,
+                    "weeks": list(reversed(chain)), "n_weeks": len(chain), "total": sum(c["size"] for c in chain)})
+    out.sort(key=lambda t: (-t["n_weeks"], -t["total"]))
+    return {"threads": out[:limit], "min_weeks": min_weeks}
+
+
 def story(sid: int) -> dict | None:
     db = _open()
     r = db.execute("SELECT * FROM stories WHERE id=? AND title IS NOT NULL", (sid,)).fetchone()

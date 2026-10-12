@@ -51,10 +51,12 @@ class ArchiveHandler(SimpleHTTPRequestHandler):
                 self.send_json(503, {"error": "search_unavailable"})
             else:
                 self.send_json(200, result)
-        elif url.path in ("/api/stories", "/api/story"):
+        elif url.path in ("/api/stories", "/api/story", "/api/threads"):
             try:
                 params = {k: v[0] for k, v in parse_qs(url.query, keep_blank_values=True, max_num_fields=6).items()}
-                if url.path == "/api/story":
+                if url.path == "/api/threads":
+                    result = storyapi.threads(min(max(int(params.get("min", "3")), 2), 52))
+                elif url.path == "/api/story":
                     result = storyapi.story(int(params.get("id", "")))
                     if result is None:
                         self.send_json(404, {"error": "not_found"}); return

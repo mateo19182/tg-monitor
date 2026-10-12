@@ -214,6 +214,7 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 .story-row{padding:10px 0;border-bottom:1px solid var(--line)}.story-row .meta{font-size:12px;display:flex;flex-wrap:wrap;gap:4px 12px}
 .story-row .meta .tag{color:var(--mute)}.story-row .sum{margin-top:4px}
 .filters{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 16px;font-size:13px}.filters a.on{text-decoration:underline}
+.thread{padding:10px 0;border-bottom:1px solid var(--line)}.thread .wk{display:flex;gap:2px;align-items:flex-end;height:22px;margin-top:4px}.thread .wk span{display:block;width:14px;background:var(--bar);min-height:2px}.thread .wk span.gap{background:transparent;border-bottom:1px dotted var(--line)}
 .chain{list-style:none;padding:0;margin:0}.chain li{margin:3px 0}
 .post{padding:10px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:12px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
 @media(max-width:760px){main{grid-template-columns:1fr;gap:12px}nav{display:none;position:static;max-height:none;border-bottom:1px solid var(--line);padding-bottom:10px}
@@ -244,7 +245,7 @@ const T={
   name:'Telegram archive',home:'home',browse:'browse channels',directory:'index',indexed:'channels in index',cited:'cited facts',activity:'messages per day',period:'archive dates',light:'light',dark:'dark',
   messageSearch:'search messages',query:'text',searchGo:'search',queryHint:'Words or "quoted phrases"',allChannels:'all channels',dateFrom:'from (UTC)',dateTo:'to (UTC)',order:'order',relevance:'relevance',newest:'newest',oldest:'oldest',
   loading:'searching…',results:'results',noresults:'no matching messages.',original:'original post',previous:'previous',next:'next',page:'page',
-  stories:'stories',week:'week',region:'region',theme:'theme',all:'all',story:'story',earlier:'earlier weeks',later:'later weeks',related:'related story',nostories:'no stories for this selection.',postsIn:'posts in this story',chans:'channels',showing:'showing',
+  stories:'stories',threads:'story threads',weeks:'weeks',minWeeks:'at least %d weeks',week:'week',region:'region',theme:'theme',all:'all',story:'story',earlier:'earlier weeks',later:'later weeks',related:'related story',nostories:'no stories for this selection.',postsIn:'posts in this story',chans:'channels',showing:'showing',
   invalid_query:'Enter words or balanced "quoted phrases". Maximum 20 terms.',query_too_long:'Search text is limited to 300 characters.',invalid_date:'Enter a valid date.',date_range:'The start date must be on or before the end date.',invalid_sort:'Choose a valid order.',invalid_page:'Choose a valid page.',invalid_channel:'Choose a channel in the index.',invalid_request:'Check the search fields.',search_unavailable:'Search is unavailable. Try again.',search_timeout:'This search took too long. Try more words or a narrower date range.'},
  es:{channels:'canales',messages:'mensajes',archive:'archivo',tiers:'niveles',sources:'fuentes',handle:'usuario',title:'título',tier:'nivel',subs:'suscriptores',posts:'publicaciones',last:'última publicación',days:'últimos %d días',search:'buscar /',
   about:'descripción (tal como la publica el canal)',facts:'investigaciones publicadas',stats:'archivo',created:'canal creado',first:'primera publicación archivada',views:'visualizaciones totales',fwd:'publicaciones que son reenvíos',senders:'remitentes distintos',
@@ -253,7 +254,7 @@ const T={
   name:'Archivo de Telegram',home:'inicio',browse:'ver canales',directory:'índice',indexed:'canales en el índice',cited:'datos con fuentes',activity:'mensajes por día',period:'fechas del archivo',light:'claro',dark:'oscuro',
   messageSearch:'buscar mensajes',query:'texto',searchGo:'buscar',queryHint:'Palabras o "frases entre comillas"',allChannels:'todos los canales',dateFrom:'desde (UTC)',dateTo:'hasta (UTC)',order:'orden',relevance:'relevancia',newest:'más recientes',oldest:'más antiguos',
   loading:'buscando…',results:'resultados',noresults:'no hay mensajes coincidentes.',original:'publicación original',previous:'anterior',next:'siguiente',page:'página',
-  stories:'historias',week:'semana',region:'región',theme:'tema',all:'todas',story:'historia',earlier:'semanas anteriores',later:'semanas posteriores',related:'historia relacionada',nostories:'no hay historias para esta selección.',postsIn:'publicaciones en esta historia',chans:'canales',showing:'mostrando',
+  stories:'historias',threads:'hilos de historias',weeks:'semanas',minWeeks:'al menos %d semanas',week:'semana',region:'región',theme:'tema',all:'todas',story:'historia',earlier:'semanas anteriores',later:'semanas posteriores',related:'historia relacionada',nostories:'no hay historias para esta selección.',postsIn:'publicaciones en esta historia',chans:'canales',showing:'mostrando',
   invalid_query:'Introduce palabras o "frases entre comillas" cerradas. Máximo 20 términos.',query_too_long:'El texto de búsqueda está limitado a 300 caracteres.',invalid_date:'Introduce una fecha válida.',date_range:'La fecha inicial debe ser anterior o igual a la final.',invalid_sort:'Elige un orden válido.',invalid_page:'Elige una página válida.',invalid_channel:'Elige un canal del índice.',invalid_request:'Revisa los campos de búsqueda.',search_unavailable:'La búsqueda no está disponible. Inténtalo de nuevo.',search_timeout:'La búsqueda tardó demasiado. Añade palabras o reduce el intervalo de fechas.'}};
 let L=localStorage.getItem('lang')==='es'?'es':'en';
 const t=k=>T[L][k]||k;
@@ -265,7 +266,7 @@ function bar(n,max,w=24){return '<span class="bar">'+'█'.repeat(Math.max(1,Mat
 function link(c){return c.handle?`<a href="https://t.me/${esc(c.handle)}" target="_blank" rel="noopener">@${esc(c.handle)}</a>`:`<span class="mute">id ${c.id}</span>`}
 function chanLink(c){return c.tracked?`<a href="#/c/${esc(c.handle||c.id)}">${esc(c.title||c.handle||c.id)}</a>`:esc(c.title||c.handle||('id '+c.id))}
 function nav(cur){const byT={};D.channels.forEach(c=>(byT[c.tier]=byT[c.tier]||[]).push(c));
- let h=`<input class="search" id="q" aria-label="${t('search')}" placeholder="${t('search')}"><ul><li><a href="#/">${t('home')}</a></li><li><a href="#/search">${t('messageSearch')}</a></li><li><a href="#/stories">${t('stories')}</a></li><li><a href="#/channels">${t('channels')}</a></li><li><a href="#/tiers">${t('tiers')}</a></li><li><a href="#/sources">${t('sources')}</a></li></ul>`;
+ let h=`<input class="search" id="q" aria-label="${t('search')}" placeholder="${t('search')}"><ul><li><a href="#/">${t('home')}</a></li><li><a href="#/search">${t('messageSearch')}</a></li><li><a href="#/stories">${t('stories')}</a></li><li><a href="#/threads">${t('threads')}</a></li><li><a href="#/channels">${t('channels')}</a></li><li><a href="#/tiers">${t('tiers')}</a></li><li><a href="#/sources">${t('sources')}</a></li></ul>`;
  for(const k of Object.keys(D.tiers)){if(!byT[k])continue;h+=`<h3>${k.slice(0,1)} · ${byT[k].length}</h3><ul>`+byT[k].map(c=>`<li class="${cur===c.handle.toLowerCase()?'cur':''}"><a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a></li>`).join('')+'</ul>'}
  document.getElementById('nav').innerHTML=h;
  const q=document.getElementById('q');q.oninput=()=>{const v=q.value.toLowerCase();document.querySelectorAll('#nav li').forEach(li=>{li.style.display=li.textContent.toLowerCase().includes(v)?'':'none'})};
@@ -288,6 +289,7 @@ function home(){
   <div class="home-grid"><section><h3>${t('directory')} /</h3><ul class="archive-tree">
    <li><span class="branch" aria-hidden="true">├── </span><a href="#/search">[${t('messageSearch')}]</a></li>
    <li><span class="branch" aria-hidden="true">├── </span><a href="#/stories">[${t('stories')}]</a></li>
+   <li><span class="branch" aria-hidden="true">├── </span><a href="#/threads">[${t('threads')}]</a></li>
    <li><span class="branch" aria-hidden="true">├── </span><a href="#/channels">[${t('browse')}]</a></li>
    <li><span class="branch" aria-hidden="true">├── </span><a href="#/tiers">[${t('tiers')}]</a></li>
    <li><span class="branch" aria-hidden="true">└── </span><a href="#/sources">[${t('sources')}]</a></li>
@@ -344,6 +346,22 @@ async function storiesView(params){
   for(const s of data.stories)h+=`<div class="story-row"><div><a href="#/s/${s.id}">${esc(TT(s))}</a>${s.prev?` <span class="mute" title="${t('earlier')}">⟵</span>`:''}</div><div class="meta"><span>${fmt(s.size)} ${t('posts')} · ${fmt(s.channels)} ${t('chans')}</span><span class="tag">${esc(A(s.region))}</span>${s.themes.map(k=>`<span class="tag">${esc(A(k))}</span>`).join('')}</div></div>`;
   view.innerHTML=h;
  }catch(e){if(e.name!=='AbortError')view.innerHTML=`<h2>${t('stories')}</h2><div class="ul">=======</div><p class="mute">${t('search_unavailable')}</p>`}
+}
+async function threadsView(params){
+ const view=document.getElementById('view');const min=Math.max(2,parseInt(params.get('min')||'3'));
+ view.innerHTML=`<h2>${t('threads')}</h2><div class="ul">=============</div><div class="mute" role="status">${t('loading')}</div>`;
+ const controller=new AbortController();searchController=controller;
+ try{
+  const d=await (await fetch('/api/threads?min='+min,{signal:controller.signal})).json();if(controller.signal.aborted)return;
+  const allWeeks=[...new Set(d.threads.flatMap(x=>x.weeks.map(w=>w.week)))].sort();
+  let h=`<h2>${t('threads')}</h2><div class="ul">=============</div><div class="filters"><span class="mute">${t('weeks')}</span>${[2,3,5,8].map(n=>`<a class="${n===min?'on':''}" href="#/threads?min=${n}">${t('minWeeks').replace('%d',n)}</a>`).join('')}</div>`;
+  h+=`<div class="mute">${fmt(d.threads.length)} · ${allWeeks[0]||''} → ${allWeeks[allWeeks.length-1]||''}</div>`;
+  if(!d.threads.length)h+=`<p class="mute">${t('nostories')}</p>`;
+  for(const x of d.threads){const by={};x.weeks.forEach(w=>by[w.week]=w);const m=Math.max(...x.weeks.map(w=>w.size));const first=allWeeks.indexOf(x.weeks[0].week),last=allWeeks.indexOf(x.weeks[x.weeks.length-1].week);
+   h+=`<div class="thread"><div><a href="#/s/${x.id}">${esc(TT(x))}</a></div><div class="meta story-row" style="padding:0;border:0"><div class="meta"><span>${x.n_weeks} ${t('weeks')} · ${fmt(x.total)} ${t('posts')}</span><span class="tag">${esc(A(x.region))}</span>${x.themes.map(k=>`<span class="tag">${esc(A(k))}</span>`).join('')}</div></div>`;
+   h+=`<div class="wk" title="${esc(x.weeks.map(w=>w.week+': '+w.size).join(' · '))}">${allWeeks.slice(first,last+1).map(w=>by[w]?`<span style="height:${Math.max(2,Math.round(by[w].size/m*22))}px" title="${w}: ${by[w].size}"></span>`:`<span class="gap"></span>`).join('')}</div></div>`}
+  view.innerHTML=h;
+ }catch(e){if(e.name!=='AbortError')view.innerHTML=`<h2>${t('threads')}</h2><p class="mute">${t('search_unavailable')}</p>`}
 }
 async function storyView(id){
  const view=document.getElementById('view');view.innerHTML=`<div class="mute" role="status">${t('loading')}</div>`;
@@ -406,10 +424,10 @@ function sources(){let h=`<h2>${t('sources')}</h2><div class="ul">=======</div><
 function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/),sm=p.match(/^s\/(\d+)$/);const isHome=!p;
  document.body.classList.toggle('home',isHome);document.documentElement.lang=L;
  document.getElementById('brand').textContent=t('name');document.getElementById('menu').textContent=`[${t('directory')}]`;document.getElementById('menu').setAttribute('aria-expanded',String(document.body.classList.contains('nav-open')));
- document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='stories'||sm?t('stories'):p==='tiers'?t('tiers'):p==='sources'?t('sources'):t('channels'))}`;
+ document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='stories'||sm?t('stories'):p==='threads'?t('threads'):p==='tiers'?t('tiers'):p==='sources'?t('sources'):t('channels'))}`;
  if(!isHome)nav(m?decodeURIComponent(m[1]).toLowerCase():null);
  document.getElementById('hdr').textContent=`${fmt(D.channels.length)} ${t('channels')} · ${fmt(D.total)} ${t('messages')}`;
- if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories')storiesView(new URLSearchParams(query));else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='tiers')tiers();else if(p==='sources')sources();else index();window.scrollTo(0,0)}
+ if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories')storiesView(new URLSearchParams(query));else if(p==='threads')threadsView(new URLSearchParams(query));else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='tiers')tiers();else if(p==='sources')sources();else index();window.scrollTo(0,0)}
 document.getElementById('lang').onclick=()=>{L=L==='en'?'es':'en';localStorage.setItem('lang',L);document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';applyTheme();route()};
 document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';
 const th=document.getElementById('theme');let dark=(localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';
