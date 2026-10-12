@@ -216,7 +216,7 @@ body{font:15px/1.6 ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monos
 a{color:var(--fg);text-decoration:none}a:hover{text-decoration:underline}
 .wrap{max-width:1180px;margin:0 auto;padding:16px}
 header{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
-header h1{font-size:14px;margin:0;font-weight:700}
+header h1{font-size:20px;line-height:1;margin:0;font-weight:400}
 header .r{margin-left:auto;display:flex;gap:14px}
 .btn{cursor:pointer;color:var(--mute);background:none;border:0;padding:0;font:inherit}.btn:hover{color:var(--fg)}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:1px dashed var(--fg);outline-offset:4px}
@@ -287,7 +287,7 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 <body>
 <div class="wrap">
 <header>
- <h1><a href="#/" id="brand">Spanish Politics on Telegram</a></h1>
+ <h1><a href="#/" id="brand" aria-label="Spanish Politics on Telegram" title="Spanish Politics on Telegram">▚</a></h1>
  <span id="top"></span>
  <span class="r"><button class="btn" id="lang" type="button">[es]</button><button class="btn" id="theme" type="button">[dark]</button></span>
 </header>
@@ -514,7 +514,7 @@ const METHOD={
 function methodView(){document.getElementById('view').innerHTML=`<div class="prose">${METHOD[L]({n:fmt(D.channels.length),a:fmt(D.channels.filter(c=>c.n).length),g:Object.keys(D.groups).length})}</div>`}
 function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/),sm=p.match(/^s\/(\d+)$/);const isHome=!p;
  document.body.classList.toggle('home',isHome);document.documentElement.lang=L;
- document.getElementById('brand').textContent=t('name');
+ {const b=document.getElementById('brand');b.setAttribute('aria-label',t('name'));b.title=t('name')}
  document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='links'?t('links'):p==='method'?t('method'):p==='stories'||p==='threads'||sm?t('stories'):t('channels'))}`;
  nav(isHome?'':(m?'channels':p==='search'||p==='links'||p==='method'?p:(p==='stories'||p==='threads'||sm)?'stories':'channels'));
  if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories'||p==='threads'){const q=new URLSearchParams(query);(p==='threads'||q.get('view')==='time')?threadsView(q):storiesView(q)}else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='links')linksView(new URLSearchParams(query));else if(p==='method')methodView();else index();window.scrollTo(0,0)}
