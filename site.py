@@ -31,6 +31,13 @@ TIERS = {
     "K_spain_left": {"en": "Spanish left-wing, anti-NATO and solidarity organisations and media", "es": "Organizaciones y medios españoles de izquierda, contrarios a la OTAN y de solidaridad"},
     "L_spain_media": {"en": "Spanish media outlets and commentators", "es": "Medios de comunicación y comentaristas españoles"},
     "M_public_channels": {"en": "Public channels of individual authors, associations and community publishers", "es": "Canales públicos de autores, asociaciones y comunidades"},
+    "N_spain_institution": {"en": "Spanish state institutions", "es": "Instituciones del Estado español"},
+    "O_factchecker": {"en": "Fact-checking organisations", "es": "Organizaciones de verificación"},
+    "P_regional_politics": {"en": "Regional and nationalist parties, organisations and media (Catalonia, Basque Country, Galicia, others)", "es": "Partidos, organizaciones y medios regionales y nacionalistas (Cataluña, País Vasco, Galicia, otros)"},
+    "Q_mobilisation": {"en": "Unions, housing, civic, professional and diaspora organisations", "es": "Sindicatos y organizaciones de vivienda, cívicas, profesionales y de diáspora"},
+    "R_conspiracy_pivot": {"en": "Channels documented by Maldita.es (2022) as moving from COVID-19 content to the war in Ukraine", "es": "Canales documentados por Maldita.es (2022) como pasando de contenido sobre COVID-19 a la guerra en Ucrania"},
+    "S_influencer": {"en": "Individual commentators and streamers", "es": "Comentaristas y streamers individuales"},
+    "T_counterpart": {"en": "Ukrainian, EU, Israeli and Moroccan official or aligned channels", "es": "Canales oficiales o afines de Ucrania, la UE, Israel y Marruecos"},
 }
 
 

@@ -24,6 +24,13 @@ Each channel carries a `tier` label so the dataset can be sliced:
 | K_spain_left | Spanish left-wing, anti-NATO and solidarity organisations and media |
 | L_spain_media | Spanish media outlets and commentators |
 | M_public_channels | Public channels of individual authors, associations and community publishers |
+| N_spain_institution | Spanish state institutions |
+| O_factchecker | Fact-checking organisations |
+| P_regional_politics | Regional and nationalist parties, organisations and media |
+| Q_mobilisation | Unions, housing, civic, professional and diaspora organisations |
+| R_conspiracy_pivot | Channels documented by Maldita.es (2022) as moving from COVID-19 content to the war in Ukraine |
+| S_influencer | Individual commentators and streamers |
+| T_counterpart | Ukrainian, EU, Israeli and Moroccan official or aligned channels |
 
 ## Layout
 

@@ -218,3 +218,103 @@ CBKNEWS,M_public_channels,2020-01-01,M13,Named in Maldita.es' December 2022 samp
 laquintacolumnainternational,M_public_channels,2020-01-01,M13,Named in Maldita.es' December 2022 sample as La Quinta Columna International
 resurgente2020,M_public_channels,2020-01-01,M13,Named in Maldita.es' December 2022 sample as RESURGENTE 2020
 KaosCanal,B_es_aggregator,2024-11-01,M1,Named in Maldita.es' July 2025 sample as ꧁NOTI✞KAOS꧂
+UkraineNowSpanish,T_counterpart,,discovery-2026-10-12,Spanish edition of the Ukrainian government's Ukraine NOW channel; last post 2025-11-24
+Ukraine_MFA,T_counterpart,2026-01-01,discovery-2026-10-12,Ministry of Foreign Affairs of Ukraine official channel (Ukrainian); verified
+V_Zelenskiy_official,T_counterpart,2026-01-01,discovery-2026-10-12,Official channel of the President of Ukraine; verified
+ukrinform_news,T_counterpart,2026-01-01,discovery-2026-10-12,Ukrinform state news agency (Ukrainian); linked from ukrinform.es
+UKR_token,T_counterpart,,discovery-2026-10-12,Spanish-language news channel focused on Ukraine and the Middle East; operator not identified
+espana_ucrania_canal,T_counterpart,,discovery-2026-10-12,Ukrainian-language information channel for Ukrainians in Spain
+EuropeanCommission,T_counterpart,,discovery-2026-10-12,Official European Commission channel (EN/UK); verified
+aurora_israel,T_counterpart,,discovery-2026-10-12,Spanish-language newspaper published in Israel; official channel per description
+hespress,T_counterpart,2026-01-01,discovery-2026-10-12,Moroccan outlet Hespress (Arabic); verified
+policianacional,N_spain_institution,,discovery-2026-10-12,Policía Nacional channel; verified
+congresodelosdiputados,N_spain_institution,,discovery-2026-10-12,Congress channel; linked from congreso.es; verified
+senadoesp,N_spain_institution,,discovery-2026-10-12,Senate channel; linked from senado.es
+sanidadgob,N_spain_institution,2026-01-01,discovery-2026-10-12,Ministry of Health channel; verified
+MinisterioTrabajo,N_spain_institution,,discovery-2026-10-12,Ministry of Labour channel
+mefpdtelegram,N_spain_institution,,discovery-2026-10-12,Ministry of Education channel; verified
+consumogob,N_spain_institution,,discovery-2026-10-12,Consumer-affairs secretariat channel
+mitecogob,N_spain_institution,,discovery-2026-10-12,Ministry for Ecological Transition channel
+minecogob,N_spain_institution,,discovery-2026-10-12,Ministry of Economy channel
+jupolnacional,Q_mobilisation,,discovery-2026-10-12,Policía Nacional trade union Jupol channel
+JucilDifusiones,Q_mobilisation,,discovery-2026-10-12,Guardia Civil professional association Jucil channel; verified
+AUGC_COMUNICA,Q_mobilisation,,discovery-2026-10-12,Guardia Civil professional association AUGC channel
+malditobulo,O_factchecker,,discovery-2026-10-12,Maldita.es fact-checking channel; linked from maldita.es
+maldita_es,O_factchecker,,discovery-2026-10-12,Maldita.es general channel
+newtral_telegram,O_factchecker,,discovery-2026-10-12,Newtral channel; linked from newtral.es; verified
+elpais,L_spain_media,,discovery-2026-10-12,El País channel; verified
+elmundoes,L_spain_media,,discovery-2026-10-12,El Mundo channel; verified; last post 2024-03-22
+eldiarioes,L_spain_media,,discovery-2026-10-12,elDiario.es channel; linked from eldiario.es; verified
+elconfidencial,L_spain_media,,discovery-2026-10-12,El Confidencial channel
+elliberal,L_spain_media,,discovery-2026-10-12,The Objective channel; linked from theobjective.com
+OKDiarioOficial,L_spain_media,,discovery-2026-10-12,OKDiario channel; verified; last post 2025-01-10
+vozpopuli,L_spain_media,,discovery-2026-10-12,Vozpópuli channel; verified
+publico_es,L_spain_media,,discovery-2026-10-12,Público channel; linked from publico.es
+periodistadigit,L_spain_media,,discovery-2026-10-12,Periodista Digital channel; linked from site; verified
+esdiario,L_spain_media,,discovery-2026-10-12,ESdiario channel; linked from site; verified
+diario_LaRazon,L_spain_media,,discovery-2026-10-12,La Razón front page and headlines channel; not linked from larazon.es
+noticias_20minutos,L_spain_media,,discovery-2026-10-12,20minutos channel; not linked from 20minutos.es
+la_sexta,L_spain_media,,discovery-2026-10-12,laSexta channel; linked from lasexta.com; verified
+A3Noticias,L_spain_media,,discovery-2026-10-12,Antena 3 Noticias channel; verified
+radiocope,L_spain_media,,discovery-2026-10-12,COPE channel; linked from cope.es; last post 2025-01-08
+europa_press,L_spain_media,,discovery-2026-10-12,Europa Press agency channel; verified
+infoLibre_es,L_spain_media,,discovery-2026-10-12,infoLibre channel; linked from infolibre.es
+ctxtes,L_spain_media,,discovery-2026-10-12,CTXT (Revista Contexto) channel
+elsaltodiario,L_spain_media,,discovery-2026-10-12,El Salto channel; linked from site
+LaBasePublico,K_spain_left,,discovery-2026-10-12,La Base programme on Canal Red
+canalpabloiglesias,K_spain_left,,discovery-2026-10-12,Personal channel of Pablo Iglesias; verified
+MediterraneoDGT,L_spain_media,,discovery-2026-10-12,Mediterráneo Digital channel; linked from site; verified
+Diario16Info,L_spain_media,,discovery-2026-10-12,Diario16 handle now titled DiarioSabemos posting Diario16+ articles
+LaVanguardia_es,L_spain_media,,discovery-2026-10-12,La Vanguardia news channel; not linked from lavanguardia.com; last post 2026-04-24
+elnacionalcat,P_regional_politics,,discovery-2026-10-12,ElNacional.cat channel (Catalan media)
+naciodigital,P_regional_politics,,discovery-2026-10-12,Nació Digital channel; verified
+vilaweb,P_regional_politics,,discovery-2026-10-12,VilaWeb channel; last post 2025-08-07
+elperiodico,L_spain_media,,discovery-2026-10-12,El Periódico politics channel; last post 2024-08-09
+assemblea,P_regional_politics,,discovery-2026-10-12,Official ANC channel; linked from assemblea.cat
+omnium,P_regional_politics,,discovery-2026-10-12,Self-described official channel of Òmnium Cultural
+cupnacional,P_regional_politics,,discovery-2026-10-12,CUP diffusion channel; linked from cup.cat
+elpuntavui,P_regional_politics,,discovery-2026-10-12,Breaking-news channel of the Catalan daily El Punt Avui
+catalunyaradio,P_regional_politics,,discovery-2026-10-12,Catalan public broadcaster channel
+ladirecta,P_regional_politics,,discovery-2026-10-12,Catalan cooperative media outlet
+llibertatcat,P_regional_politics,,discovery-2026-10-12,Catalan independence news site channel
+bloquenacionalistagalego,P_regional_politics,,discovery-2026-10-12,Self-described official BNG channel; linked from bng.gal
+galizanova,P_regional_politics,,discovery-2026-10-12,Youth organisation of the BNG per its description
+prazapublica,P_regional_politics,,discovery-2026-10-12,Galician-language digital daily
+galizalivre,P_regional_politics,,discovery-2026-10-12,Galician independentist portal
+teruel_existe,P_regional_politics,,discovery-2026-10-12,Citizens' movement; linked from teruelexiste.info
+soriaya,P_regional_politics,,discovery-2026-10-12,España Vaciada platform channel
+masmadridinforma,P_regional_politics,,discovery-2026-10-12,Más Madrid party information channel per its description
+herritmoabizitu,P_regional_politics,,discovery-2026-10-12,Sortu channel; linked from sortu.eus
+ernaigazte,P_regional_politics,,discovery-2026-10-12,Basque left-abertzale youth organisation; linked from ernai.eus
+sareherritarra,P_regional_politics,,discovery-2026-10-12,Basque prisoners' rights network; linked from sare.eus
+naiz_info,P_regional_politics,,discovery-2026-10-12,Basque daily NAIZ/Gara; linked from naiz.eus
+adelante_andalucia,P_regional_politics,,discovery-2026-10-12,Party channel; linked from adelanteandalucia.org
+izquierdacastellana,P_regional_politics,,discovery-2026-10-12,Self-described public channel of Izquierda Castellana
+sindicatlloguer,Q_mobilisation,,discovery-2026-10-12,Official channel; linked from sindicatdellogateres.org
+inquilinatoMad,Q_mobilisation,,discovery-2026-10-12,Official channel; organiser of the 3 Oct 2026 Madrid housing march; linked from inquilinato.org
+pahbarcelona,Q_mobilisation,,discovery-2026-10-12,PAH Barcelona channel; linked from afectadosporlahipoteca.com
+ugt_es,Q_mobilisation,,discovery-2026-10-12,UGT news channel; linked from ugt.es
+serviciosccoo,Q_mobilisation,,discovery-2026-10-12,CCOO Federación de Servicios channel
+ccoomadrid,Q_mobilisation,,discovery-2026-10-12,CCOO Madrid regional channel
+cgtcatalunya,Q_mobilisation,,discovery-2026-10-12,Self-described official CGT Catalunya channel
+CNTes,Q_mobilisation,,discovery-2026-10-12,Official CNT channel; linked from cnt.es
+cnt_ait,Q_mobilisation,,discovery-2026-10-12,Self-described official channel of the CNT-AIT
+elasindikatua,Q_mobilisation,,discovery-2026-10-12,Basque union ELA channel
+intersindicalvalenciana,Q_mobilisation,,discovery-2026-10-12,Valencian union channel
+abogadoscristianos,Q_mobilisation,,discovery-2026-10-12,Self-described official channel of Fundación Abogados Cristianos
+fundacionvillacisneros,Q_mobilisation,,discovery-2026-10-12,Foundation channel matching its self-description
+provida,Q_mobilisation,,discovery-2026-10-12,Anti-abortion association channel
+plataforma6f,Q_mobilisation,,discovery-2026-10-12,Farmers' protest platform channel
+elitetaxicat,Q_mobilisation,,discovery-2026-10-12,Self-described official channel of Élite Taxi Catalunya
+venezolanosenespana,Q_mobilisation,,discovery-2026-10-12,Information channel for Venezuelans in Spain per its description
+cibercuba,Q_mobilisation,2026-01-01,discovery-2026-10-12,Spain-based Cuban news outlet
+diario14ymedio,Q_mobilisation,,discovery-2026-10-12,Cuban independent daily; linked from 14ymedio.com
+reconquistaespana,Q_mobilisation,,discovery-2026-10-12,Self-described youth activist organisation based in Catalonia
+spanishrevolution,Q_mobilisation,,discovery-2026-10-12,Activist media page
+MedicosporlaverdadEsp,R_conspiracy_pivot,,discovery-2026-10-12,Self-described official channel of Médicos por la Verdad España
+medicosporlaverdad,R_conspiracy_pivot,,discovery-2026-10-12,Argentine edition; March 2022 pivot to Ukraine content documented by Maldita.es and Chequeado
+elinvestigador_org,R_conspiracy_pivot,,discovery-2026-10-12,El Investigador project; linked from elinvestigador.org
+alertamundial2,R_conspiracy_pivot,,discovery-2026-10-12,Appears in forwards into watched channels
+wallstwolverine,S_influencer,2026-01-01,discovery-2026-10-12,Víctor Domínguez's channel linking to his X and Instagram
+infovlogger1,S_influencer,,discovery-2026-10-12,InfoVlogger channel; linked from his Linktree
+gerardotece,S_influencer,,discovery-2026-10-12,CTXT columnist's channel matching his byline
