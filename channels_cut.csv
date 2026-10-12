@@ -15,7 +15,6 @@ Ukraine_MFA,T_counterpart,2026-01-01,discovery-2026-10-12,Ministry of Foreign Af
 V_Zelenskiy_official,T_counterpart,2026-01-01,discovery-2026-10-12,Official channel of the President of Ukraine; verified,"Ukrainian/English, parent material only"
 ukrinform_news,T_counterpart,2026-01-01,discovery-2026-10-12,Ukrinform state news agency (Ukrainian); linked from ukrinform.es,Ukrainian-language agency
 aurora_israel,T_counterpart,,discovery-2026-10-12,Spanish-language newspaper published in Israel; official channel per description,"Israeli Spanish-language paper, low relevance"
-hespress,T_counterpart,2026-01-01,discovery-2026-10-12,Moroccan outlet Hespress (Arabic); verified,"Arabic-language Moroccan outlet, no Spanish politics"
 policianacional,N_spain_institution,,discovery-2026-10-12,Policía Nacional channel; verified,outside politics/disinformation focus
 congresodelosdiputados,N_spain_institution,,discovery-2026-10-12,Congress channel; linked from congreso.es; verified,outside politics/disinformation focus
 senadoesp,N_spain_institution,,discovery-2026-10-12,Senate channel; linked from senado.es,outside politics/disinformation focus

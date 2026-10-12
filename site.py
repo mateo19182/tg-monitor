@@ -37,7 +37,7 @@ TIERS = {
     "Q_mobilisation": {"en": "Unions, housing, civic, professional and diaspora organisations", "es": "Sindicatos y organizaciones de vivienda, cívicas, profesionales y de diáspora"},
     "R_conspiracy_pivot": {"en": "Channels documented by Maldita.es (2022) as moving from COVID-19 content to the war in Ukraine", "es": "Canales documentados por Maldita.es (2022) como pasando de contenido sobre COVID-19 a la guerra en Ucrania"},
     "S_influencer": {"en": "Individual commentators and streamers", "es": "Comentaristas y streamers individuales"},
-    "T_counterpart": {"en": "Ukrainian, EU, Israeli and Moroccan official or aligned channels", "es": "Canales oficiales o afines de Ucrania, la UE, Israel y Marruecos"},
+    "T_counterpart": {"en": "Ukrainian, EU, Israeli, Moroccan and Algerian official or aligned channels and media", "es": "Canales y medios oficiales o afines de Ucrania, la UE, Israel, Marruecos y Argelia"},
     "U_campaign_2026": {"en": "Candidates, party branches and youth wings around the 29 November 2026 election", "es": "Candidatos, agrupaciones territoriales y juventudes en torno a las elecciones del 29 de noviembre de 2026"},
     "V_civil_society": {"en": "Civil-society organisations: environmental, feminist, consumer, health, education, rights, religious, professional", "es": "Organizaciones de la sociedad civil: ambientales, feministas, de consumidores, sanidad, educación, derechos, religiosas, profesionales"},
     "W_journalist": {"en": "Journalists' and commentators' personal and programme channels", "es": "Canales personales y de programas de periodistas y comentaristas"},
