@@ -208,7 +208,7 @@ def label(vec, week, kind, cap):
         user = story_context(vec, sid)
         if kind == "comment":
             user = user.replace("posts", "discussion-group comments", 1)
-        reqs.append({"custom_id": f"s{sid}", "params": {"model": MODEL, "max_tokens": 700, "system": system,
+        reqs.append({"custom_id": f"s{sid}", "params": {"model": MODEL, "max_tokens": 700, "thinking": {"type": "disabled"}, "system": system,
                                                         "messages": [{"role": "user", "content": user}]}})
     batch = client.messages.batches.create(requests=reqs)
     log.info("batch %s submitted", batch.id)
@@ -253,6 +253,7 @@ def show(vec, week, kind, full=False):
     rows = vec.execute("SELECT id, size, n_channels, arenas, title, prev_story, related_story, note, summary FROM stories WHERE week=? AND kind=? ORDER BY size DESC", (week, kind)).fetchall()
     for sid, size, nch, arenas, title, prev, rel, note, summary in rows:
         na = (json.loads(note) or {}).get("new_arena") if note else None
+        if isinstance(na, dict): na = na.get("name")
         link = f"={prev}" if prev else (f"~{rel}" if rel else "")
         print(f"{sid:5d} {size:5d} {nch:3d}ch {(','.join(json.loads(arenas)) if arenas else '-'):<28} {link:>6}  {title or '(unlabelled)'}{'  [proposes: '+na+']' if na else ''}")
         if full and summary: print(f"{'':52}{summary}")
