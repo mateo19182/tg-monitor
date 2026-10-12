@@ -6,10 +6,11 @@ titles fetched for content pages. Stored in links.db (separate from tg.db so the
   links.py fetch [--limit N] [--domain D]  # fetch <title>/description for content URLs, newest first, 1 req/s per domain
   links.py tme [--min 5]      # t.me handles referenced by watched channels but not on the watchlist (discovery feed)
   links.py domains [--top 40] # domain table
+  links.py summary            # site/links.json for the site's links page (domains per group and window, shared URLs, t.me refs)
 """
-import argparse, csv, json, logging, re, sqlite3, sys, time
+import argparse, csv, html, json, logging, re, sqlite3, sys, time
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
@@ -136,7 +137,7 @@ def resolve(db: sqlite3.Connection, limit: int) -> None:
             c = canonical(target)
             if c:
                 db.execute("UPDATE links SET canon=?, domain=?, kind=? WHERE canon=?", (c[0][:2000], c[1], kind_of(c[1], urlsplit(c[0]).path), u)); ok += 1
-        if i % 50 == 49: db.commit()
+        db.commit()
         time.sleep(0.2)
     db.commit(); log.info("resolved %d/%d", ok, len(todo))
 
@@ -157,18 +158,24 @@ def fetch(db: sqlite3.Connection, limit: int, domain: str | None) -> None:
         try:
             r = s.get(u, timeout=12, stream=True); status = r.status_code
             if "html" in (r.headers.get("content-type") or ""):
-                head = r.raw.read(200_000, decode_content=True).decode(r.encoding or "utf-8", "replace")
+                raw = r.raw.read(200_000, decode_content=True)
+                m = re.search(rb'charset=["\']?([A-Za-z0-9_-]+)', raw[:4000])  # <meta charset>; the header default (ISO-8859-1) garbles UTF-8 pages
+                enc = m.group(1).decode() if m else ("charset" in (r.headers.get("content-type") or "") and r.encoding) or "utf-8"
+                try:
+                    head = raw.decode(enc, "replace")
+                except LookupError:
+                    head = raw.decode("utf-8", "replace")
                 m = re.search(r'<meta[^>]+property=["\']og:title["\'][^>]+content=["\']([^"\']{1,300})', head, re.I) or re.search(r"<title[^>]*>\s*([^<]{1,300})", head, re.I)
-                title = m.group(1).strip() if m else None
+                title = html.unescape(m.group(1)).strip() if m else None
                 m = re.search(r'<meta[^>]+(?:property=["\']og:description["\']|name=["\']description["\'])[^>]+content=["\']([^"\']{1,500})', head, re.I)
-                desc = m.group(1).strip() if m else None
+                desc = html.unescape(m.group(1)).strip() if m else None
             r.close()
         except Exception:
             pass
         last_hit[host] = time.time()
         db.execute("INSERT OR REPLACE INTO pages VALUES (?,?,?,?,?,?)", (u, host, title, desc, status, datetime.now(timezone.utc).isoformat(timespec="seconds")))
         ok += bool(title)
-        if i % 20 == 19: db.commit()
+        db.commit()
     db.commit(); log.info("fetched %d titles of %d", ok, len(todo))
 
 
@@ -189,14 +196,66 @@ def domains(db: sqlite3.Connection, top: int) -> None:
         print(f"{n:8d} {c:4d}ch {k:9s} {d}")
 
 
+BOT_WALL = re.compile(r"^(just a moment|attention required|access denied|un momento|403 forbidden|404 not found|captcha|security check)", re.I)
+
+
+def clean_title(t: str | None) -> str | None:
+    """Unescape entities, undo UTF-8-read-as-Latin-1, drop bot-wall titles."""
+    if not t:
+        return None
+    t = html.unescape(t)
+    try:
+        t = t.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        pass
+    return None if BOT_WALL.match(t.strip()) else t.strip()
+
+
+def summary(db: sqlite3.Connection, out: Path) -> None:
+    """Aggregates for the site: top domains per channel group and time window, kinds, most-shared URLs, unwatched t.me handles."""
+    import importlib.util  # site.py shadows the stdlib 'site' module name, so load it by path
+    spec = importlib.util.spec_from_file_location("tg_site", HERE / "site.py"); tg_site = importlib.util.module_from_spec(spec); spec.loader.exec_module(tg_site)
+    GROUP_OF = tg_site.GROUP_OF
+    watch = {r["handle"].lower(): r["tier"] for r in csv.DictReader(open(HERE / "channels.csv", encoding="utf-8"))}
+    group = {cid: GROUP_OF.get(watch[(u or "").lower()][0]) for cid, u in db.execute("SELECT id, username FROM tg.channels") if (u or "").lower() in watch}
+    for cid, u in db.execute("SELECT id, CAST(id AS TEXT) FROM tg.channels"):  # private groups listed by numeric id
+        if cid not in group and u in watch: group[cid] = GROUP_OF.get(watch[u][0])
+    now = datetime.now(timezone.utc)
+    windows = {"7": (now - timedelta(days=7)).isoformat(), "30": (now - timedelta(days=30)).isoformat(), "all": ""}
+    res: dict = {"built": now.strftime("%Y-%m-%d %H:%M UTC"), "windows": {}}
+    for w, lo in windows.items():
+        dom: dict = defaultdict(lambda: defaultdict(lambda: [0, set(), ""]))  # group -> domain -> [n, channels, kind]
+        kinds: dict = defaultdict(Counter)
+        for cid, d, k, n in db.execute("SELECT channel_id, domain, kind, COUNT(*) FROM links WHERE date >= ? GROUP BY 1, 2", (lo,)):
+            for g in ("", group.get(cid) or "other"):
+                kinds[g][k] += n
+                if k == "telegram": continue
+                e = dom[g][d]; e[0] += n; e[1].add(cid); e[2] = k
+        res["windows"][w] = {g: {"kinds": dict(kinds[g]),
+                                 "domains": [[d, e[2], e[0], len(e[1])] for d, e in sorted(dom[g].items(), key=lambda x: -x[1][0])[:30]]}
+                             for g in kinds}
+    lo = windows["7"]
+    res["urls"] = [{"url": u, "domain": d, "n": n, "channels": c, "title": clean_title(t)} for u, d, n, c, t in db.execute(
+        "SELECT l.canon, l.domain, COUNT(*) n, COUNT(DISTINCT l.channel_id) c, p.title FROM links l LEFT JOIN pages p ON p.canon = l.canon "
+        "WHERE l.date >= ? AND l.kind = 'content' GROUP BY l.canon HAVING c >= 2 ORDER BY c DESC, n DESC LIMIT 40", (lo,))]
+    own = {(u or "").lower() for (u,) in db.execute("SELECT username FROM tg.channels")} | set(watch)
+    res["tme"] = {}
+    for w in ("30", "all"):
+        rows = db.execute("SELECT handle, COUNT(*) n, COUNT(DISTINCT channel_id) c, MAX(date) FROM tme WHERE date >= ? GROUP BY handle "
+                          "HAVING c >= 2 ORDER BY c DESC, n DESC LIMIT 200", (windows[w],)).fetchall()
+        res["tme"][w] = [[h, n, c, (last or "")[:10]] for h, n, c, last in rows if h not in own][:50]
+    tmp = out.with_suffix(".tmp"); tmp.write_text(json.dumps(res, ensure_ascii=False), encoding="utf-8"); tmp.replace(out)
+    log.info("wrote %s (%d KB)", out, out.stat().st_size // 1024)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["index", "resolve", "fetch", "tme", "domains"])
+    ap.add_argument("cmd", choices=["index", "resolve", "fetch", "tme", "domains", "summary"])
     ap.add_argument("--limit", type=int, default=2000); ap.add_argument("--domain"); ap.add_argument("--min", type=int, default=5); ap.add_argument("--top", type=int, default=40)
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stdout)
     db = open_db()
-    {"index": lambda: index(db), "resolve": lambda: resolve(db, a.limit), "fetch": lambda: fetch(db, a.limit, a.domain), "tme": lambda: tme(db, a.min), "domains": lambda: domains(db, a.top)}[a.cmd]()
+    {"index": lambda: index(db), "resolve": lambda: resolve(db, a.limit), "fetch": lambda: fetch(db, a.limit, a.domain), "tme": lambda: tme(db, a.min), "domains": lambda: domains(db, a.top), "summary": lambda: summary(db, HERE / "site" / "links.json")}[a.cmd]()
 
 
 if __name__ == "__main__":

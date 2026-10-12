@@ -105,6 +105,39 @@ def build() -> dict:
         "SELECT channel_id, COUNT(*) n, MIN(date) lo, MAX(date) hi, SUM(views) views, "
         f"SUM(fwd_from_channel_id IS NOT NULL) n_fwd, {senders} senders FROM messages GROUP BY 1")}
 
+    monthly = defaultdict(dict)  # channel -> 'YYYY-MM' -> n, full archive
+    for cid, m, n in db.execute("SELECT channel_id, substr(date,1,7), COUNT(*) FROM messages GROUP BY 1,2"):
+        monthly[cid][m] = n
+    since30 = (today - timedelta(days=30)).isoformat()
+    recent = {cid: (round(v) if v is not None else None, n) for cid, v, n in db.execute(
+        "SELECT channel_id, AVG(views), COUNT(*) FROM messages WHERE date >= ? AND fwd_from_channel_id IS NULL GROUP BY 1", (since30,))}
+    shares = {cid: (med, lnk) for cid, med, lnk in db.execute(
+        "SELECT channel_id, SUM(media IS NOT NULL AND media != 'webpage'), SUM(urls IS NOT NULL AND urls NOT IN ('', '[]')) FROM messages GROUP BY 1")}
+
+    def months(cid) -> dict | None:
+        mm = monthly.get(cid)
+        if not mm:
+            return None
+        lo = min(mm); y, mo = map(int, lo.split("-")); out = []
+        while f"{y:04d}-{mo:02d}" <= max(mm):
+            out.append(mm.get(f"{y:04d}-{mo:02d}", 0)); mo += 1
+            if mo > 12: y, mo = y + 1, 1
+        return {"start": lo, "n": out}
+
+    ch_stories = defaultdict(list); ch_regions = defaultdict(Counter); ch_themes = defaultdict(Counter)
+    if (HERE / "vec.db").exists():
+        try:
+            vec = sqlite3.connect(f"file:{HERE / 'vec.db'}?mode=ro", uri=True)
+            for cid, sid, wk, ti, ti_es, ar, n in vec.execute(
+                    "SELECT m.channel_id, s.id, s.week, s.title, s.title_es, s.arenas, COUNT(*) FROM story_members m JOIN stories s ON s.id = m.story_id "
+                    "WHERE s.kind = 'post' AND s.title IS NOT NULL GROUP BY 1, 2"):
+                al = json.loads(ar) if ar else []
+                if al: ch_regions[cid][al[0]] += n
+                for th in al[1:]: ch_themes[cid][th] += n
+                ch_stories[cid].append({"id": sid, "week": wk, "title": ti, "title_es": ti_es, "n": n})
+        except sqlite3.Error:
+            pass
+
     fwd_from = defaultdict(Counter)  # channel -> origin -> n
     fwd_to = defaultdict(Counter)    # origin -> watched channel -> n
     for cid, src, n in db.execute("SELECT channel_id, fwd_from_channel_id, COUNT(*) FROM messages WHERE fwd_from_channel_id IS NOT NULL GROUP BY 1,2"):
@@ -142,6 +175,12 @@ def build() -> dict:
             "fwd_from": [{**label(s), "n": n} for s, n in fwd_from[cid].most_common(TOP)] if cid else [],
             "fwd_to": [{**label(s), "n": n} for s, n in fwd_to[cid].most_common(TOP)] if cid else [],
             "domains": domains[cid].most_common(TOP) if cid else [],
+            "months": months(cid) if cid else None,
+            "views30": recent.get(cid, (None, 0))[0] if cid else None, "n30": recent.get(cid, (None, 0))[1] if cid else 0,
+            "n_media": shares.get(cid, (0, 0))[0] if cid else 0, "n_links": shares.get(cid, (0, 0))[1] if cid else 0,
+            "regions": ch_regions[cid].most_common() if cid else [], "themes": ch_themes[cid].most_common(8) if cid else [],
+            "stories": sorted(ch_stories[cid], key=lambda x: (x["week"], x["n"]), reverse=True)[:10] if cid else [],
+            "n_stories": len(ch_stories[cid]) if cid else 0,
             "facts": wiki.get(h, []),
             "linked_note": w.get("note") if w["tier"] == "I_discussion_group" else None,
         })
@@ -182,7 +221,7 @@ header .r{margin-left:auto;display:flex;gap:14px}
 .btn{cursor:pointer;color:var(--mute);background:none;border:0;padding:0;font:inherit}.btn:hover{color:var(--fg)}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:1px dashed var(--fg);outline-offset:4px}
 main{display:block}#view{overflow-wrap:anywhere}.tw{overflow-x:auto}.tw table{min-width:640px}td,th{overflow-wrap:normal}
-#top{display:flex;gap:16px}#top a{color:var(--mute)}#top a.on{color:var(--fg);text-decoration:underline}
+#top{display:flex;flex-wrap:wrap;gap:4px 16px}#top a{color:var(--mute)}#top a.on{color:var(--fg);text-decoration:underline}
 nav{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto;font-size:14px}
 nav h3{margin:14px 0 4px;font-size:12px;color:var(--mute);font-weight:400}
 nav ul{list-style:none;margin:0;padding:0}nav li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -236,6 +275,7 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 .story-row .meta .tag{color:var(--mute)}.story-row .sum{margin-top:4px}
 .filters{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 16px;font-size:14px}.filters a.on{text-decoration:underline}
 .thread{padding:10px 0;border-bottom:1px solid var(--line)}.thread .wk{display:flex;gap:2px;align-items:flex-end;height:22px;margin-top:4px}.thread .wk span{display:block;width:14px;background:var(--bar);min-height:2px}.thread .wk span.gap{background:transparent;border-bottom:1px dotted var(--line)}
+.prose h3{font-size:16px;margin:22px 0 6px}.prose ul{margin:0 0 12px;padding-left:20px}.prose li{margin-bottom:4px}
 .chain{list-style:none;padding:0;margin:0}.chain li{margin:3px 0}
 .post{padding:12px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
 @media(max-width:760px){.m-hide{display:none}.wrap{padding:12px}#top{width:100%;order:3;gap:14px}
@@ -266,7 +306,7 @@ const T={
   loading:'searching…',results:'results',noresults:'no matching messages.',original:'original post',previous:'previous',next:'next',page:'page',
   stories:'stories',firstPost:'first post',tierOrder:'order of tiers',threads:'story threads',thisWeek:'by week',overTime:'over time',groupLabel:'group',legend:'tiers inside the groups',sections:'sections',aboutPage:'about',
   aboutText:'<p>A public archive of Telegram channels relevant to Spanish politics.</p>',weeks:'weeks',minWeeks:'at least %d weeks',week:'week',region:'region',theme:'theme',all:'all',story:'story',earlier:'earlier weeks',later:'later weeks',related:'related story',nostories:'no stories for this selection.',postsIn:'posts in this story',chans:'channels',showing:'showing',
-  invalid_query:'Enter words or balanced "quoted phrases". Maximum 20 terms.',query_too_long:'Search text is limited to 300 characters.',invalid_date:'Enter a valid date.',date_range:'The start date must be on or before the end date.',invalid_sort:'Choose a valid order.',invalid_page:'Choose a valid page.',invalid_channel:'Choose a channel in the index.',invalid_request:'Check the search fields.',search_unavailable:'Search is unavailable. Try again.',search_timeout:'This search took too long. Try more words or a narrower date range.'},
+  invalid_query:'Enter words or balanced "quoted phrases". Maximum 20 terms.',query_too_long:'Search text is limited to 300 characters.',invalid_date:'Enter a valid date.',date_range:'The start date must be on or before the end date.',invalid_sort:'Choose a valid order.',invalid_page:'Choose a valid page.',invalid_channel:'Choose a channel in the index.',invalid_request:'Check the search fields.',search_unavailable:'Search is unavailable. Try again.',search_timeout:'This search took too long. Try more words or a narrower date range.',monthly:'posts per month · full archive',views30:'average views per own post, last 30 days',withMedia:'posts with photo, video or file',withLinks:'posts with links',storiesIn:'appears in %d stories',byRegion:'posts in stories by region',byTheme:'posts in stories by theme',recentStories:'latest stories',links:'links',method:'method',linkKinds:'links by type',content:'web pages',social:'social networks',telegram:'Telegram',shortener:'shortened links',colLinks:'links',kind:'type',sharedUrls:'pages linked by the most channels · last 7 days · all groups',tmeRefs:'Telegram channels outside the list, linked by the most listed channels',w7:'7 days',w30:'30 days',wall:'all',allGroups:'all groups',lastRef:'last',window:'period',noLinks:'link statistics are not available yet.'},
  es:{channels:'canales',messages:'mensajes',archive:'archivo',tiers:'niveles',sources:'fuentes',handle:'usuario',title:'título',tier:'nivel',subs:'suscriptores',posts:'publicaciones',last:'última publicación',days:'últimos %d días',search:'buscar /',
   about:'descripción (tal como la publica el canal)',facts:'investigaciones publicadas',stats:'archivo',created:'canal creado',first:'primera publicación archivada',views:'visualizaciones totales',fwd:'publicaciones que son reenvíos',senders:'remitentes distintos',
   fwdfrom:'más reenviado desde',fwdto:'reenviado por canales seguidos',domains:'dominios más enlazados',none:'ninguno',notyet:'aún no archivado',perday:'publicaciones por día',tracked:'seguido',untracked:'no seguido',
@@ -276,7 +316,7 @@ const T={
   loading:'buscando…',results:'resultados',noresults:'no hay mensajes coincidentes.',original:'publicación original',previous:'anterior',next:'siguiente',page:'página',
   stories:'historias',firstPost:'primera publicación',tierOrder:'orden de niveles',threads:'hilos de historias',thisWeek:'por semana',overTime:'en el tiempo',groupLabel:'grupo',legend:'niveles dentro de los grupos',sections:'secciones',aboutPage:'acerca de',
   aboutText:'<p>Un archivo público de canales de Telegram relevantes para la política española.</p>',weeks:'semanas',minWeeks:'al menos %d semanas',week:'semana',region:'región',theme:'tema',all:'todas',story:'historia',earlier:'semanas anteriores',later:'semanas posteriores',related:'historia relacionada',nostories:'no hay historias para esta selección.',postsIn:'publicaciones en esta historia',chans:'canales',showing:'mostrando',
-  invalid_query:'Introduce palabras o "frases entre comillas" cerradas. Máximo 20 términos.',query_too_long:'El texto de búsqueda está limitado a 300 caracteres.',invalid_date:'Introduce una fecha válida.',date_range:'La fecha inicial debe ser anterior o igual a la final.',invalid_sort:'Elige un orden válido.',invalid_page:'Elige una página válida.',invalid_channel:'Elige un canal del índice.',invalid_request:'Revisa los campos de búsqueda.',search_unavailable:'La búsqueda no está disponible. Inténtalo de nuevo.',search_timeout:'La búsqueda tardó demasiado. Añade palabras o reduce el intervalo de fechas.'}};
+  invalid_query:'Introduce palabras o "frases entre comillas" cerradas. Máximo 20 términos.',query_too_long:'El texto de búsqueda está limitado a 300 caracteres.',invalid_date:'Introduce una fecha válida.',date_range:'La fecha inicial debe ser anterior o igual a la final.',invalid_sort:'Elige un orden válido.',invalid_page:'Elige una página válida.',invalid_channel:'Elige un canal del índice.',invalid_request:'Revisa los campos de búsqueda.',search_unavailable:'La búsqueda no está disponible. Inténtalo de nuevo.',search_timeout:'La búsqueda tardó demasiado. Añade palabras o reduce el intervalo de fechas.',monthly:'publicaciones por mes · archivo completo',views30:'visualizaciones medias por publicación propia, últimos 30 días',withMedia:'publicaciones con foto, vídeo o archivo',withLinks:'publicaciones con enlaces',storiesIn:'aparece en %d historias',byRegion:'publicaciones en historias por región',byTheme:'publicaciones en historias por tema',recentStories:'historias más recientes',links:'enlaces',method:'método',linkKinds:'enlaces por tipo',content:'páginas web',social:'redes sociales',telegram:'Telegram',shortener:'enlaces acortados',colLinks:'enlaces',kind:'tipo',sharedUrls:'páginas enlazadas por más canales · últimos 7 días · todos los grupos',tmeRefs:'Canales de Telegram fuera de la lista, enlazados por más canales de la lista',w7:'7 días',w30:'30 días',wall:'todo',allGroups:'todos los grupos',lastRef:'último',window:'periodo',noLinks:'las estadísticas de enlaces aún no están disponibles.'}};
 let L=localStorage.getItem('lang')==='es'?'es':'en';
 const t=k=>T[L][k]||k;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -287,7 +327,7 @@ function bar(n,max,w=24){return '<span class="bar">'+'█'.repeat(Math.max(1,Mat
 function link(c){return c.handle?`<a href="https://t.me/${esc(c.handle)}" target="_blank" rel="noopener">@${esc(c.handle)}</a>`:`<span class="mute">id ${c.id}</span>`}
 function chanLink(c){return c.tracked?`<a href="#/c/${esc(c.handle||c.id)}">${esc(c.title||c.handle||c.id)}</a>`:esc(c.title||c.handle||('id '+c.id))}
 const G=k=>D.groups[k]?D.groups[k][L]:k;
-function nav(cur){document.getElementById('top').innerHTML=[['',t('aboutPage')],['channels',t('channels')],['stories',t('stories')],['search',t('messageSearch')]].map(([k,l])=>`<a class="${cur===k?'on':''}" href="#/${k}">${l}</a>`).join('')}
+function nav(cur){document.getElementById('top').innerHTML=[['',t('aboutPage')],['channels',t('channels')],['stories',t('stories')],['links',t('links')],['search',t('messageSearch')],['method',t('method')]].map(([k,l])=>`<a class="${cur===k?'on':''}" href="#/${k}">${l}</a>`).join('')}
 function home(){
  const counts=[[t('channels'),D.channels.length],[t('messages'),D.total],[t('stories'),D.stories]];
  const n=SP(),daily=D.daily.slice(-n),start=new Date(D.start+'T00:00:00Z');start.setUTCDate(start.getUTCDate()+D.days-n);
@@ -422,21 +462,62 @@ function channel(handle){const c=D.channels.find(x=>x.handle.toLowerCase()===han
  if(c.n){h+=`<div>${t('first')}</div><div>${c.first}${c.since?` <span class="mute">(${t('since')} ${c.since})</span>`:''}</div><div>${t('last')}</div><div>${c.last}</div><div>${t('views')}</div><div>${fmt(c.views)}</div><div>${t('fwd')}</div><div>${fmt(c.n_fwd)} (${Math.round(c.n_fwd/c.n*100)}%)</div>`;
   if(c.senders>1)h+=`<div>${t('senders')}</div><div>${fmt(c.senders)}</div>`}
  h+='</div>';
+ if(c.n){h+=`<div class="kv"><div>${t('views30')}</div><div>${c.n30?fmt(c.views30):'—'}</div><div>${t('withMedia')}</div><div>${fmt(c.n_media)} (${Math.round(c.n_media/c.n*100)}%)</div><div>${t('withLinks')}</div><div>${fmt(c.n_links)} (${Math.round(c.n_links/c.n*100)}%)</div></div>`;
+  if(c.months&&c.months.n.length>1)h+=`<div class="mute">${t('monthly')}</div>`+mchart(c.months)+'<div style="margin-top:10px"></div>'}
  if(c.n)h+=`<div class="mute">${t('perday')} · ${t('days').replace('%d',D.days)}</div>`+chart(c.daily)+`<div class="mute" style="margin-top:10px">${t('hours')} · ${t('days').replace('%d',D.days)}</div>`+heat(c.hours);
  h+='</section>';
  const list=(title,items,f)=>{h+=`<section><h2>${title}</h2>`;if(!items.length){h+=`<p class="mute">${t('none')}</p></section>`;return}const m=items[0].n;h+='<div class="tw"><table class="list">'+items.map(i=>`<tr><td class="num">${fmt(i.n)}</td><td>${bar(i.n,m,innerWidth<=760?12:24)}</td><td>${f(i)}</td></tr>`).join('')+'</table></div></section>'};
  list(t('fwdfrom'),c.fwd_from,i=>`${chanLink(i)} ${i.handle?`<span class="mute">@${esc(i.handle)}</span>`:''}${i.tracked?'':' <span class="mute">·</span>'}`);
  list(t('fwdto'),c.fwd_to,i=>chanLink(i));
  list(t('domains'),c.domains.map(([d,n])=>({d,n})),i=>esc(i.d));
+ if(c.n_stories){const A=k=>D.arenas[k]?D.arenas[k][L]:k;h+=`<section><h2>${t('stories')}</h2><p class="mute">${t('storiesIn').replace('%d',fmt(c.n_stories))}</p></section>`;
+  list(t('byRegion'),c.regions.map(([k,n])=>({k,n})),i=>`<a href="#/stories?region=${esc(i.k)}">${esc(A(i.k))}</a>`);
+  list(t('byTheme'),c.themes.map(([k,n])=>({k,n})),i=>`<a href="#/stories?theme=${esc(i.k)}">${esc(A(i.k))}</a>`);
+  h+=`<section><h2>${t('recentStories')}</h2>`+c.stories.map(s=>`<div class="story-row"><div class="meta"><span class="tag">${esc(s.week)}</span><span class="tag">${fmt(s.n)} ${t('posts')}</span></div><a href="#/s/${s.id}">${esc((L==='es'&&s.title_es)||s.title)}</a></div>`).join('')+'</section>'}
  document.getElementById('view').innerHTML=h}
 function tiers(){let h=`<h2>${t('tierlist')}</h2><table>`;for(const [k,v] of Object.entries(D.tiers)){const n=D.channels.filter(c=>c.tier===k).length;h+=`<tr><td>${k[0]}</td><td class="num">${n}</td><td>${esc(v[L])}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
 function sources(){let h=`<h2>${t('sources')}</h2><table>`;for(const s of Object.values(D.sources)){const n=D.channels.filter(c=>c.facts.some(f=>f.source===s.key)).length;h+=`<tr><td class="mute">${s.key}</td><td>${s.date}</td><td>${esc(s.publisher)}</td><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a></td><td class="num">${n}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
+function mchart(m){const a=m.n,H=6,W=a.length,mx=Math.max(1,...a);const rows=[];for(let r=H;r>=1;r--){let s=String(Math.round(mx*r/H)).padStart(6)+' ┤';for(let i=0;i<W;i++){const v=a[i]/mx*H;s+=v>=r?'█':v>=r-.5?'▄':' '}rows.push(s)}
+ rows.push('       └'+'─'.repeat(W));let [y,mo]=m.start.split('-').map(Number),lab='';for(let i=0;i<W;i++){if(i===0||mo===1){const txt=String(y);if(lab.length<=i){lab=lab.padEnd(i)+txt}}if(++mo>12){mo=1;y++}}rows.push('        '+lab);return `<div class="chart">${rows.map(r=>esc(r)).join('\n')}</div>`}
+let LJ=null;
+function linksURL(w,g){const q=new URLSearchParams();if(w!=='30')q.set('w',w);if(g)q.set('g',g);return '#/links'+(q.size?'?'+q.toString():'')}
+async function linksView(q){const v=document.getElementById('view');
+ if(!LJ){v.innerHTML=`<p class="mute">${t('loading')}</p>`;try{LJ=await fetch('links.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})}catch(e){v.innerHTML=`<p class="mute">${t('noLinks')}</p>`;return}}
+ const w=['7','30','all'].includes(q.get('w'))?q.get('w'):'30',W=LJ.windows[w]||{},g=W[q.get('g')]?q.get('g'):'',cur=W[g]||{kinds:{},domains:[]};
+ let h=`<h2>${t('links')}</h2><div class="tabs">${[['7',t('w7')],['30',t('w30')],['all',t('wall')]].map(([k,l])=>`<a class="${k===w?'on':''}" href="${linksURL(k,g)}">${l}</a>`).join('')}</div>`;
+ h+=`<div class="filters"><a class="${g?'':'on'}" href="${linksURL(w,'')}">${t('allGroups')}</a>${Object.keys(D.groups).filter(k=>W[k]).map(k=>`<a class="${k===g?'on':''}" href="${linksURL(w,k)}">${esc(G(k))}</a>`).join('')}</div>`;
+ const kinds=Object.entries(cur.kinds).sort((a,b)=>b[1]-a[1]),tot=kinds.reduce((a,[,n])=>a+n,0),km=kinds.length?kinds[0][1]:1,bw=innerWidth<=760?12:24;
+ h+=`<section><h2>${t('linkKinds')}</h2><table class="list">${kinds.map(([k,n])=>`<tr><td class="num">${fmt(n)}</td><td class="num mute">${Math.round(n/tot*100)}%</td><td>${bar(n,km,innerWidth<=760?8:24)}</td><td>${esc(t(k))}</td></tr>`).join('')}</table></section>`;
+ const dm=cur.domains.length?cur.domains[0][2]:1;
+ h+=`<section><h2>${t('domains')}</h2><div class="tw"><table><tr><th class="num">${t('colLinks')}</th><th></th><th>domain</th><th>${t('kind')}</th><th class="num">${t('chans')}</th></tr>${cur.domains.map(([d,k,n,c])=>`<tr><td class="num">${fmt(n)}</td><td>${bar(n,dm,bw)}</td><td>${esc(d)}</td><td class="mute">${esc(t(k))}</td><td class="num">${fmt(c)}</td></tr>`).join('')}</table></div></section>`;
+ h+=`<section><h2>${t('sharedUrls')}</h2>${LJ.urls.map(u=>`<div class="story-row"><div class="meta"><span class="tag">${fmt(u.channels)} ${t('chans')}</span><span class="tag">${fmt(u.n)} ${t('posts')}</span><span class="tag">${esc(u.domain)}</span></div><a href="${esc(u.url)}" target="_blank" rel="noopener nofollow">${esc(u.title||u.url)}</a></div>`).join('')}</section>`;
+ const tw=w==='all'?'all':'30',tm=LJ.tme[tw]||[];
+ h+=`<section><h2>${t('tmeRefs')} · ${t(tw==='all'?'wall':'w30')}</h2><div class="tw"><table><tr><th></th><th class="num">${t('chans')}</th><th class="num">${t('colLinks')}</th><th>${t('lastRef')}</th></tr>${tm.map(([hd,n,c,last])=>`<tr><td><a href="https://t.me/${esc(hd)}" target="_blank" rel="noopener">@${esc(hd)}</a></td><td class="num">${fmt(c)}</td><td class="num">${fmt(n)}</td><td class="mute">${esc(last)}</td></tr>`).join('')}</table></div></section>`;
+ h+=`<footer class="home-footer">${t('built')} ${esc(LJ.built)}</footer>`;v.innerHTML=h}
+const METHOD={
+ en:c=>`<h2>Method</h2>
+<h3>Scope</h3><p>The archive follows ${c.n} Telegram channels and discussion groups relevant to Spanish politics, in ${c.g} groups (see <a href="#/channels">channels</a>). Each channel is placed in a tier by what it is: who runs it, what it is an edition of, where it is based. Channels come from published research (cited on the channel page), from forwards seen in the archive, and from searches for parties, institutions, media and organisations. The list is maintained by hand. ${c.a} of the ${c.n} are archived so far; the rest are queued.</p>
+<h3>Collection</h3><p>Posts are read every hour through the Telegram API. For each post the archive keeps the text, date, views, forwards, replies, the channel it was forwarded from, its links, and the type and Telegram identifier of any attached media. Media files are not stored. Views and forwards are re-read for seven days after a post appears and then stay as they were. An edit replaces the earlier text. Posts deleted from Telegram after they were archived are kept. For some very large channels, only posts from a set date onward are archived; the channel page shows that date. Times are in UTC.</p>
+<h3>Stories</h3><p>Every week, posts of at least 40 characters are compared by meaning with a multilingual text model (bge-m3), after links, handles and subscription footers are removed. Discussion groups are left out. Posts that are close to each other form a story when there are at least 12 of them (UMAP and HDBSCAN); posts far from the centre of their story are dropped. About a quarter of posts fit no story. A story is linked to one from the previous week when the two are very similar (cosine similarity of 0.90 or more).</p>
+<p>Titles, summaries in English and Spanish, one region and one or two themes are written by a language model (Claude Haiku 5.5) from up to eight representative posts of each story. The model is instructed to describe what the posts say, to attribute claims to the channels, and not to use evaluative words. Regions and themes come from fixed lists. Labels are not checked one by one and can be wrong; every story page lists its posts with links to the originals.</p>
+<h3>Links</h3><p>Links in posts are extracted and normalised (tracking parameters removed). Shortened links are followed to their destination, and page titles are fetched for some pages. Counts include forwarded posts.</p>
+<h3>Published research</h3><p>Channel pages list statements from published research, each with its source and date. They are the findings of those sources, not of this archive. Fact-checkers, governments, researchers and media are cited in the same way, and contrary findings are listed where they exist.</p>
+<h3>Limits</h3><ul><li>Only channels on the list are archived; spread elsewhere on Telegram is not measured.</li><li>Archive start dates differ between channels.</li><li>View counts are reported by Telegram and cannot be verified.</li><li>Reactions and Telegram stories are not collected. Comments are collected only for the discussion groups on the list.</li><li>Which channels are on the list is a selection; the tier descriptions state the criteria.</li></ul>`,
+ es:c=>`<h2>Método</h2>
+<h3>Alcance</h3><p>El archivo sigue ${c.n} canales y grupos de debate de Telegram relevantes para la política española, en ${c.g} grupos (ver <a href="#/channels">canales</a>). Cada canal se asigna a un nivel según lo que es: quién lo gestiona, de qué es edición, dónde tiene su base. Los canales proceden de investigaciones publicadas (citadas en la página de cada canal), de reenvíos observados en el archivo y de búsquedas de partidos, instituciones, medios y organizaciones. La lista se mantiene a mano. Hasta ahora están archivados ${c.a} de los ${c.n}; el resto está en cola.</p>
+<h3>Recogida</h3><p>Las publicaciones se leen cada hora a través de la API de Telegram. De cada publicación se guarda el texto, la fecha, las visualizaciones, los reenvíos, las respuestas, el canal del que se reenvió, sus enlaces y el tipo e identificador de Telegram de cualquier archivo adjunto. Los archivos multimedia no se guardan. Las visualizaciones y los reenvíos se vuelven a leer durante siete días tras la publicación y después se quedan como estaban. Una edición sustituye al texto anterior. Las publicaciones borradas de Telegram después de archivarse se conservan. En algunos canales muy grandes solo se archivan publicaciones a partir de una fecha, que se indica en la página del canal. Las horas están en UTC.</p>
+<h3>Historias</h3><p>Cada semana, las publicaciones de al menos 40 caracteres se comparan por su significado con un modelo de texto multilingüe (bge-m3), tras quitar enlaces, nombres de usuario y pies de suscripción. Los grupos de debate quedan fuera. Las publicaciones cercanas entre sí forman una historia cuando son al menos 12 (UMAP y HDBSCAN); las alejadas del centro de su historia se descartan. Alrededor de una cuarta parte de las publicaciones no encaja en ninguna historia. Una historia se enlaza con otra de la semana anterior cuando ambas son muy parecidas (similitud coseno de 0,90 o más).</p>
+<p>Los títulos, los resúmenes en inglés y español, una región y uno o dos temas los redacta un modelo de lenguaje (Claude Haiku 5.5) a partir de hasta ocho publicaciones representativas de cada historia. Se le indica que describa lo que dicen las publicaciones, que atribuya las afirmaciones a los canales y que no use palabras valorativas. Las regiones y los temas salen de listas fijas. Las etiquetas no se revisan una a una y pueden contener errores; cada página de historia enumera sus publicaciones con enlaces a los originales.</p>
+<h3>Enlaces</h3><p>Los enlaces de las publicaciones se extraen y se normalizan (se quitan los parámetros de seguimiento). Los enlaces acortados se siguen hasta su destino y se obtienen los títulos de algunas páginas. Los recuentos incluyen publicaciones reenviadas.</p>
+<h3>Investigaciones publicadas</h3><p>Las páginas de canal recogen afirmaciones de investigaciones publicadas, cada una con su fuente y fecha. Son conclusiones de esas fuentes, no de este archivo. Verificadores, gobiernos, investigadores y medios se citan de la misma manera, y se recogen las conclusiones contrarias cuando existen.</p>
+<h3>Límites</h3><ul><li>Solo se archivan los canales de la lista; la difusión en el resto de Telegram no se mide.</li><li>Las fechas de inicio del archivo varían entre canales.</li><li>Las visualizaciones las informa Telegram y no se pueden verificar.</li><li>No se recogen reacciones ni historias de Telegram. Los comentarios solo se recogen en los grupos de debate de la lista.</li><li>Qué canales están en la lista es una selección; las descripciones de los niveles indican los criterios.</li></ul>`};
+function methodView(){document.getElementById('view').innerHTML=`<div class="prose">${METHOD[L]({n:fmt(D.channels.length),a:fmt(D.channels.filter(c=>c.n).length),g:Object.keys(D.groups).length})}</div>`}
 function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/),sm=p.match(/^s\/(\d+)$/);const isHome=!p;
  document.body.classList.toggle('home',isHome);document.documentElement.lang=L;
  document.getElementById('brand').textContent=t('name');
- document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='stories'||p==='threads'||sm?t('stories'):t('channels'))}`;
- nav(isHome?'':(m?'channels':p==='search'?'search':(p==='stories'||p==='threads'||sm)?'stories':'channels'));
- if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories'||p==='threads'){const q=new URLSearchParams(query);(p==='threads'||q.get('view')==='time')?threadsView(q):storiesView(q)}else if(p==='search')messageSearch(new URLSearchParams(query));else index();window.scrollTo(0,0)}
+ document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='links'?t('links'):p==='method'?t('method'):p==='stories'||p==='threads'||sm?t('stories'):t('channels'))}`;
+ nav(isHome?'':(m?'channels':p==='search'||p==='links'||p==='method'?p:(p==='stories'||p==='threads'||sm)?'stories':'channels'));
+ if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories'||p==='threads'){const q=new URLSearchParams(query);(p==='threads'||q.get('view')==='time')?threadsView(q):storiesView(q)}else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='links')linksView(new URLSearchParams(query));else if(p==='method')methodView();else index();window.scrollTo(0,0)}
 document.getElementById('lang').onclick=()=>{L=L==='en'?'es':'en';localStorage.setItem('lang',L);document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';applyTheme();route()};
 document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';
 const th=document.getElementById('theme');let dark=(localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';
