@@ -4,6 +4,7 @@ Usage:
   stories.py --week 2026-W41 [--kind post|comment] [--min-size 12]   # cluster (replaces that week's stories)
   stories.py --week 2026-W41 --label [--cap 10]                       # label unlabelled stories with Haiku
   stories.py --week 2026-W41 --show [--full]                          # list stories (=prev: same story continued, ~prev: related)
+  stories.py --week 2026-W41 --map                                    # 2D projection of that week for the method page -> site/map.json
   stories.py --proposals                                               # arena names the model proposed, for promotion into arenas.csv
 """
 import argparse, csv, datetime as dt, json, logging, os, re, sqlite3, sys
@@ -115,6 +116,30 @@ def cluster(vec, week: str, kind: str, min_size: int):
     vec.commit()
     log.info("%s %s: %d stories, %d/%d texts unassigned (%.0f%%), %d peripheral members trimmed, %d linked to previous week", week, kind, made, n_noise, len(hashes),
              100 * n_noise / len(hashes), trimmed, vec.execute("SELECT count(*) FROM stories WHERE week=? AND kind=? AND prev_story IS NOT NULL", (week, kind)).fetchone()[0])
+
+
+def week_map(vec, week: str, kind: str = "post"):
+    """2D UMAP of one week's distinct texts with their story ids, for the method page. Separate from the 10D projection used for clustering."""
+    start, end = week_bounds(week)
+    hashes = sorted({h for (h,) in vec.execute("SELECT hash FROM msg_text WHERE kind=? AND date>=? AND date<? AND hash IS NOT NULL", (kind, start, end))})
+    if not hashes:
+        log.warning("no texts for %s", week); return
+    story_of = {}
+    for sid, h in vec.execute("SELECT m.story_id, t.hash FROM story_members m JOIN stories s ON s.id=m.story_id JOIN msg_text t "
+                              "ON t.channel_id=m.channel_id AND t.msg_id=m.msg_id WHERE s.week=? AND s.kind=?", (week, kind)):
+        story_of[h] = sid
+    import umap
+    U = umap.UMAP(n_components=2, n_neighbors=15, min_dist=0.1, metric="cosine", random_state=0).fit_transform(load_vectors(vec, hashes))
+    U = (U - U.min(0)) / (U.max(0) - U.min(0)).max() * 1000   # one scale for both axes
+    stories = vec.execute(f"SELECT id, title, title_es, size FROM stories WHERE week=? AND kind=? ORDER BY size DESC", (week, kind)).fetchall()
+    idx = {s[0]: i for i, s in enumerate(stories)}
+    pts = [[int(x), int(y), idx.get(story_of.get(h), -1)] for (x, y), h in zip(U, hashes)]
+    out = {"week": week, "n": len(hashes), "assigned": sum(p[2] >= 0 for p in pts), "w": int(U[:, 0].max()) + 1, "h": int(U[:, 1].max()) + 1,
+           "stories": [{"id": i, "title": t, "title_es": te, "size": n} for i, t, te, n in stories], "points": pts}
+    (HERE / "site").mkdir(exist_ok=True)
+    tmp = HERE / "site" / "map.json.tmp"
+    tmp.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"); tmp.replace(HERE / "site" / "map.json")
+    log.info("%s map: %d texts, %d in %d stories", week, out["n"], out["assigned"], len(stories))
 
 
 def relink(vec, week, kind):
@@ -267,6 +292,7 @@ def main():
     ap.add_argument("--cap", type=float, default=10.0); ap.add_argument("--show", action="store_true")
     ap.add_argument("--relink", action="store_true"); ap.add_argument("--full", action="store_true")
     ap.add_argument("--proposals", action="store_true"); ap.add_argument("--clear-labels", action="store_true")
+    ap.add_argument("--map", action="store_true")
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stdout)
     logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -277,6 +303,8 @@ def main():
         ap.error("--week is required")
     if a.clear_labels:
         vec.execute("UPDATE stories SET title=NULL, summary=NULL, title_es=NULL, summary_es=NULL, arenas=NULL, note=NULL WHERE week=? AND kind=?", (a.week, a.kind)); vec.commit()
+    if a.map:
+        week_map(vec, a.week, a.kind); return
     if not (a.label or a.show or a.relink or a.clear_labels):
         cluster(vec, a.week, a.kind, a.min_size)
     if a.relink:

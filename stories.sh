@@ -6,4 +6,5 @@ week="${1:-$(date -d 'last monday' +%G-W%V)}"   # on a Monday this is the week t
 {
   echo "=== $(date -Is) stories for $week"
   .venv/bin/python stories.py --week "$week" && .venv/bin/python stories.py --week "$week" --label --cap 10
+  .venv/bin/python stories.py --week "$week" --map
 } >> stories.log 2>&1

@@ -278,6 +278,7 @@ HTML = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Spanish Politics on Telegram</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cstyle%3Erect%7Bfill:%231a1a1a%7D@media(prefers-color-scheme:dark)%7Brect%7Bfill:%23e6e6e0%7D%7D%3C/style%3E%3Crect x='1' y='1' width='7' height='7'/%3E%3Crect x='8' y='8' width='7' height='7'/%3E%3C/svg%3E">
 <style>
 :root{color-scheme:light;--bg:#f7f7f4;--fg:#1a1a1a;--mute:#6b6b66;--line:#d8d8d2;--dot:#cfcfc8;--acc:#1a1a1a;--bar:#1a1a1a}
 :root:not([data-theme="light"]){ @media (prefers-color-scheme: dark){ color-scheme:dark;--bg:#0f0f0e;--fg:#e6e6e0;--mute:#8a8a84;--line:#2a2a28;--dot:#2a2a28;--acc:#e6e6e0;--bar:#e6e6e0 } }
@@ -347,6 +348,7 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 .story-row .meta .tag{color:var(--mute)}.story-row .sum{margin-top:4px}
 .filters{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 16px;font-size:14px}.filters a.on{text-decoration:underline}
 .thread{padding:10px 0;border-bottom:1px solid var(--line)}.thread .wk{display:flex;gap:2px;align-items:flex-end;height:22px;margin-top:4px}.thread .wk span{display:block;width:14px;background:var(--bar);min-height:2px}.thread .wk span.gap{background:transparent;border-bottom:1px dotted var(--line)}
+#wmap canvas{display:block;width:100%;max-width:100%;touch-action:manipulation;cursor:crosshair}#wmap .cap{font-size:13px;color:var(--mute);margin:6px 0 4px}#wmap .hov{font-size:14px;min-height:2.6em;margin-bottom:12px}
 .prose h3{font-size:16px;margin:22px 0 6px}.prose ul{margin:0 0 12px;padding-left:20px}.prose li{margin-bottom:4px}
 .chain{list-style:none;padding:0;margin:0}.chain li{margin:3px 0}
 .post{padding:12px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
@@ -579,6 +581,7 @@ const METHOD={
 <li>Per ISO week: UMAP (10 dimensions, cosine, 15 neighbours) → HDBSCAN (min. cluster 12, min. samples 5). Members with cosine to the centroid below max(0.60, mean − 1.5 sd) dropped. ~25% of posts unassigned.</li>
 <li>Week to week: centroid cosine ≥ 0.90 = same story; 0.85–0.90 = related.</li>
 <li>Labels: Claude Haiku 5.5 on the 8 posts nearest the centroid (≤ 400 characters each) → title and summary (EN, ES), 1 region of 10, 1–2 themes of 15. Not reviewed one by one.</li></ul>
+<div id="wmap"></div>
 <h3>Links</h3><ul>
 <li>URLs from post text and link previews; canonical form: https, no www/m/amp, no tracking parameters, fragments or trailing slash.</li>
 <li>Types: web page, social network, Telegram, shortener. Shorteners followed to the destination; page titles fetched for a subset (1 request/s per domain). Counts include forwards.</li></ul>
@@ -598,6 +601,7 @@ const METHOD={
 <li>Por semana ISO: UMAP (10 dimensiones, coseno, 15 vecinos) → HDBSCAN (grupo mín. 12, muestras mín. 5). Se descartan miembros con coseno al centroide inferior a max(0,60, media − 1,5 de). ~25 % de publicaciones sin asignar.</li>
 <li>Entre semanas: coseno de centroides ≥ 0,90 = misma historia; 0,85–0,90 = relacionada.</li>
 <li>Etiquetas: Claude Haiku 5.5 sobre las 8 publicaciones más cercanas al centroide (≤ 400 caracteres cada una) → título y resumen (EN, ES), 1 región de 10, 1–2 temas de 15. Sin revisión una a una.</li></ul>
+<div id="wmap"></div>
 <h3>Enlaces</h3><ul>
 <li>URL del texto y de las vistas previas; forma canónica: https, sin www/m/amp, sin parámetros de seguimiento, fragmentos ni barra final.</li>
 <li>Tipos: página web, red social, Telegram, acortador. Los acortadores se siguen hasta el destino; títulos de página para una parte (1 petición/s por dominio). Los recuentos incluyen reenvíos.</li></ul>
@@ -605,7 +609,28 @@ const METHOD={
 <li>Solo canales de la lista; las fechas de inicio varían entre canales.</li>
 <li>Visualizaciones según Telegram.</li>
 <li>Sin reacciones ni historias de Telegram; comentarios solo de los grupos de debate de la lista.</li></ul>`};
-function methodView(){document.getElementById('view').innerHTML=`<div class="prose">${METHOD[L]({n:fmt(D.channels.length),a:fmt(D.channels.filter(c=>c.n).length),g:Object.keys(D.groups).length})}</div>`}
+function methodView(){document.getElementById('view').innerHTML=`<div class="prose">${METHOD[L]({n:fmt(D.channels.length),a:fmt(D.channels.filter(c=>c.n).length),g:Object.keys(D.groups).length})}</div>`;weekMap()}
+let MJ=null,redrawMap=null;addEventListener('resize',()=>redrawMap&&redrawMap());
+const MAPT={en:{cap:'Week %w: %n distinct post texts, one dot each. Dark: in one of %s stories (%a); light: unassigned. Same bge-m3 embeddings projected to 2 dimensions with UMAP (cosine, 15 neighbours) for display only; the clusters themselves are found in the 10-dimensional projection, so a few dots sit away from the rest of their story.',hov:'Point at a dot to see its story.',none:'unassigned',open:'open story'},
+ es:{cap:'Semana %w: %n textos distintos de publicaciones, un punto cada uno. Oscuros: en una de %s historias (%a); claros: sin asignar. Los mismos vectores bge-m3 proyectados a 2 dimensiones con UMAP (coseno, 15 vecinos) solo para mostrarlos; los grupos se forman en la proyección de 10 dimensiones, así que algunos puntos quedan lejos del resto de su historia.',hov:'Señala un punto para ver su historia.',none:'sin asignar',open:'abrir historia'}};
+async function weekMap(){const box=document.getElementById('wmap');if(!box)return;
+ if(!MJ){try{MJ=await fetch('map.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})}catch(e){return}}
+ if(!document.body.contains(box))return;const M=MJ,T=MAPT[L],P=M.points;
+ box.innerHTML=`<div class="cap">${T.cap.replace('%w',esc(M.week)).replace('%n',fmt(M.n)).replace('%s',fmt(M.stories.length)).replace('%a',Math.round(M.assigned/M.n*100)+'%')}</div><canvas></canvas><div class="hov mute">${T.hov}</div>`;
+ const cv=box.querySelector('canvas'),hv=box.querySelector('.hov'),pad=6;let cur=-2,sc=1,W=0,H=0;
+ function draw(){const cs=getComputedStyle(document.documentElement),fg=cs.getPropertyValue('--fg'),mu=cs.getPropertyValue('--mute'),dt=cs.getPropertyValue('--dot'),dpr=devicePixelRatio||1;
+  W=cv.clientWidth;sc=(W-2*pad)/M.w;H=Math.round(M.h*sc+2*pad);cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  const r=W<500?1.1:1.4,dot=(p,col,rr)=>{c.fillStyle=col;c.fillRect(pad+p[0]*sc-rr,pad+p[1]*sc-rr,2*rr,2*rr)};
+  for(const p of P)if(p[2]<0)dot(p,dt,r);c.globalAlpha=cur>=0?.35:.8;for(const p of P)if(p[2]>=0)dot(p,mu,r);c.globalAlpha=1;
+  if(cur>=0)for(const p of P)if(p[2]===cur)dot(p,fg,r+1.2)}
+ function pick(e){const b=cv.getBoundingClientRect(),x=(e.clientX-b.left-pad)/sc,y=(e.clientY-b.top-pad)/sc,lim=(10/sc)**2;let best=-1,bd=lim;
+  for(let i=0;i<P.length;i++){const dx=P[i][0]-x,dy=P[i][1]-y,d=dx*dx+dy*dy;if(d<bd){bd=d;best=i}}return best<0?-2:P[best][2]}
+ function show(k){if(k===cur)return;cur=k;draw();if(k===-2){hv.className='hov mute';hv.textContent=T.hov;return}
+  if(k===-1){hv.className='hov mute';hv.textContent=T.none;return}const s=M.stories[k];hv.className='hov';
+  hv.innerHTML=`<a href="#/s/${s.id}">${esc((L==='es'&&s.title_es)||s.title||'')}</a> <span class="mute">· ${fmt(s.size)} ${t('posts')}</span>`}
+ cv.onpointermove=e=>show(pick(e));cv.onpointerleave=e=>{if(e.pointerType==='mouse')show(-2)};
+ cv.onclick=e=>{const k=pick(e);if(k>=0&&e.pointerType==='mouse'&&k===cur)location.hash='#/s/'+M.stories[k].id;else show(k)};
+ redrawMap=()=>{if(document.body.contains(cv))draw()};draw()}
 function electionView(){const E=D.election,v=document.getElementById('view');if(!E){v.innerHTML='';return}
  const today=new Date(new Date().toISOString().slice(0,10)+'T00:00:00Z'),dd=Math.round((new Date(E.day+'T00:00:00Z')-today)/864e5);
  const cd=dd>0?t('daysTo').replace('%d',dd):dd===0?t('eDay'):t('daysSince').replace('%d',-dd);
@@ -629,7 +654,7 @@ document.getElementById('lang').onclick=()=>{L=L==='en'?'es':'en';localStorage.s
 document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';
 const th=document.getElementById('theme');let dark=(localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';
 function applyTheme(){document.documentElement.dataset.theme=dark?'dark':'light';th.textContent=`[${t(dark?'light':'dark')}]`}applyTheme();
-th.onclick=()=>{dark=!dark;localStorage.setItem('theme',dark?'dark':'light');applyTheme()};
+th.onclick=()=>{dark=!dark;localStorage.setItem('theme',dark?'dark':'light');applyTheme();redrawMap&&redrawMap()};
 window.onhashchange=()=>route();route();
 let compact=innerWidth<=760;window.onresize=()=>{const next=innerWidth<=760;if(next!==compact){compact=next;if(document.body.classList.contains('home'))home()}};
 </script>
