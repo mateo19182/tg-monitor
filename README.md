@@ -77,7 +77,7 @@ A story is a group of similar posts within one ISO week; members far from the gr
 ## Operations
 
 ```
-crontab: 17 * * * * /home/mateo/projects/tg-monitor/sync.sh
+crontab: 17 * * * * /path/to/tg-monitor/sync.sh
 ./sync.sh                      # manual run (no-op if one is already running)
 ./sync.sh RybarESP herQles     # subset
 ./sync.sh --benchmark-takeout RybarESP infodefSPAIN  # compare history reads without archive writes
@@ -126,3 +126,7 @@ those ids to names.
   user unit `cloudflared-tg-monitor.service`): https://canales.m19182.dev and https://tg.m19182.dev.
 - Gotcha: `cloudflared tunnel route dns` takes the tunnel from the default `~/.cloudflared/config.yml`
   regardless of the name argument. Always pass `--config tg-monitor.yml` (and `--overwrite-dns` to repoint).
+
+## Licence
+
+Code: MIT (`LICENSE`). Dataset: CC BY-NC 4.0 (see `dataset_card.md`).
