@@ -32,7 +32,7 @@ DEMOCRACIA_NACIONAL,D_spain_farright_election,,ekstrategies-2026-09,Democracia N
 fedelasjons,D_spain_farright_election,,ekstrategies-2026-09,Falange Española de las JONS - Paladins network
 AlvisePerez,D_spain_farright_election,,own-2026-10,Alvise Pérez personal channel (~614k subs)
 SeAcaboLaFiesta,D_spain_farright_election,,own-2026-10,SALF party channel
-SantiagoAbascalPresidente,D_spain_farright_election,,own-2026-10,Santiago Abascal (Vox) official-looking channel (~40k subs)
+SantiagoAbascalPresidente,J_spain_parties,,own-2026-10,Santiago Abascal; description 'Diputado Nacional. Presidente de VOX' (moved from D 2026-10-13: parliamentary party leader)
 vitoquilestelegram,D_spain_farright_election,,own-2026-10,Vito Quiles (~149k subs) - far-right agitator/journalist
 desokupaOficial,D_spain_farright_election,,own-2026-10,Desokupa (Daniel Esteve) (~47k subs)
 difusionfrenteobrero,D_spain_farright_election,,own-2026-10,Frente Obrero - red-brown party
@@ -129,8 +129,8 @@ casosaislados,C_spain_node,,discovery-2026-10,Anti-immigration incident aggregat
 borreruak,K_spain_left,,discovery-2026-10,Basque-language channel linked from the Euskal Herria-Donbass committee
 coordinadoraantifeixistabcn,K_spain_left,,discovery-2026-10,Catalan-language antifascist coordinator
 guerra_de_espana,K_spain_left,,discovery-2026-10,Antifascist Spain channel cross-linked with mpr21
-voxtelegram_es,D_spain_farright_election,,discovery-2026-10,Self-described 'canal oficial de alertas de VOX'
-voxtelegram,D_spain_farright_election,,discovery-2026-10,Second VOX España channel
+voxtelegram_es,J_spain_parties,,discovery-2026-10,Self-described 'canal oficial de alertas de VOX' (moved from D 2026-10-13: parliamentary party)
+voxtelegram,D_spain_farright_election,,discovery-2026-10,"Second VOX España channel; 1 post, last 2025-11-07"
 VoxBaleares,D_spain_farright_election,,discovery-2026-10,VOX Baleares channel
 jorgebuxade,D_spain_farright_election,,discovery-2026-10,Vox MEP channel
 ivanedlm,D_spain_farright_election,,discovery-2026-10,Former Vox spokesperson channel; linked 77 times across discovered previews
@@ -167,7 +167,7 @@ esquerrarepublicana,J_spain_parties,,discovery-2026-10,ERC channel
 ehbildu,J_spain_parties,,discovery-2026-10,Official EH Bildu channel
 eajpnveus,J_spain_parties,,discovery-2026-10,Official PNV channel
 compromis,J_spain_parties,,discovery-2026-10,Compromís channel
-yolandadiaz,J_spain_parties,,discovery-2026-10,Sumar leader official channel
+yolandadiaz,J_spain_parties,,discovery-2026-10,Sumar leader official channel; no posts since 2024-12-02
 ionebelarra,J_spain_parties,,discovery-2026-10,Podemos secretary general official channel
 une80,H_discovered_es_aggregator,,newtral/own-2026-10,327 subs) - named by Newtral as a current source of electoral-fraud narratives
 NosObservan,H_discovered_es_aggregator,,newtral/own-2026-10,113 subs) - named by Newtral as a current source of electoral-fraud narratives
@@ -290,7 +290,7 @@ MailloAntonio,U_campaign_2026,,discovery-2026-10-12b,IU federal coordinator; Lin
 EnriqueSantiagoR,U_campaign_2026,,discovery-2026-10-12b,PCE general secretary; forwarded by @iunida
 jessicaalbiachsatorres,U_campaign_2026,,discovery-2026-10-12b,Comuns president in the Parlament; forwarded by @SomComuns
 JavierOrtegaSmith,U_campaign_2026,,discovery-2026-10-12b,Channel in the name of the Vox deputy reposting his X; ownership not externally confirmed
-pepa_millan,U_campaign_2026,,discovery-2026-10-12b,Self-described channel of Vox's Congress spokesperson; ownership not externally confirmed
+pepa_millan,U_campaign_2026,,discovery-2026-10-12b,Self-described channel of Vox's Congress spokesperson; ownership not externally confirmed; no posts since 2026-03-16
 VOXCongreso,U_campaign_2026,,discovery-2026-10-12b,Channel in the name of the Vox parliamentary group; officialness not externally confirmed
 socialistes_cat,U_campaign_2026,,discovery-2026-10-12b,Self-described PSC-PSOE channel
 SomComuns,U_campaign_2026,,discovery-2026-10-12b,Catalunya en Comú channel linked from comuns.cat
