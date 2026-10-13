@@ -138,11 +138,38 @@ def layout_xy(vec, hashes):
         for i in range(0, len(todo), 50_000):
             part = todo[i:i + 50_000]
             U = (m["umap"].transform(load_vectors(vec, part)) - m["lo"]) / m["span"] * MAP_SIZE
-            U = U.clip(0, MAP_SIZE)
+            U = orient(U)
             vec.executemany("INSERT OR REPLACE INTO xy VALUES (?,?,?)", [(h, float(x), float(y)) for h, (x, y) in zip(part, U)])
             vec.commit(); have.update((h, (float(x), float(y))) for h, (x, y) in zip(part, U))
             log.info("layout: placed %d/%d texts", min(i + 50_000, len(todo)), len(todo))
     return have
+
+
+LAYOUT_ORIENT = HERE / "data" / "layout2d.json"   # rotation that lays the map's long axis horizontally, and the resulting extent
+
+
+def orient(U):
+    o = json.loads(LAYOUT_ORIENT.read_text())
+    V = (U - np.array(o["c"])) @ np.array(o["R"]) * o["k"] + np.array(o["off"])
+    return np.column_stack([V[:, 0].clip(0, o["w"]), V[:, 1].clip(0, o["h"])])
+
+
+def map_extent():
+    o = json.loads(LAYOUT_ORIENT.read_text()); return o["w"], o["h"]
+
+
+def fit_orientation(vec):
+    """Rotate the cached coordinates so the principal axis is horizontal; scale so the width is MAP_SIZE. Only right after fitting: it expects unrotated coordinates."""
+    P = np.array(vec.execute("SELECT x, y FROM xy").fetchall(), dtype=np.float64)
+    c = P.mean(0); _, _, Vt = np.linalg.svd(P - c, full_matrices=False); R = Vt.T
+    V = (P - c) @ R; lo = np.percentile(V, 0.5, 0); hi = np.percentile(V, 99.5, 0)
+    k = MAP_SIZE / (hi[0] - lo[0]); off = -lo * k
+    o = {"c": c.tolist(), "R": R.tolist(), "k": float(k), "off": off.tolist(), "w": MAP_SIZE, "h": int(round((hi[1] - lo[1]) * k))}
+    rows = vec.execute("SELECT hash, x, y FROM xy").fetchall()
+    LAYOUT_ORIENT.write_text(json.dumps(o))
+    V = orient(np.array([[r[1], r[2]] for r in rows]))
+    vec.executemany("UPDATE xy SET x=?, y=? WHERE hash=?", [(float(x), float(y), r[0]) for (x, y), r in zip(V, rows)]); vec.commit()
+    log.info("layout: oriented, %d x %d", o["w"], o["h"])
 
 
 def fit_layout(vec, kind="post"):
@@ -157,7 +184,9 @@ def fit_layout(vec, kind="post"):
     E = m.embedding_; lo = np.percentile(E, 0.5, axis=0); hi = np.percentile(E, 99.5, axis=0)
     LAYOUT.parent.mkdir(exist_ok=True); joblib.dump({"umap": m, "lo": lo, "span": float((hi - lo).max()), "from": LAYOUT_FROM}, LAYOUT)
     vec.execute("DROP TABLE IF EXISTS xy"); vec.commit()
+    LAYOUT_ORIENT.write_text(json.dumps({"c": [0, 0], "R": [[1, 0], [0, 1]], "k": 1.0, "off": [0, 0], "w": MAP_SIZE, "h": MAP_SIZE}))
     layout_xy(vec, hashes)
+    fit_orientation(vec)
 
 
 def week_map(vec, week: str, kind: str = "post"):
@@ -173,8 +202,10 @@ def week_map(vec, week: str, kind: str = "post"):
     xy = layout_xy(vec, hashes)
     stories = vec.execute("SELECT id, title, title_es, size FROM stories WHERE week=? AND kind=? ORDER BY size DESC", (week, kind)).fetchall()
     idx = {s[0]: i for i, s in enumerate(stories)}
-    pts = [[round(xy[h][0]), round(xy[h][1]), idx.get(story_of.get(h), -1)] for h in hashes]
-    out = {"week": week, "n": len(hashes), "assigned": sum(p[2] >= 0 for p in pts), "w": MAP_SIZE, "h": MAP_SIZE,
+    mw, mh = map_extent()
+    inside = lambda x, y: 0 < x < mw and 0 < y < mh      # the outermost 0.5% are clipped to the edge by orient(); leave them off the map
+    pts = [[round(xy[h][0]), round(xy[h][1]), idx.get(story_of.get(h), -1)] for h in hashes if inside(*xy[h])]
+    out = {"week": week, "n": len(hashes), "assigned": sum(p[2] >= 0 for p in pts), "w": mw, "h": mh,
            "stories": [{"id": i, "title": t, "title_es": te, "size": n} for i, t, te, n in stories], "points": pts}
     d = HERE / "site" / "maps"; d.mkdir(parents=True, exist_ok=True)
     tmp = d / f"{week}.json.tmp"
@@ -197,7 +228,7 @@ def story_dots(vec, kind="post"):
             x, y = np.median(np.array(pos[sid]), axis=0)
             rows.append([sid, week, size, round(float(x)), round(float(y)), t, te])
     d = HERE / "site" / "maps"; d.mkdir(parents=True, exist_ok=True)
-    (d / "stories.json.tmp").write_text(json.dumps({"w": MAP_SIZE, "h": MAP_SIZE, "cols": ["id", "week", "size", "x", "y", "title", "title_es"], "stories": rows},
+    (d / "stories.json.tmp").write_text(json.dumps({"w": map_extent()[0], "h": map_extent()[1], "cols": ["id", "week", "size", "x", "y", "title", "title_es"], "stories": rows},
                                                    ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     (d / "stories.json.tmp").replace(d / "stories.json")
     log.info("story dots: %d stories", len(rows))

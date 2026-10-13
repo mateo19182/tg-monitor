@@ -632,7 +632,7 @@ async function weekMap(){const box=document.getElementById('wmap');if(!box)retur
  const mx=Math.max(1,...S.map(s=>s.size));dotR=k=>(MM==='year'?.8:1.2)+Math.sqrt(S[k].size/mx)*(MM==='year'?7:10);
  const step=(d,ch)=>list[pos+d]?`<a href="#" class="wk" data-d="${d}">${ch}</a>`:`<span class="wk off">${ch}</span>`;
  const modes=(AS.length?[['week',T.week],['month',T.month],['year',yr]]:[]).map(([k,l])=>`<a href="#" class="md${MM===k?' on':''}" data-m="${k}">${l}</a>`).join(' ');
- box.innerHTML=`<h3><span style="white-space:nowrap"><a href="${link}">${t('stories')}</a> · ${step(-1,'‹')} ${lab} ${step(1,'›')} ·</span><span class="hov mute">${T.hov}</span><span class="modes">${modes}</span></h3><canvas></canvas>`;
+ box.innerHTML=`<h3><span style="white-space:nowrap"><a href="${link}">${t('stories')}</a> · ${list.length>1?step(-1,'‹')+' ':''}${lab}${list.length>1?' '+step(1,'›'):''} ·</span><span class="hov mute">${T.hov}</span><span class="modes">${modes}</span></h3><canvas></canvas>`;
  box.querySelectorAll('a.wk').forEach(a=>a.onclick=e=>{e.preventDefault();const v=list[pos+ +a.dataset.d];if(MM==='week')MW=v;else MO=v;weekMap()});
  box.querySelectorAll('a.md').forEach(a=>a.onclick=e=>{e.preventDefault();MM=a.dataset.m;if(MM==='month'&&MW)MO=wkMonth(MW);weekMap()});
  const W0=MS.w||1000,H0=MS.h||1000,BG=AS.map(r=>[r[3],r[4]]);
