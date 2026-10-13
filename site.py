@@ -568,7 +568,7 @@ const METHOD={
 <h3>Stories</h3><ul>
 <li>Input: posts ≥ 40 characters, discussion groups excluded. URLs, handle-only lines and subscription footers removed; identical texts merged.</li>
 <li>Embeddings: BAAI/bge-m3 (multilingual, 1024 dimensions).</li>
-<li>Per ISO week: UMAP (10 dimensions, cosine, 15 neighbours) → HDBSCAN (min. cluster 12, min. samples 5). Members with cosine to the centroid below max(0.60, mean − 1.5 sd) dropped. ~25% of posts unassigned.</li>
+<li>Per ISO week: UMAP (10 dimensions, cosine, 15 neighbours) → HDBSCAN (min. cluster 12, min. samples 5). Members with cosine to the centroid below max(0.60, mean − 1.5 sd) dropped. About a third of posts end up unassigned (W38–W41: 33–34%).</li>
 <li>Week to week: centroid cosine ≥ 0.90 = same story; 0.85–0.90 = related.</li>
 <li>Labels: Claude Haiku 5.5 on the 8 posts nearest the centroid (≤ 400 characters each) → title and summary (EN, ES), 1 region of 10, 1–2 themes of 15. Not reviewed one by one.</li></ul>
 <div id="wmap"></div>
@@ -588,7 +588,7 @@ const METHOD={
 <h3>Historias</h3><ul>
 <li>Entrada: publicaciones de ≥ 40 caracteres, sin grupos de debate. Se quitan URL, líneas solo con usuarios y pies de suscripción; los textos idénticos se agrupan.</li>
 <li>Vectores: BAAI/bge-m3 (multilingüe, 1024 dimensiones).</li>
-<li>Por semana ISO: UMAP (10 dimensiones, coseno, 15 vecinos) → HDBSCAN (grupo mín. 12, muestras mín. 5). Se descartan miembros con coseno al centroide inferior a max(0,60, media − 1,5 de). ~25 % de publicaciones sin asignar.</li>
+<li>Por semana ISO: UMAP (10 dimensiones, coseno, 15 vecinos) → HDBSCAN (grupo mín. 12, muestras mín. 5). Se descartan miembros con coseno al centroide inferior a max(0,60, media − 1,5 de). Alrededor de un tercio de las publicaciones queda sin asignar (S38–S41: 33–34 %).</li>
 <li>Entre semanas: coseno de centroides ≥ 0,90 = misma historia; 0,85–0,90 = relacionada.</li>
 <li>Etiquetas: Claude Haiku 5.5 sobre las 8 publicaciones más cercanas al centroide (≤ 400 caracteres cada una) → título y resumen (EN, ES), 1 región de 10, 1–2 temas de 15. Sin revisión una a una.</li></ul>
 <div id="wmap"></div>
@@ -613,8 +613,8 @@ async function weekMap(){const box=document.getElementById('wmap');if(!box)retur
   const r=W<500?1.1:1.4,dot=(p,col,rr)=>{c.fillStyle=col;c.fillRect(pad+p[0]*sc-rr,pad+p[1]*sc-rr,2*rr,2*rr)};
   for(const p of P)if(p[2]<0)dot(p,dt,r);c.globalAlpha=cur>=0?.35:.8;for(const p of P)if(p[2]>=0)dot(p,mu,r);c.globalAlpha=1;
   if(cur>=0)for(const p of P)if(p[2]===cur)dot(p,fg,r+1.2)}
- function pick(e){const b=cv.getBoundingClientRect(),x=(e.clientX-b.left-pad)/sc,y=(e.clientY-b.top-pad)/sc,lim=(10/sc)**2;let best=-1,bd=lim;
-  for(let i=0;i<P.length;i++){const dx=P[i][0]-x,dy=P[i][1]-y,d=dx*dx+dy*dy;if(d<bd){bd=d;best=i}}return best<0?-2:P[best][2]}
+ function pick(e){const b=cv.getBoundingClientRect(),x=(e.clientX-b.left-pad)/sc,y=(e.clientY-b.top-pad)/sc,lim=(10/sc)**2;let best=-1,bd=lim,un=-1,ud=lim;
+  for(let i=0;i<P.length;i++){const dx=P[i][0]-x,dy=P[i][1]-y,d=dx*dx+dy*dy;if(P[i][2]<0){if(d<ud){ud=d;un=i}}else if(d<bd){bd=d;best=i}}return best>=0?P[best][2]:un>=0?-1:-2}
  function show(k){if(k===cur)return;cur=k;draw();if(k===-2){hv.className='hov mute';hv.textContent=T.hov;return}
   if(k===-1){hv.className='hov mute';hv.textContent=T.none;return}const s=M.stories[k];hv.className='hov';
   hv.innerHTML=`<a href="#/s/${s.id}">${esc((L==='es'&&s.title_es)||s.title||'')}</a> <span class="mute">· ${fmt(s.size)} ${t('posts')}</span>`}
