@@ -35,7 +35,8 @@ def stories(week: str, region: str | None = None, theme: str | None = None) -> d
         raise ValueError("invalid_request")
     db = _open()
     out, regions, themes = [], {}, {}
-    for r in db.execute("SELECT id, size, n_channels, title, summary, title_es, summary_es, arenas, prev_story, related_story FROM stories "
+    subj = {r[0]: (r[1], r[2]) for r in db.execute("SELECT id, title, title_es FROM subjects WHERE title IS NOT NULL")}
+    for r in db.execute("SELECT id, size, n_channels, title, summary, title_es, summary_es, arenas, prev_story, related_story, subject_id FROM stories "
                         "WHERE kind='post' AND week=? AND title IS NOT NULL ORDER BY size DESC", (week,)):
         reg, ths = _arenas(r["arenas"])
         regions[reg] = regions.get(reg, 0) + 1
@@ -43,31 +44,27 @@ def stories(week: str, region: str | None = None, theme: str | None = None) -> d
         if region and reg != region: continue
         if theme and theme not in ths: continue
         out.append({"id": r["id"], "size": r["size"], "channels": r["n_channels"], "title": r["title"], "summary": r["summary"], "title_es": r["title_es"], "summary_es": r["summary_es"],
-                    "region": reg, "themes": ths, "prev": r["prev_story"], "related": r["related_story"]})
+                    "region": reg, "themes": ths, "prev": r["prev_story"], "related": r["related_story"],
+                    "subject": {"id": r["subject_id"], "title": subj[r["subject_id"]][0], "title_es": subj[r["subject_id"]][1]} if r["subject_id"] in subj else None})
     return {"week": week, "stories": out, "regions": regions, "themes": themes, "total": sum(regions.values())}
 
 
-def threads(min_weeks: int = 3, limit: int = 300) -> dict:
-    """Chains of stories linked week to week (prev_story), longest first."""
+def subjects(region: str | None = None, theme: str | None = None) -> dict:
+    """Named subjects with their weekly stories, largest first."""
+    if (region and not KEY.match(region)) or (theme and not KEY.match(theme)):
+        raise ValueError("invalid_request")
     db = _open()
-    rows = db.execute("SELECT id, week, size, title, title_es, arenas, prev_story FROM stories WHERE kind='post' AND title IS NOT NULL").fetchall()
-    by_id = {r["id"]: r for r in rows}
-    has_next = {r["prev_story"] for r in rows if r["prev_story"]}
-    out = []
-    for r in rows:
-        if r["id"] in has_next:
-            continue  # not the head (latest) of its chain
-        chain, cur, seen = [], r["id"], set()
-        while cur in by_id and cur not in seen:
-            seen.add(cur); c = by_id[cur]
-            chain.append({"id": c["id"], "week": c["week"], "size": c["size"]}); cur = c["prev_story"]
-        if len(chain) < min_weeks:
-            continue
-        reg, ths = _arenas(r["arenas"])
-        out.append({"id": r["id"], "title": r["title"], "title_es": r["title_es"], "region": reg, "themes": ths,
-                    "weeks": list(reversed(chain)), "n_weeks": len(chain), "total": sum(c["size"] for c in chain)})
-    out.sort(key=lambda t: (-t["n_weeks"], -t["total"]))
-    return {"threads": out[:limit], "min_weeks": min_weeks}
+    st = {r["id"]: r for r in db.execute("SELECT id, week, size, title, title_es FROM stories WHERE kind='post' AND subject_id IS NOT NULL AND title IS NOT NULL")}
+    out, regions, themes = [], {}, {}
+    for r in db.execute("SELECT * FROM subjects WHERE title IS NOT NULL ORDER BY size DESC"):
+        regions[r["region"]] = regions.get(r["region"], 0) + 1; themes[r["theme"]] = themes.get(r["theme"], 0) + 1
+        if (region and r["region"] != region) or (theme and r["theme"] != theme): continue
+        items = sorted(({"id": i, "week": st[i]["week"], "size": st[i]["size"], "title": st[i]["title"], "title_es": st[i]["title_es"]}
+                        for i in json.loads(r["members"]) if i in st), key=lambda x: (x["week"], -x["size"]))
+        out.append({"id": r["id"], "title": r["title"], "title_es": r["title_es"], "region": r["region"], "theme": r["theme"],
+                    "n_weeks": r["n_weeks"], "size": r["size"], "stories": items})
+    weeks = [w for (w,) in db.execute("SELECT DISTINCT week FROM stories WHERE kind='post' AND title IS NOT NULL ORDER BY week")]
+    return {"subjects": out, "weeks": weeks, "regions": regions, "themes": themes, "total": sum(regions.values())}
 
 
 def story(sid: int) -> dict | None:
@@ -108,4 +105,15 @@ def story(sid: int) -> dict | None:
     return {"id": r["id"], "week": r["week"], "size": r["size"], "channels_n": r["n_channels"], "title": r["title"], "summary": r["summary"],
             "title_es": r["title_es"], "summary_es": r["summary_es"], "first_post": first, "tier_order": tier_order,
             "region": reg, "themes": ths, "prev": r["prev_story"], "related": r["related_story"], "chain": chain, "next": nxt,
-            "channels": chans, "posts": posts, "first": posts[0]["date"] if posts else None, "last": posts[-1]["date"] if posts else None}
+            "channels": chans, "posts": posts, "subject": _subject(db, r["subject_id"]), "first": posts[0]["date"] if posts else None, "last": posts[-1]["date"] if posts else None}
+
+
+def _subject(db, sid):
+    if not sid:
+        return None
+    r = db.execute("SELECT id, title, title_es, members FROM subjects WHERE id=? AND title IS NOT NULL", (sid,)).fetchone()
+    if not r:
+        return None
+    ids = json.loads(r["members"])
+    items = [dict(x) for x in db.execute(f"SELECT id, week, size, title, title_es FROM stories WHERE id IN ({','.join('?'*len(ids))}) AND title IS NOT NULL ORDER BY week", ids)]
+    return {"id": r["id"], "title": r["title"], "title_es": r["title_es"], "stories": items}

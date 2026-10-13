@@ -26,6 +26,8 @@ configs:
   data_files: stories.parquet
 - config_name: story_members
   data_files: story_members.parquet
+- config_name: subjects
+  data_files: subjects.parquet
 - config_name: arenas
   data_files: arenas.parquet
 - config_name: forward_sources
@@ -57,6 +59,7 @@ The same archive is browsable at https://canales.m19182.dev.
 | `channels` | Archived channels and groups: title, description, subscribers, tier and group, the date the archive starts from, where the channel was listed from, message counts. |
 | `stories` | Weekly groups of similar posts with machine-written title and summary (English and Spanish), one region and one or two themes, and the link to the previous week's story. |
 | `story_members` | The messages in each story (`story_id`, `channel_id`, `msg_id`). |
+| `subjects` | Narrow subjects that recur across weeks: stories of different weeks whose centroids have average cosine ≥ 0.88, with a machine-written name (English and Spanish) and the most common region and theme of their stories. Stories point to them through `subject_id`. |
 | `arenas` | The fixed lists of regions and themes used for stories. |
 | `forward_sources` | Channels that archived posts were forwarded from but that are not archived themselves. |
 

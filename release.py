@@ -115,10 +115,10 @@ def build() -> dict:
     # stories + labels (only labelled post stories)
     vec = sqlite3.connect(f"file:{HERE / 'vec.db'}?mode=ro", uri=True)
     st = []
-    for r in vec.execute("SELECT id, week, size, n_channels, title, summary, title_es, summary_es, arenas, prev_story, prev_sim, related_story, model, labelled_at "
+    for r in vec.execute("SELECT id, week, size, n_channels, title, summary, title_es, summary_es, arenas, prev_story, prev_sim, related_story, model, labelled_at, subject_id "
                          "FROM stories WHERE kind='post' AND title IS NOT NULL ORDER BY week, id"):
         d = dict(zip(["story_id", "week", "size", "n_channels", "title", "summary", "title_es", "summary_es", "arenas", "prev_story", "prev_similarity",
-                      "related_story", "label_model", "labelled_at"], r))
+                      "related_story", "label_model", "labelled_at", "subject_id"], r))
         a = json.loads(d.pop("arenas") or "[]")
         d["region"], d["themes"] = (a[0] if a else None), a[1:]
         st.append(d)
@@ -127,6 +127,10 @@ def build() -> dict:
                       "WHERE s.kind='post' AND s.title IS NOT NULL ORDER BY 1, 2, 3").fetchall()
     pq.write_table(pa.table({"story_id": [m[0] for m in mem], "channel_id": [m[1] for m in mem], "msg_id": [m[2] for m in mem]}),
                    OUT / "story_members.parquet", compression="zstd")
+    sj = [dict(zip(["subject_id", "title", "title_es", "region", "theme", "n_stories", "n_weeks", "size", "first_week", "last_week", "label_model"], x))
+          for x in vec.execute("SELECT id, title, title_es, region, theme, n_stories, n_weeks, size, first_week, last_week, model FROM subjects WHERE title IS NOT NULL ORDER BY id")]
+    if sj: pq.write_table(pa.Table.from_pylist(sj), OUT / "subjects.parquet", compression="zstd")
+    stats["subjects"] = len(sj)
     stats["stories"] = len(st); stats["weeks"] = f"{st[0]['week']} to {st[-1]['week']}" if st else "none"
 
     arenas = read_csv(HERE / "arenas.csv")

@@ -4,7 +4,9 @@ Usage:
   stories.py --week 2026-W41 [--kind post|comment] [--min-size 12]   # cluster (replaces that week's stories)
   stories.py --week 2026-W41 --label [--cap 10]                       # label unlabelled stories with Haiku
   stories.py --week 2026-W41 --show [--full]                          # list stories (=prev: same story continued, ~prev: related)
-  stories.py --week 2026-W41 --map                                    # 2D projection of that week for the home page -> site/maps/
+  stories.py --week 2026-W41 --map                                    # that week on the fixed 2D layout for the home page -> site/maps/
+  stories.py --subjects [--label --cap 30]                            # join the year's stories into narrow subjects, name new ones
+  stories.py --fit-layout                                              # fit the year's 2D layout once (data/layout2d.joblib)
   stories.py --proposals                                               # arena names the model proposed, for promotion into arenas.csv
 """
 import argparse, csv, datetime as dt, json, logging, os, re, sqlite3, sys
@@ -118,8 +120,48 @@ def cluster(vec, week: str, kind: str, min_size: int):
              100 * n_noise / len(hashes), trimmed, vec.execute("SELECT count(*) FROM stories WHERE week=? AND kind=? AND prev_story IS NOT NULL", (week, kind)).fetchone()[0])
 
 
+LAYOUT = HERE / "data" / "layout2d.joblib"   # one 2D projection for the whole year, so a subject keeps its place across weeks
+LAYOUT_FROM, LAYOUT_SAMPLE, MAP_SIZE = "2026-W01", 150_000, 1000
+
+
+def layout_xy(vec, hashes):
+    """Fixed 2D coordinates (0..MAP_SIZE) for these texts; computed once with the saved projection and cached in vec.db."""
+    vec.execute("CREATE TABLE IF NOT EXISTS xy (hash TEXT PRIMARY KEY, x REAL, y REAL)")
+    have = {}
+    for i in range(0, len(hashes), 900):
+        part = hashes[i:i + 900]
+        have.update((h, (x, y)) for h, x, y in vec.execute(f"SELECT hash, x, y FROM xy WHERE hash IN ({','.join('?'*len(part))})", part))
+    todo = [h for h in hashes if h not in have]
+    if todo:
+        import joblib
+        m = joblib.load(LAYOUT)
+        for i in range(0, len(todo), 50_000):
+            part = todo[i:i + 50_000]
+            U = (m["umap"].transform(load_vectors(vec, part)) - m["lo"]) / m["span"] * MAP_SIZE
+            U = U.clip(0, MAP_SIZE)
+            vec.executemany("INSERT OR REPLACE INTO xy VALUES (?,?,?)", [(h, float(x), float(y)) for h, (x, y) in zip(part, U)])
+            vec.commit(); have.update((h, (float(x), float(y))) for h, (x, y) in zip(part, U))
+            log.info("layout: placed %d/%d texts", min(i + 50_000, len(todo)), len(todo))
+    return have
+
+
+def fit_layout(vec, kind="post"):
+    """Fit the year's 2D projection on a random sample of its texts and save it (replaces cached coordinates)."""
+    import umap, joblib
+    start, _ = week_bounds(LAYOUT_FROM)
+    hashes = sorted({h for (h,) in vec.execute("SELECT DISTINCT hash FROM msg_text WHERE kind=? AND date>=? AND hash IS NOT NULL", (kind, start))})
+    rng = np.random.default_rng(0)
+    sample = [hashes[i] for i in rng.choice(len(hashes), min(LAYOUT_SAMPLE, len(hashes)), replace=False)]
+    log.info("layout: fitting on %d of %d texts", len(sample), len(hashes))
+    m = umap.UMAP(n_components=2, n_neighbors=15, min_dist=0.1, metric="cosine", low_memory=True).fit(load_vectors(vec, sample))
+    E = m.embedding_; lo = np.percentile(E, 0.5, axis=0); hi = np.percentile(E, 99.5, axis=0)
+    LAYOUT.parent.mkdir(exist_ok=True); joblib.dump({"umap": m, "lo": lo, "span": float((hi - lo).max()), "from": LAYOUT_FROM}, LAYOUT)
+    vec.execute("DROP TABLE IF EXISTS xy"); vec.commit()
+    layout_xy(vec, hashes)
+
+
 def week_map(vec, week: str, kind: str = "post"):
-    """2D UMAP of one week's distinct texts with their story ids, for the home page map (site/maps/<week>.json + index.json). Separate from the 10D projection used for clustering."""
+    """One week's distinct texts on the fixed layout, with their story ids -> site/maps/<week>.json; then refresh site/maps/stories.json."""
     start, end = week_bounds(week)
     hashes = sorted({h for (h,) in vec.execute("SELECT hash FROM msg_text WHERE kind=? AND date>=? AND date<? AND hash IS NOT NULL", (kind, start, end))})
     if not hashes:
@@ -128,13 +170,11 @@ def week_map(vec, week: str, kind: str = "post"):
     for sid, h in vec.execute("SELECT m.story_id, t.hash FROM story_members m JOIN stories s ON s.id=m.story_id JOIN msg_text t "
                               "ON t.channel_id=m.channel_id AND t.msg_id=m.msg_id WHERE s.week=? AND s.kind=?", (week, kind)):
         story_of[h] = sid
-    import umap
-    U = umap.UMAP(n_components=2, n_neighbors=15, min_dist=0.1, metric="cosine", random_state=0).fit_transform(load_vectors(vec, hashes))
-    U = (U - U.min(0)) / (U.max(0) - U.min(0)).max() * 1000   # one scale for both axes
-    stories = vec.execute(f"SELECT id, title, title_es, size FROM stories WHERE week=? AND kind=? ORDER BY size DESC", (week, kind)).fetchall()
+    xy = layout_xy(vec, hashes)
+    stories = vec.execute("SELECT id, title, title_es, size FROM stories WHERE week=? AND kind=? ORDER BY size DESC", (week, kind)).fetchall()
     idx = {s[0]: i for i, s in enumerate(stories)}
-    pts = [[int(x), int(y), idx.get(story_of.get(h), -1)] for (x, y), h in zip(U, hashes)]
-    out = {"week": week, "n": len(hashes), "assigned": sum(p[2] >= 0 for p in pts), "w": int(U[:, 0].max()) + 1, "h": int(U[:, 1].max()) + 1,
+    pts = [[round(xy[h][0]), round(xy[h][1]), idx.get(story_of.get(h), -1)] for h in hashes]
+    out = {"week": week, "n": len(hashes), "assigned": sum(p[2] >= 0 for p in pts), "w": MAP_SIZE, "h": MAP_SIZE,
            "stories": [{"id": i, "title": t, "title_es": te, "size": n} for i, t, te, n in stories], "points": pts}
     d = HERE / "site" / "maps"; d.mkdir(parents=True, exist_ok=True)
     tmp = d / f"{week}.json.tmp"
@@ -142,6 +182,116 @@ def week_map(vec, week: str, kind: str = "post"):
     weeks = sorted(p.stem for p in d.glob("????-W??.json"))
     (d / "index.json.tmp").write_text(json.dumps(weeks)); (d / "index.json.tmp").replace(d / "index.json")
     log.info("%s map: %d texts, %d in %d stories", week, out["n"], out["assigned"], len(stories))
+    story_dots(vec, kind)
+
+
+def story_dots(vec, kind="post"):
+    """Every story since LAYOUT_FROM as one dot at the median position of its texts -> site/maps/stories.json (month and year views)."""
+    pos: dict[int, list] = {}
+    for sid, x, y in vec.execute("SELECT m.story_id, xy.x, xy.y FROM stories s JOIN story_members m ON m.story_id=s.id JOIN msg_text t "
+                                 "ON t.channel_id=m.channel_id AND t.msg_id=m.msg_id JOIN xy ON xy.hash=t.hash WHERE s.kind=? AND s.week>=?", (kind, LAYOUT_FROM)):
+        pos.setdefault(sid, []).append((x, y))
+    rows = []
+    for sid, week, size, t, te in vec.execute("SELECT id, week, size, title, title_es FROM stories WHERE kind=? AND week>=? ORDER BY week, size DESC", (kind, LAYOUT_FROM)):
+        if sid in pos:
+            x, y = np.median(np.array(pos[sid]), axis=0)
+            rows.append([sid, week, size, round(float(x)), round(float(y)), t, te])
+    d = HERE / "site" / "maps"; d.mkdir(parents=True, exist_ok=True)
+    (d / "stories.json.tmp").write_text(json.dumps({"w": MAP_SIZE, "h": MAP_SIZE, "cols": ["id", "week", "size", "x", "y", "title", "title_es"], "stories": rows},
+                                                   ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    (d / "stories.json.tmp").replace(d / "stories.json")
+    log.info("story dots: %d stories", len(rows))
+
+
+SUBJECT_DIST = 0.12      # stories join a subject when their average centroid cosine is >= 0.88 (between "related" 0.85 and "same story" 0.90)
+
+SUBJECT_SYSTEM = """You name a recurring subject from the titles of weekly story groups. Each group was formed automatically from Telegram posts; the groups below were then joined because their content is similar across weeks.
+
+Return only a JSON object: {"title": at most 8 words in English, "title_es": the same in Spanish}.
+
+Name the specific, narrow subject the titles share: the actors, place and issue (e.g. "Israeli strikes in southern Lebanon", "Spanish housing decrees and evictions"). Not a single week's event, not a broad category. Describe, do not evaluate: no verdicts, no characterisation of channels or actors, no loaded words. Sentence case."""
+
+
+def subjects(vec, kind="post"):
+    """Join this year's weekly stories into narrow subjects (average-linkage clustering of story centroids, >= 2 weeks).
+    A subject keeps its id and name while its membership overlaps the previous run's by >= 50%."""
+    from sklearn.cluster import AgglomerativeClustering
+    rows = vec.execute("SELECT id, week, size, centroid, arenas FROM stories WHERE kind=? AND week>=?", (kind, LAYOUT_FROM)).fetchall()
+    if len(rows) < 2:
+        return
+    C = np.stack([np.frombuffer(r[3], np.float32) for r in rows])
+    lab = AgglomerativeClustering(n_clusters=None, metric="precomputed", linkage="average",
+                                  distance_threshold=SUBJECT_DIST).fit_predict(1 - np.clip(C @ C.T, -1, 1))
+    groups: dict[int, list] = {}
+    for r, l in zip(rows, lab):
+        groups.setdefault(int(l), []).append(r)
+    groups = [g for g in groups.values() if len({r[1] for r in g}) >= 2]
+    old = [(sid, set(json.loads(m)), t) for sid, m, t in vec.execute("SELECT id, members, title FROM subjects")]
+    used, keep, n_new = set(), {}, 0
+    vec.execute("UPDATE stories SET subject_id=NULL WHERE kind=?", (kind,))
+    for g in groups:
+        ids = {r[0] for r in g}
+        match = max(((len(ids & m) / len(ids | m), sid) for sid, m, _ in old if sid not in used), default=(0, None))
+        reg, th = Counter(), Counter()
+        for r in g:
+            a = json.loads(r[4]) if r[4] else []
+            if a: reg[a[0]] += r[2]; th.update({t: r[2] for t in a[1:2]})
+        weeks = sorted({r[1] for r in g})
+        vals = (reg.most_common(1)[0][0] if reg else None, th.most_common(1)[0][0] if th else None, len(g), len(weeks),
+                sum(r[2] for r in g), weeks[0], weeks[-1], json.dumps(sorted(ids)))
+        if match[0] >= 0.5:
+            sid = match[1]; used.add(sid)
+            vec.execute("UPDATE subjects SET region=?, theme=?, n_stories=?, n_weeks=?, size=?, first_week=?, last_week=?, members=? WHERE id=?", vals + (sid,))
+        else:
+            sid = vec.execute("INSERT INTO subjects(region, theme, n_stories, n_weeks, size, first_week, last_week, members) VALUES (?,?,?,?,?,?,?,?)", vals).lastrowid
+            n_new += 1
+        keep[sid] = ids
+        vec.executemany("UPDATE stories SET subject_id=? WHERE id=?", [(sid, i) for i in ids])
+    gone = [sid for sid, _, _ in old if sid not in keep]
+    vec.executemany("DELETE FROM subjects WHERE id=?", [(s,) for s in gone])
+    vec.commit()
+    log.info("subjects: %d (%d new, %d kept, %d dropped), %d of %d stories in one", len(keep), n_new, len(keep) - n_new, len(gone),
+             sum(len(v) for v in keep.values()), len(rows))
+
+
+def label_subjects(vec, cap):
+    """Name unnamed subjects from their stories' titles, as one batch."""
+    from dotenv import load_dotenv
+    load_dotenv(HERE / ".env")
+    import anthropic, time
+    client = anthropic.Anthropic()
+    todo = []
+    for sid, members in vec.execute("SELECT id, members FROM subjects WHERE title IS NULL"):
+        ids = json.loads(members)
+        st = vec.execute(f"SELECT week, size, title FROM stories WHERE id IN ({','.join('?'*len(ids))}) AND title IS NOT NULL ORDER BY size DESC", ids).fetchall()
+        if len(st) < 2: continue          # name it once its stories are titled
+        pick = sorted(st[:16], key=lambda r: r[0])
+        todo.append((sid, "Story titles (week: title):\n" + "\n".join(f"{w}: {t}" for w, _, t in pick)))
+    spent = ledger_read()["usd"]; est = len(todo) * 0.0007
+    log.info("naming %d subjects (spent $%.3f, estimate +$%.2f, cap $%.2f)", len(todo), spent, est, cap)
+    if not todo: return
+    if spent + est > cap:
+        log.error("would exceed the spend cap, not submitting"); return
+    system = [{"type": "text", "text": SUBJECT_SYSTEM, "cache_control": {"type": "ephemeral"}}]
+    batch = client.messages.batches.create(requests=[{"custom_id": f"j{sid}", "params": {"model": MODEL, "max_tokens": 200, "thinking": {"type": "disabled"},
+                                                       "system": system, "messages": [{"role": "user", "content": u}]}} for sid, u in todo])
+    log.info("batch %s submitted", batch.id)
+    while client.messages.batches.retrieve(batch.id).processing_status != "ended":
+        time.sleep(BATCH_POLL_S)
+    ok = bad = 0
+    now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    for res in client.messages.batches.results(batch.id):
+        sid = int(res.custom_id[1:])
+        if res.result.type != "succeeded":
+            bad += 1; continue
+        ledger_add(res.result.message.usage, batch=True)
+        try:
+            j = parse_reply(res.result.message)
+            vec.execute("UPDATE subjects SET title=?, title_es=?, labelled_at=?, model=? WHERE id=?", (j.get("title"), j.get("title_es"), now, MODEL, sid)); ok += 1
+        except (json.JSONDecodeError, AttributeError):
+            bad += 1
+    vec.commit()
+    log.info("subjects: %d named, %d failed, total spend $%.3f", ok, bad, ledger_read()["usd"])
 
 
 def relink(vec, week, kind):
@@ -294,13 +444,20 @@ def main():
     ap.add_argument("--cap", type=float, default=10.0); ap.add_argument("--show", action="store_true")
     ap.add_argument("--relink", action="store_true"); ap.add_argument("--full", action="store_true")
     ap.add_argument("--proposals", action="store_true"); ap.add_argument("--clear-labels", action="store_true")
-    ap.add_argument("--map", action="store_true")
+    ap.add_argument("--map", action="store_true"); ap.add_argument("--fit-layout", action="store_true")
+    ap.add_argument("--subjects", action="store_true")
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stdout)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     vec = open_vec()
     if a.proposals:
         proposals(vec); return
+    if a.fit_layout:
+        fit_layout(vec, a.kind); return
+    if a.subjects:
+        subjects(vec, a.kind)
+        if a.label: label_subjects(vec, a.cap)
+        return
     if not a.week:
         ap.error("--week is required")
     if a.clear_labels:

@@ -33,6 +33,9 @@ CREATE TABLE IF NOT EXISTS arena_proposals (
 CREATE TABLE IF NOT EXISTS story_members (
   story_id INTEGER, channel_id INTEGER, msg_id INTEGER, PRIMARY KEY (story_id, channel_id, msg_id));
 CREATE INDEX IF NOT EXISTS idx_story_members_msg ON story_members(channel_id, msg_id);
+CREATE TABLE IF NOT EXISTS subjects (
+  id INTEGER PRIMARY KEY, title TEXT, title_es TEXT, region TEXT, theme TEXT, n_stories INTEGER, n_weeks INTEGER, size INTEGER,
+  first_week TEXT, last_week TEXT, members TEXT, labelled_at TEXT, model TEXT);
 """
 
 PLATFORMS = re.compile(r"\b(youtube|instagram|facebook|whatsapp|telegram|twitter|tiktok|bluesky|vk|rutube|𝕏|x)\b", re.I)
@@ -66,7 +69,7 @@ def open_vec() -> sqlite3.Connection:
     db.execute("PRAGMA synchronous=NORMAL")
     db.executescript(SCHEMA)
     cols = {r[1] for r in db.execute("PRAGMA table_info(stories)")}
-    for col, typ in [("prev_sim", "REAL"), ("related_story", "INTEGER"), ("title_es", "TEXT"), ("summary_es", "TEXT")]:
+    for col, typ in [("prev_sim", "REAL"), ("related_story", "INTEGER"), ("title_es", "TEXT"), ("summary_es", "TEXT"), ("subject_id", "INTEGER")]:
         if col not in cols:
             db.execute(f"ALTER TABLE stories ADD COLUMN {col} {typ}")
     return db

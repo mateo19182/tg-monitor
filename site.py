@@ -341,9 +341,9 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 .story-row .meta .tag{color:var(--mute)}.story-row .sum{margin-top:4px}
 .filters{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 16px;font-size:14px}.filters a.on{text-decoration:underline}
 .thread{padding:10px 0;border-bottom:1px solid var(--line)}.thread .wk{display:flex;gap:2px;align-items:flex-end;height:22px;margin-top:4px}.thread .wk span{display:block;width:14px;background:var(--bar);min-height:2px}.thread .wk span.gap{background:transparent;border-bottom:1px dotted var(--line)}
-#wmap canvas{display:block;width:100%;max-width:100%;touch-action:manipulation;cursor:crosshair}#wmap h3{display:flex;gap:6px;height:2em;align-items:baseline;margin:0}#wmap h3 a{color:inherit}#wmap .wk{padding:0 4px}#wmap .wk.off{opacity:.3}#wmap .hov{color:var(--fg);font-size:13px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#wmap .hov.mute{color:var(--mute)}
+#wmap canvas{display:block;width:100%;max-width:100%;touch-action:manipulation;cursor:crosshair}#wmap h3{display:flex;gap:6px;height:2em;align-items:baseline;margin:0}#wmap h3 a{color:inherit}#wmap .wk{padding:0 4px}#wmap .wk.off{opacity:.3}#wmap .modes{margin-left:auto;white-space:nowrap;display:flex;gap:12px}#wmap .md.on{color:var(--fg);text-decoration:underline}#wmap .hov{flex:1}#wmap .hov{color:var(--fg);font-size:13px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#wmap .hov.mute{color:var(--mute)}
 .prose h3{font-size:16px;margin:22px 0 6px}.prose ul{margin:0 0 12px;padding-left:20px}.prose li{margin-bottom:4px}
-.chain{list-style:none;padding:0;margin:0}.chain li{margin:3px 0}
+.chain{list-style:none;padding:0;margin:0}.subj{border-bottom:1px solid var(--line);padding:10px 0}.subj summary{cursor:pointer;list-style:none}.subj summary::-webkit-details-marker{display:none}.subj-head{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline}.subj-head .meta{font-size:13px}.subj[open] .subj-t{text-decoration:underline}.subj .wk{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:1px;align-items:end;height:22px;margin-top:6px}.subj .wk span{display:block;background:var(--bar)}.subj .wk span.gap{background:transparent;border-bottom:1px solid var(--line);height:1px}.subj .chain{margin:10px 0 4px;font-size:14px}.subj-tag{color:var(--mute)}.chain li{margin:3px 0}
 .post{padding:12px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
 @media(max-width:760px){.m-hide{display:none}.wrap{padding:12px}#top{width:100%;order:3;gap:6px 22px}
  .kv{grid-template-columns:1fr;gap:0 0}.kv div:nth-child(odd){margin-top:6px}.big{font-size:18px}
@@ -371,7 +371,7 @@ const T={
   name:'Spanish Politics on Telegram',home:'home',browse:'browse channels',directory:'index',indexed:'channels in index',activity:'messages per day',period:'archive dates',light:'light',dark:'dark',
   messageSearch:'search messages',query:'text',searchGo:'search',queryHint:'Words or "quoted phrases"',allChannels:'all channels',dateFrom:'from (UTC)',dateTo:'to (UTC)',order:'order',relevance:'relevance',newest:'newest',oldest:'oldest',
   loading:'searching…',results:'results',noresults:'no matching messages.',original:'original post',previous:'previous',next:'next',page:'page',
-  stories:'stories',firstPost:'first post',tierOrder:'order of tiers',threads:'story threads',thisWeek:'by week',overTime:'over time',groupLabel:'group',legend:'tiers inside the groups',sections:'sections',aboutPage:'about',
+  stories:'stories',firstPost:'first post',tierOrder:'order of tiers',subjects:'subjects',subject:'subject',subjHint:'stories from different weeks with similar content (average cosine ≥ 0.88)',more:'more',thisWeek:'by week',groupLabel:'group',legend:'tiers inside the groups',sections:'sections',aboutPage:'about',
   aboutText:'<p>A public archive of Telegram channels relevant to Spanish politics.</p>',weeks:'weeks',minWeeks:'at least %d weeks',week:'week',region:'region',theme:'theme',all:'all',story:'story',earlier:'earlier weeks',later:'later weeks',related:'related story',nostories:'no stories for this selection.',postsIn:'posts in this story',chans:'channels',showing:'showing',
   invalid_query:'Enter words or balanced "quoted phrases". Maximum 20 terms.',query_too_long:'Search text is limited to 300 characters.',invalid_date:'Enter a valid date.',date_range:'The start date must be on or before the end date.',invalid_sort:'Choose a valid order.',invalid_page:'Choose a valid page.',invalid_channel:'Choose a channel in the index.',invalid_request:'Check the search fields.',search_unavailable:'Search is unavailable. Try again.',search_timeout:'This search took too long. Try more words or a narrower date range.',monthly:'posts per month · full archive',views30:'average views per own post, last 30 days',withMedia:'posts with photo, video or file',withLinks:'posts with links',storiesIn:'appears in %d stories',byRegion:'posts in stories by region',byTheme:'posts in stories by theme',recentStories:'latest stories',links:'links',method:'method',linkKinds:'links by type',content:'web pages',social:'social networks',telegram:'Telegram',shortener:'shortened links',colLinks:'links',kind:'type',sharedUrls:'pages linked by the most channels · last 7 days · all groups',tmeRefs:'Telegram channels outside the list, linked by the most listed channels',w7:'7 days',w30:'30 days',wall:'all',allGroups:'all groups',lastRef:'last',window:'period',noLinks:'link statistics are not available yet.',e29n:'29N',eTitle:'General election · 29 November 2026',daysTo:'%d days to go',eDay:'election day',daysSince:'%d days since the election',ePosts:'posts containing election terms, per day',eTerms:'terms',eByGroup:'by group',last7:'last 7 days',sinceStart:'since %s',eStories:'stories with the theme “29N election”',eParties:'parties and candidates',perWeek:'posts per week, last 8 weeks',avgViews:'avg views, 30 days',eHits:'posts with election terms, 30 days',queued:'queued',ePages:'pages linked from posts with election terms · last 14 days',noneYet:'none yet.'},
  es:{channels:'canales',messages:'mensajes',archive:'archivo',tiers:'niveles',sources:'fuentes',handle:'usuario',title:'título',tier:'nivel',subs:'suscriptores',posts:'publicaciones',last:'última publicación',days:'últimos %d días',search:'buscar /',
@@ -381,7 +381,7 @@ const T={
   name:'Política española en Telegram',home:'inicio',browse:'ver canales',directory:'índice',indexed:'canales en el índice',activity:'mensajes por día',period:'fechas del archivo',light:'claro',dark:'oscuro',
   messageSearch:'buscar mensajes',query:'texto',searchGo:'buscar',queryHint:'Palabras o "frases entre comillas"',allChannels:'todos los canales',dateFrom:'desde (UTC)',dateTo:'hasta (UTC)',order:'orden',relevance:'relevancia',newest:'más recientes',oldest:'más antiguos',
   loading:'buscando…',results:'resultados',noresults:'no hay mensajes coincidentes.',original:'publicación original',previous:'anterior',next:'siguiente',page:'página',
-  stories:'historias',firstPost:'primera publicación',tierOrder:'orden de niveles',threads:'hilos de historias',thisWeek:'por semana',overTime:'en el tiempo',groupLabel:'grupo',legend:'niveles dentro de los grupos',sections:'secciones',aboutPage:'acerca de',
+  stories:'historias',firstPost:'primera publicación',tierOrder:'orden de niveles',subjects:'asuntos',subject:'asunto',subjHint:'historias de distintas semanas con contenido parecido (coseno medio ≥ 0,88)',more:'más',thisWeek:'por semana',groupLabel:'grupo',legend:'niveles dentro de los grupos',sections:'secciones',aboutPage:'acerca de',
   aboutText:'<p>Un archivo público de canales de Telegram relevantes para la política española.</p>',weeks:'semanas',minWeeks:'al menos %d semanas',week:'semana',region:'región',theme:'tema',all:'todas',story:'historia',earlier:'semanas anteriores',later:'semanas posteriores',related:'historia relacionada',nostories:'no hay historias para esta selección.',postsIn:'publicaciones en esta historia',chans:'canales',showing:'mostrando',
   invalid_query:'Introduce palabras o "frases entre comillas" cerradas. Máximo 20 términos.',query_too_long:'El texto de búsqueda está limitado a 300 caracteres.',invalid_date:'Introduce una fecha válida.',date_range:'La fecha inicial debe ser anterior o igual a la final.',invalid_sort:'Elige un orden válido.',invalid_page:'Elige una página válida.',invalid_channel:'Elige un canal del índice.',invalid_request:'Revisa los campos de búsqueda.',search_unavailable:'La búsqueda no está disponible. Inténtalo de nuevo.',search_timeout:'La búsqueda tardó demasiado. Añade palabras o reduce el intervalo de fechas.',monthly:'publicaciones por mes · archivo completo',views30:'visualizaciones medias por publicación propia, últimos 30 días',withMedia:'publicaciones con foto, vídeo o archivo',withLinks:'publicaciones con enlaces',storiesIn:'aparece en %d historias',byRegion:'publicaciones en historias por región',byTheme:'publicaciones en historias por tema',recentStories:'historias más recientes',links:'enlaces',method:'método',linkKinds:'enlaces por tipo',content:'páginas web',social:'redes sociales',telegram:'Telegram',shortener:'enlaces acortados',colLinks:'enlaces',kind:'tipo',sharedUrls:'páginas enlazadas por más canales · últimos 7 días · todos los grupos',tmeRefs:'Canales de Telegram fuera de la lista, enlazados por más canales de la lista',w7:'7 días',w30:'30 días',wall:'todo',allGroups:'todos los grupos',lastRef:'último',window:'periodo',noLinks:'las estadísticas de enlaces aún no están disponibles.',e29n:'29N',eTitle:'Elecciones generales · 29 de noviembre de 2026',daysTo:'faltan %d días',eDay:'día de las elecciones',daysSince:'%d días desde las elecciones',ePosts:'publicaciones con términos electorales, por día',eTerms:'términos',eByGroup:'por grupo',last7:'últimos 7 días',sinceStart:'desde %s',eStories:'historias con el tema «elecciones 29N»',eParties:'partidos y candidatos',perWeek:'publicaciones por semana, últimas 8 semanas',avgViews:'visualizaciones medias, 30 días',eHits:'publicaciones con términos electorales, 30 días',queued:'en cola',ePages:'páginas enlazadas desde publicaciones con términos electorales · últimos 14 días',noneYet:'aún ninguna.'}};
 let L=localStorage.getItem('lang')==='es'?'es':'en';
@@ -453,26 +453,36 @@ async function storiesView(params){
   h+=`<div class="filters"><span class="mute">${t('theme')}</span><a class="${theme?'':'on'}" href="${esc(sel('theme',''))}">${t('all')}</a>${keys('theme').concat(keys('bucket')).filter(k=>data.themes[k]).map(k=>`<a class="${theme===k?'on':''}" href="${esc(sel('theme',k))}">${esc(A(k))} <span class="mute">${data.themes[k]}</span></a>`).join('')}</div>`;
   h+=`<div class="mute">${t('showing')} ${fmt(data.stories.length)} / ${fmt(data.total)} · ${t('posts')}: ${fmt(data.stories.reduce((n,s)=>n+s.size,0))}</div>`;
   if(!data.stories.length)h+=`<p class="mute">${t('nostories')}</p>`;
-  for(const s of data.stories)h+=`<div class="story-row"><div><a href="#/s/${s.id}">${esc(TT(s))}</a>${s.prev?` <span class="mute" title="${t('earlier')}">⟵</span>`:''}</div><div class="meta"><span>${fmt(s.size)} ${t('posts')} · ${fmt(s.channels)} ${t('chans')}</span><span class="tag">${esc(A(s.region))}</span>${s.themes.map(k=>`<span class="tag">${esc(A(k))}</span>`).join('')}</div></div>`;
+  for(const s of data.stories)h+=`<div class="story-row"><div><a href="#/s/${s.id}">${esc(TT(s))}</a>${s.prev?` <span class="mute" title="${t('earlier')}">⟵</span>`:''}</div><div class="meta"><span>${fmt(s.size)} ${t('posts')} · ${fmt(s.channels)} ${t('chans')}</span><span class="tag">${esc(A(s.region))}</span>${s.themes.map(k=>`<span class="tag">${esc(A(k))}</span>`).join('')}${s.subject?`<a class="tag subj-tag" href="${esc(subjURL({s:s.subject.id}))}">↳ ${esc(TT(s.subject))}</a>`:''}</div></div>`;
   view.innerHTML=h;
  }catch(e){if(e.name!=='AbortError')view.innerHTML=`<h2>${t('stories')}</h2><p class="mute">${t('search_unavailable')}</p>`}
 }
-const tabs=cur=>`<div class="tabs"><a class="${cur==='week'?'on':''}" href="#/stories">${t('thisWeek')}</a><a class="${cur==='time'?'on':''}" href="#/stories?view=time">${t('overTime')}</a></div>`;
-async function threadsView(params){
- const view=document.getElementById('view');const min=Math.max(2,parseInt(params.get('min')||'3'));
- view.innerHTML=`<h2>${t('threads')}</h2><div class="mute" role="status">${t('loading')}</div>`;
+const tabs=cur=>`<div class="tabs"><a class="${cur==='week'?'on':''}" href="#/stories">${t('thisWeek')}</a><a class="${cur==='subjects'?'on':''}" href="#/stories?view=subjects">${t('subjects')}</a></div>`;
+const subjURL=p=>{const q=new URLSearchParams({view:'subjects'});for(const k of ['region','theme','s'])if(p[k])q.set(k,p[k]);return '#/stories?'+q};
+const wkn=w=>w.replace(/^\d+-W/,'');
+async function subjectsView(params){
+ const view=document.getElementById('view');view.innerHTML=`<h2>${t('stories')}</h2>`+tabs('subjects')+`<div class="mute" role="status">${t('loading')}</div>`;
  const controller=new AbortController();searchController=controller;
+ const region=params.get('region')||'',theme=params.get('theme')||'',open=+params.get('s')||0;
  try{
-  const d=await (await fetch('/api/threads?min='+min,{signal:controller.signal})).json();if(controller.signal.aborted)return;
-  const allWeeks=[...new Set(d.threads.flatMap(x=>x.weeks.map(w=>w.week)))].sort();
-  let h=`<h2>${t('stories')}</h2>`+tabs('time')+`<div class="filters"><span class="mute">${t('weeks')}</span>${[2,3,5,8].map(n=>`<a class="${n===min?'on':''}" href="#/stories?view=time&min=${n}">${t('minWeeks').replace('%d',n)}</a>`).join('')}</div>`;
-  h+=`<div class="mute">${fmt(d.threads.length)} · ${allWeeks[0]||''} → ${allWeeks[allWeeks.length-1]||''}</div>`;
-  if(!d.threads.length)h+=`<p class="mute">${t('nostories')}</p>`;
-  for(const x of d.threads){const by={};x.weeks.forEach(w=>by[w.week]=w);const m=Math.max(...x.weeks.map(w=>w.size));const first=allWeeks.indexOf(x.weeks[0].week),last=allWeeks.indexOf(x.weeks[x.weeks.length-1].week);
-   h+=`<div class="thread"><div><a href="#/s/${x.id}">${esc(TT(x))}</a></div><div class="meta story-row" style="padding:0;border:0"><div class="meta"><span>${x.n_weeks} ${t('weeks')} · ${fmt(x.total)} ${t('posts')}</span><span class="tag">${esc(A(x.region))}</span>${x.themes.map(k=>`<span class="tag">${esc(A(k))}</span>`).join('')}</div></div>`;
-   h+=`<div class="wk" title="${esc(x.weeks.map(w=>w.week+': '+w.size).join(' · '))}">${allWeeks.slice(first,last+1).map(w=>by[w]?`<span style="height:${Math.max(2,Math.round(by[w].size/m*22))}px" title="${w}: ${by[w].size}"></span>`:`<span class="gap"></span>`).join('')}</div></div>`}
+  const d=await (await fetch('/api/subjects?'+new URLSearchParams({region,theme}),{signal:controller.signal})).json();if(controller.signal.aborted)return;
+  const sel=(k,v)=>subjURL({region:k==='region'?v:region,theme:k==='theme'?v:theme}),keys=axis=>Object.keys(D.arenas).filter(k=>D.arenas[k].axis===axis);
+  let h=`<h2>${t('stories')}</h2>`+tabs('subjects');
+  h+=`<div class="filters"><span class="mute">${t('region')}</span><a class="${region?'':'on'}" href="${esc(sel('region',''))}">${t('all')}</a>${keys('region').filter(k=>d.regions[k]).map(k=>`<a class="${region===k?'on':''}" href="${esc(sel('region',k))}">${esc(A(k))} <span class="mute">${d.regions[k]}</span></a>`).join('')}</div>`;
+  h+=`<div class="filters"><span class="mute">${t('theme')}</span><a class="${theme?'':'on'}" href="${esc(sel('theme',''))}">${t('all')}</a>${keys('theme').concat(keys('bucket')).filter(k=>d.themes[k]).map(k=>`<a class="${theme===k?'on':''}" href="${esc(sel('theme',k))}">${esc(A(k))} <span class="mute">${d.themes[k]}</span></a>`).join('')}</div>`;
+  h+=`<div class="mute">${fmt(d.subjects.length)} / ${fmt(d.total)} ${t('subjects')} · ${t('subjHint')} · ${wkn(d.weeks[0]||'')}–${wkn(d.weeks[d.weeks.length-1]||'')}</div><div id="subj"></div><div id="subjmore"></div>`;
   view.innerHTML=h;
- }catch(e){if(e.name!=='AbortError')view.innerHTML=`<h2>${t('threads')}</h2><p class="mute">${t('search_unavailable')}</p>`}
+  const W=d.weeks,box=document.getElementById('subj'),more=document.getElementById('subjmore');let shown=0;
+  const row=x=>{const by={};for(const s of x.stories)by[s.week]=(by[s.week]||0)+s.size;const m=Math.max(...Object.values(by));
+   return `<details class="subj" id="subj-${x.id}"${x.id===open?' open':''}><summary><div class="subj-head"><span class="subj-t">${esc(TT(x))}</span><span class="meta mute">${x.n_weeks} ${t('weeks')} · ${fmt(x.size)} ${t('posts')}${x.region?` · ${esc(A(x.region))}`:''}${x.theme?` · ${esc(A(x.theme))}`:''}</span></div>
+    <div class="wk" style="--n:${W.length}">${W.map(w=>by[w]?`<span style="height:${Math.max(2,Math.round(by[w]/m*22))}px" title="${w}: ${by[w]}"></span>`:`<span class="gap" title="${w}"></span>`).join('')}</div></summary>
+    <ul class="chain">${x.stories.map(s=>`<li><span class="mute">${t('week')} ${wkn(s.week)}</span> <a href="#/s/${s.id}">${esc(TT(s))}</a> <span class="mute">${fmt(s.size)}</span></li>`).join('')}</ul></details>`};
+  const page=()=>{const n=shown?100:60;box.insertAdjacentHTML('beforeend',d.subjects.slice(shown,shown+n).map(row).join(''));shown+=n;
+   more.innerHTML=shown<d.subjects.length?`<a href="#" class="more">[${t('more')} · ${fmt(d.subjects.length-shown)}]</a>`:'';const a=more.querySelector('a');if(a)a.onclick=e=>{e.preventDefault();page()}};
+  if(open){const i=d.subjects.findIndex(x=>x.id===open);while(i>=shown&&shown<d.subjects.length)page()}
+  if(!shown)page();if(!d.subjects.length)box.innerHTML=`<p class="mute">${t('nostories')}</p>`;
+  if(open){const el=document.getElementById('subj-'+open);if(el)setTimeout(()=>el.scrollIntoView({block:'start'}),0)}
+ }catch(e){if(e.name!=='AbortError')view.innerHTML=`<h2>${t('stories')}</h2><p class="mute">${t('search_unavailable')}</p>`}
 }
 async function storyView(id){
  const view=document.getElementById('view');view.innerHTML=`<div class="mute" role="status">${t('loading')}</div>`;
@@ -485,8 +495,9 @@ async function storyView(id){
   h+=`<div class="kv"><div>${t('week')}</div><div><a href="${esc(storiesURL({week:s.week}))}">${esc(s.week)}</a></div><div>${t('region')}</div><div><a href="${esc(storiesURL({week:s.week,region:s.region}))}">${esc(A(s.region))}</a></div><div>${t('theme')}</div><div>${s.themes.map(k=>`<a href="${esc(storiesURL({week:s.week,theme:k}))}">${esc(A(k))}</a>`).join(' · ')}</div><div>${t('posts')}</div><div>${fmt(s.size)} · ${fmt(s.channels_n)} ${t('chans')} · ${s.first?esc(s.first.slice(0,10)):''} → ${s.last?esc(s.last.slice(0,10)):''}</div></div>`;
   if(s.first_post)h+=`<div class="kv"><div>${t('firstPost')}</div><div><a href="#/c/${esc(s.first_post.handle||'')}">${esc(s.first_post.title||s.first_post.handle||'')}</a> <span class="mute">${esc(s.first_post.tier)} · ${esc((s.first_post.date||'').slice(0,16).replace('T',' '))} UTC</span></div><div>${t('tierOrder')}</div><div>${s.tier_order.map(x=>`<span title="${esc((x.date||'').slice(0,16).replace('T',' '))} UTC">${esc(x.tier)}</span>`).join(' → ')}</div></div>`;
   if(SM(s))h+=`<p class="sum">${esc(SM(s))}</p>`;
-  if(s.chain.length)h+=`<section><h2>${t('earlier')}</h2><ul class="chain">${s.chain.map(c=>`<li><span class="mute">${esc(c.week)}</span> <a href="#/s/${c.id}">${esc(TT(c))}</a> <span class="mute">${fmt(c.size)}</span></li>`).join('')}</ul></section>`;
-  if(s.next.length)h+=`<section><h2>${t('later')}</h2><ul class="chain">${s.next.map(c=>`<li><span class="mute">${esc(c.week)}</span> <a href="#/s/${c.id}">${esc(TT(c))}</a> <span class="mute">${fmt(c.size)}</span></li>`).join('')}</ul></section>`;
+  if(s.subject)h+=`<section><h2>${t('subject')}: <a href="${esc(subjURL({s:s.subject.id}))}">${esc(TT(s.subject))}</a></h2><ul class="chain">${s.subject.stories.map(c=>`<li><span class="mute">${t('week')} ${wkn(c.week)}</span> ${c.id===s.id?`<b>${esc(TT(c))}</b>`:`<a href="#/s/${c.id}">${esc(TT(c))}</a>`} <span class="mute">${fmt(c.size)}</span></li>`).join('')}</ul></section>`;
+  else if(s.chain.length)h+=`<section><h2>${t('earlier')}</h2><ul class="chain">${s.chain.map(c=>`<li><span class="mute">${esc(c.week)}</span> <a href="#/s/${c.id}">${esc(TT(c))}</a> <span class="mute">${fmt(c.size)}</span></li>`).join('')}</ul></section>`;
+  if(!s.subject&&s.next.length)h+=`<section><h2>${t('later')}</h2><ul class="chain">${s.next.map(c=>`<li><span class="mute">${esc(c.week)}</span> <a href="#/s/${c.id}">${esc(TT(c))}</a> <span class="mute">${fmt(c.size)}</span></li>`).join('')}</ul></section>`;
   const m=s.channels.length?s.channels[0].n:1;
   h+=`<section><h2>${t('chans')}</h2><div class="tw"><table class="list">${s.channels.map(c=>`<tr><td class="num">${fmt(c.n)}</td><td>${bar(c.n,m,innerWidth<=760?12:24)}</td><td>${c.handle?`<a href="#/c/${esc(c.handle)}">${esc(c.title||c.handle)}</a> <span class="mute">@${esc(c.handle)}</span>`:esc(c.title||'')}</td></tr>`).join('')}</table></div></section>`;
   h+=`<section><h2>${t('postsIn')}</h2>${s.posts.length<s.size?`<div class="mute">${t('showing')} ${fmt(s.posts.length)} / ${fmt(s.size)}</div>`:''}`;
@@ -570,7 +581,8 @@ const METHOD={
 <li>Per ISO week: UMAP (10 dimensions, cosine, 15 neighbours) → HDBSCAN (min. cluster 12, min. samples 5). Members with cosine to the centroid below max(0.60, mean − 1.5 sd) dropped. About a third of posts end up unassigned (W38–W41: 33–34%).</li>
 <li>Week to week: centroid cosine ≥ 0.90 = same story; 0.85–0.90 = related.</li>
 <li>Labels: Claude Haiku 5.5 on the 8 posts nearest the centroid (≤ 400 characters each) → title and summary (EN, ES), 1 region of 10, 1–2 themes of 15. Not reviewed one by one.</li>
-<li>Home page map: the latest labelled week, the same embeddings projected to 2 dimensions with UMAP (cosine, 15 neighbours, min. distance 0.1) for display only. Stories are found in the 10-dimensional projection, so some dots sit away from the rest of their story. Titles are drawn for the largest stories that fit.</li></ul>
+<li>Subjects: stories of different weeks joined by average-linkage clustering of their centroids (average cosine ≥ 0.88; ≥ 2 weeks), named by Claude Haiku 5.5 from their story titles. Region and theme: the most common among their stories, weighted by posts. Regrouped weekly; a subject keeps its name while ≥ 50% of its stories stay the same.</li>
+<li>Home page map: one 2D UMAP layout for the year (cosine, 15 neighbours, min. distance 0.1; fitted on 150,000 sampled texts, new texts placed into it), so a subject keeps its place across weeks. Week view: one dot per text; month and year views: one dot per story at the median of its texts, area by posts. For display only: stories are found in the 10-dimensional projection, so some dots sit away from the rest of their story.</li></ul>
 <h3>Links</h3><ul>
 <li>URLs from post text and link previews; canonical form: https, no www/m/amp, no tracking parameters, fragments or trailing slash.</li>
 <li>Types: web page, social network, Telegram, shortener. Shorteners followed to the destination; page titles fetched for a subset (1 request/s per domain). Counts include forwards.</li></ul>
@@ -590,7 +602,8 @@ const METHOD={
 <li>Por semana ISO: UMAP (10 dimensiones, coseno, 15 vecinos) → HDBSCAN (grupo mín. 12, muestras mín. 5). Se descartan miembros con coseno al centroide inferior a max(0,60, media − 1,5 de). Alrededor de un tercio de las publicaciones queda sin asignar (S38–S41: 33–34 %).</li>
 <li>Entre semanas: coseno de centroides ≥ 0,90 = misma historia; 0,85–0,90 = relacionada.</li>
 <li>Etiquetas: Claude Haiku 5.5 sobre las 8 publicaciones más cercanas al centroide (≤ 400 caracteres cada una) → título y resumen (EN, ES), 1 región de 10, 1–2 temas de 15. Sin revisión una a una.</li>
-<li>Mapa de la portada: la última semana etiquetada, los mismos vectores proyectados a 2 dimensiones con UMAP (coseno, 15 vecinos, distancia mín. 0,1) solo para mostrarlos. Las historias se forman en la proyección de 10 dimensiones, así que algunos puntos quedan lejos del resto de su historia. Se rotulan las historias más grandes que caben.</li></ul>
+<li>Asuntos: historias de distintas semanas unidas por agrupamiento jerárquico de sus centroides (coseno medio ≥ 0,88; ≥ 2 semanas), nombradas por Claude Haiku 5.5 a partir de los títulos de sus historias. Región y tema: los más frecuentes entre sus historias, ponderados por publicaciones. Se reagrupan cada semana; un asunto conserva su nombre mientras ≥ 50 % de sus historias sigan siendo las mismas.</li>
+<li>Mapa de la portada: una sola proyección UMAP 2D para todo el año (coseno, 15 vecinos, distancia mín. 0,1; ajustada sobre 150.000 textos de muestra, los nuevos se colocan en ella), así que un asunto mantiene su sitio entre semanas. Vista semanal: un punto por texto; vistas de mes y año: un punto por historia en la mediana de sus textos, con área según publicaciones. Solo para mostrar: las historias se forman en la proyección de 10 dimensiones, así que algunos puntos quedan lejos del resto de su historia.</li></ul>
 <h3>Enlaces</h3><ul>
 <li>URL del texto y de las vistas previas; forma canónica: https, sin www/m/amp, sin parámetros de seguimiento, fragmentos ni barra final.</li>
 <li>Tipos: página web, red social, Telegram, acortador. Los acortadores se siguen hasta el destino; títulos de página para una parte (1 petición/s por dominio). Los recuentos incluyen reenvíos.</li></ul>
@@ -599,38 +612,55 @@ const METHOD={
 <li>Visualizaciones según Telegram.</li>
 <li>Sin reacciones ni historias de Telegram; comentarios solo de los grupos de debate de la lista.</li></ul>`};
 function methodView(){document.getElementById('view').innerHTML=`<div class="prose">${METHOD[L]({n:fmt(D.channels.length),a:fmt(D.channels.filter(c=>c.n).length),g:Object.keys(D.groups).length})}</div>`;weekMap()}
-let MI=null,MW=null,MC={},redrawMap=null;addEventListener('resize',()=>redrawMap&&redrawMap());
-const MAPT={en:{head:'week %w',hov:'Point at a dot to see its story.',none:'unassigned'},
- es:{head:'semana %w',hov:'Señala un punto para ver su historia.',none:'sin asignar'}};
+let MI=null,MS=null,MM='week',MW=null,MO=null,MC={},redrawMap=null;addEventListener('resize',()=>redrawMap&&redrawMap());
+const MAPT={en:{week:'week',month:'month',head:'week %w',hov:'Point at a dot to see its story.',none:'unassigned'},
+ es:{week:'semana',month:'mes',head:'semana %w',hov:'Señala un punto para ver su historia.',none:'sin asignar'}};
+const wkMonth=w=>{const [y,n]=w.split('-W').map(Number),d=new Date(Date.UTC(y,0,4));d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7)+(n-1)*7+3);return d.toISOString().slice(0,7)};
 async function weekMap(){const box=document.getElementById('wmap');if(!box)return;
  const get=u=>fetch(u,{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()});
- try{if(!MI)MI=await get('maps/index.json');if(!MW||!MI.includes(MW))MW=MI[MI.length-1];if(!MC[MW])MC[MW]=await get('maps/'+MW+'.json')}catch(e){return}
- if(!document.body.contains(box))return;const M=MC[MW],T=MAPT[L],P=M.points,wi=MI.indexOf(MW);
- const step=(d,ch)=>MI[wi+d]?`<a href="#" class="wk" data-d="${d}">${ch}</a>`:`<span class="wk off">${ch}</span>`;
- box.innerHTML=`<h3><span style="white-space:nowrap"><a href="#/stories?week=${esc(M.week)}">${t('stories')}</a> · ${step(-1,'‹')} ${T.head.replace('%w',esc(M.week.replace(/^\d+-W/,'')))} ${step(1,'›')} ·</span><span class="hov mute">${T.hov}</span></h3><canvas></canvas>`;
- box.querySelectorAll('a.wk').forEach(a=>a.onclick=e=>{e.preventDefault();MW=MI[wi+ +a.dataset.d];weekMap()});
+ try{if(!MI)MI=await get('maps/index.json');if(!MS)MS=await get('maps/stories.json').catch(()=>({w:1000,h:1000,stories:[]}));
+  if(!MW||!MI.includes(MW))MW=MI[MI.length-1];if(MM==='week'&&!MC[MW])MC[MW]=await get('maps/'+MW+'.json')}catch(e){return}
+ if(!document.body.contains(box))return;const T=MAPT[L],AS=MS.stories,yr=MW.slice(0,4);if(!AS.length)MM='week';
+ const months=[...new Set(AS.map(r=>wkMonth(r[1])))].sort();if(!MO||!months.includes(MO))MO=months[months.length-1];
+ let S,P,list,pos,lab,link,dotR;   // S: stories shown; P: [x,y,story index] points; dotR(k): radius of a story dot in story views
+ if(MM==='week'){const M=MC[MW];S=M.stories;P=M.points;list=MI;pos=MI.indexOf(MW);lab=T.head.replace('%w',esc(MW.replace(/^\d+-W/,'')));link='#/stories?week='+MW;
+  const cen=S.map(()=>[[],[]]);for(const p of P)if(p[2]>=0){cen[p[2]][0].push(p[0]);cen[p[2]][1].push(p[1])}
+  const med=a=>{a.sort((x,y)=>x-y);return a[a.length>>1]||0};S=S.map((s,i)=>({...s,x:med(cen[i][0]),y:med(cen[i][1])}))}
+ else{const rows=(MM==='month'?AS.filter(r=>wkMonth(r[1])===MO):AS).slice().sort((a,b)=>b[2]-a[2]);
+  S=rows.map(r=>({id:r[0],week:r[1],size:r[2],x:r[3],y:r[4],title:r[5],title_es:r[6]}));P=S.map((s,i)=>[s.x,s.y,i]);link='#/stories';
+  if(MM==='month'){list=months;pos=months.indexOf(MO);lab=new Date(MO+'-15').toLocaleString(L==='es'?'es':'en',{month:'long',year:'numeric',timeZone:'UTC'})}else{list=[yr];pos=0;lab=yr}}
+ const mx=Math.max(1,...S.map(s=>s.size));dotR=k=>(MM==='year'?.8:1.2)+Math.sqrt(S[k].size/mx)*(MM==='year'?7:10);
+ const step=(d,ch)=>list[pos+d]?`<a href="#" class="wk" data-d="${d}">${ch}</a>`:`<span class="wk off">${ch}</span>`;
+ const modes=(AS.length?[['week',T.week],['month',T.month],['year',yr]]:[]).map(([k,l])=>`<a href="#" class="md${MM===k?' on':''}" data-m="${k}">${l}</a>`).join(' ');
+ box.innerHTML=`<h3><span style="white-space:nowrap"><a href="${link}">${t('stories')}</a> · ${step(-1,'‹')} ${lab} ${step(1,'›')} ·</span><span class="hov mute">${T.hov}</span><span class="modes">${modes}</span></h3><canvas></canvas>`;
+ box.querySelectorAll('a.wk').forEach(a=>a.onclick=e=>{e.preventDefault();const v=list[pos+ +a.dataset.d];if(MM==='week')MW=v;else MO=v;weekMap()});
+ box.querySelectorAll('a.md').forEach(a=>a.onclick=e=>{e.preventDefault();MM=a.dataset.m;if(MM==='month'&&MW)MO=wkMonth(MW);weekMap()});
+ const W0=MS.w||1000,H0=MS.h||1000,BG=AS.map(r=>[r[3],r[4]]);
  const cv=box.querySelector('canvas'),hv=box.querySelector('.hov'),pad=8;let cur=-2,sc=1,ox=0,W=0,H=0,slack=0;
- const cen=M.stories.map(()=>[[],[]]);for(const p of P)if(p[2]>=0){cen[p[2]][0].push(p[0]);cen[p[2]][1].push(p[1])}
- const med=a=>{a.sort((x,y)=>x-y);return a[a.length>>1]||0};const C=cen.map(([x,y])=>[med(x),med(y)]);
  function draw(){const cs=getComputedStyle(document.documentElement),fg=cs.getPropertyValue('--fg'),mu=cs.getPropertyValue('--mute'),dt=cs.getPropertyValue('--dot'),bg=cs.getPropertyValue('--bg'),dpr=devicePixelRatio||1;
-  W=cv.clientWidth;const fit=innerWidth>760,maxH=fit?Math.max(300,innerHeight-(cv.getBoundingClientRect().top+scrollY)-24-slack):W;sc=Math.min((W-2*pad)/M.w,(maxH-2*pad)/M.h);ox=(W-M.w*sc)/2;H=Math.round(M.h*sc+2*pad);
+  W=cv.clientWidth;const fit=innerWidth>760,maxH=fit?Math.max(300,innerHeight-(cv.getBoundingClientRect().top+scrollY)-24-slack):W;sc=Math.min((W-2*pad)/W0,(maxH-2*pad)/H0);ox=(W-W0*sc)/2;H=Math.round(H0*sc+2*pad);
   cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
-  const r=W<500?1.1:1.4,X=p=>ox+p[0]*sc,Y=p=>pad+p[1]*sc,dot=(p,col,rr)=>{c.fillStyle=col;c.fillRect(X(p)-rr,Y(p)-rr,2*rr,2*rr)};
-  for(const p of P)if(p[2]<0)dot(p,dt,r);c.globalAlpha=cur>=0?.35:.8;for(const p of P)if(p[2]>=0)dot(p,mu,r);c.globalAlpha=1;
-  if(cur>=0)for(const p of P)if(p[2]===cur)dot(p,fg,r+1.2);
+  const r=W<500?1.1:1.4,X=p=>ox+p[0]*sc,Y=p=>pad+p[1]*sc,dot=(p,col,rr)=>{c.fillStyle=col;c.fillRect(X(p)-rr,Y(p)-rr,2*rr,2*rr)},
+   disc=(p,rr)=>{c.beginPath();c.arc(X(p),Y(p),rr,0,7);c.fill()};
+  if(MM!=='year'){c.globalAlpha=.5;for(const p of BG)dot(p,dt,.9);c.globalAlpha=1}   // the whole year, faint, so the shape stays put
+  if(MM==='week'){for(const p of P)if(p[2]<0)dot(p,dt,r);c.globalAlpha=cur>=0?.35:.8;for(const p of P)if(p[2]>=0)dot(p,mu,r);c.globalAlpha=1;
+   if(cur>=0)for(const p of P)if(p[2]===cur)dot(p,fg,r+1.2)}
+  else{c.fillStyle=mu;c.globalAlpha=cur>=0?.25:.45;for(let k=S.length-1;k>=0;k--)disc(P[k],dotR(k));c.globalAlpha=1;if(cur>=0){c.fillStyle=fg;disc(P[cur],dotR(cur))}}
   if(fit&&!slack){const o=document.documentElement.scrollHeight-innerHeight;if(o>0){slack=o+2;return draw()}}
-  if(W<560)return;const boxes=[],n=W<800?5:8;c.font='11px '+getComputedStyle(hv).fontFamily;c.textBaseline='middle';
-  for(let k=0;k<M.stories.length&&boxes.length<n;k++){if(cur>=0&&k!==cur)continue;const s=M.stories[k];let tx=(L==='es'&&s.title_es)||s.title||'';if(tx.length>44)tx=tx.slice(0,42).replace(/\s+\S*$/,'')+'…';
-   const w=c.measureText(tx).width,x=Math.max(2,Math.min(W-w-2,X(C[k])-w/2)),y=Y(C[k]),bb=[x-4,y-10,x+w+4,y+10];
+  if(W<560)return;const boxes=[],n=W<800?5:MM==='year'?10:8;c.font='11px '+getComputedStyle(hv).fontFamily;c.textBaseline='middle';
+  for(let k=0;k<S.length&&boxes.length<n;k++){if(cur>=0&&k!==cur)continue;const s=S[k];let tx=(L==='es'&&s.title_es)||s.title||'';if(!tx)continue;if(tx.length>44)tx=tx.slice(0,42).replace(/\s+\S*$/,'')+'…';
+   const w=c.measureText(tx).width,x=Math.max(2,Math.min(W-w-2,X([s.x,s.y])-w/2)),y=Y([s.x,s.y]),bb=[x-4,y-10,x+w+4,y+10];
    if(boxes.some(o=>bb[0]<o[2]&&bb[2]>o[0]&&bb[1]<o[3]&&bb[3]>o[1]))continue;boxes.push(bb);
    c.globalAlpha=.85;c.fillStyle=bg;c.fillRect(bb[0],y-8,bb[2]-bb[0],16);c.globalAlpha=1;c.fillStyle=fg;c.fillText(tx,x,y);if(cur>=0)break}}
- function pick(e){const b=cv.getBoundingClientRect(),x=(e.clientX-b.left-ox)/sc,y=(e.clientY-b.top-pad)/sc,lim=(10/sc)**2;let best=-1,bd=lim,un=-1,ud=lim;
+ function pick(e){const b=cv.getBoundingClientRect(),x=(e.clientX-b.left-ox)/sc,y=(e.clientY-b.top-pad)/sc;
+  if(MM!=='week'){let best=-2,bd=Infinity;for(let k=0;k<S.length;k++){const d=Math.hypot(P[k][0]-x,P[k][1]-y)-dotR(k)/sc;if(d<6/sc&&d<bd){bd=d;best=k}}return best}
+  const lim=(10/sc)**2;let best=-1,bd=lim,un=-1,ud=lim;
   for(let i=0;i<P.length;i++){const dx=P[i][0]-x,dy=P[i][1]-y,d=dx*dx+dy*dy;if(P[i][2]<0){if(d<ud){ud=d;un=i}}else if(d<bd){bd=d;best=i}}return best>=0?P[best][2]:un>=0?-1:-2}
  function show(k){if(k===cur)return;cur=k;draw();if(k===-2){hv.className='hov mute';hv.textContent=T.hov;return}
-  if(k===-1){hv.className='hov mute';hv.textContent=T.none;return}const s=M.stories[k];hv.className='hov';
-  hv.innerHTML=`<a href="#/s/${s.id}">${esc((L==='es'&&s.title_es)||s.title||'')}</a> <span class="mute">· ${fmt(s.size)} ${t('posts')}</span>`}
+  if(k===-1){hv.className='hov mute';hv.textContent=T.none;return}const s=S[k];hv.className='hov';
+  hv.innerHTML=`<a href="#/s/${s.id}">${esc((L==='es'&&s.title_es)||s.title||'')}</a> <span class="mute">· ${s.week&&MM!=='week'?esc(s.week.replace(/^\d+-W/,T.week+' '))+' · ':''}${fmt(s.size)} ${t('posts')}</span>`}
  cv.onpointermove=e=>show(pick(e));cv.onpointerleave=e=>{if(e.pointerType==='mouse')show(-2)};
- cv.onclick=e=>{const k=pick(e);if(k>=0&&e.pointerType==='mouse'&&k===cur)location.hash='#/s/'+M.stories[k].id;else show(k)};
+ cv.onclick=e=>{const k=pick(e);if(k>=0&&e.pointerType==='mouse'&&k===cur)location.hash='#/s/'+S[k].id;else show(k)};
  redrawMap=()=>{if(document.body.contains(cv)){slack=0;draw()}};draw()}
 function electionView(){const E=D.election,v=document.getElementById('view');if(!E){v.innerHTML='';return}
  const today=new Date(new Date().toISOString().slice(0,10)+'T00:00:00Z'),dd=Math.round((new Date(E.day+'T00:00:00Z')-today)/864e5);
@@ -648,9 +678,9 @@ function electionView(){const E=D.election,v=document.getElementById('view');if(
 function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/),sm=p.match(/^s\/(\d+)$/);const isHome=!p;
  document.body.classList.toggle('home',isHome);document.documentElement.lang=L;
  {const b=document.getElementById('brand');b.setAttribute('aria-label',t('name'));b.title=t('name')}
- document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='links'?t('links'):p==='29n'?t('e29n'):p==='method'?t('method'):p==='stories'||p==='threads'||sm?t('stories'):t('channels'))}`;
- nav(isHome?'':(m?'channels':p==='search'||p==='links'||p==='method'||p==='29n'?p:(p==='stories'||p==='threads'||sm)?'stories':'channels'));
- if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories'||p==='threads'){const q=new URLSearchParams(query);(p==='threads'||q.get('view')==='time')?threadsView(q):storiesView(q)}else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='links')linksView(new URLSearchParams(query));else if(p==='method')methodView();else if(p==='29n')electionView();else index();window.scrollTo(0,0)}
+ document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='links'?t('links'):p==='29n'?t('e29n'):p==='method'?t('method'):p==='stories'||sm?t('stories'):t('channels'))}`;
+ nav(isHome?'':(m?'channels':p==='search'||p==='links'||p==='method'||p==='29n'?p:(p==='stories'||sm)?'stories':'channels'));
+ if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories'){const q=new URLSearchParams(query);q.get('view')==='subjects'?subjectsView(q):storiesView(q)}else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='links')linksView(new URLSearchParams(query));else if(p==='method')methodView();else if(p==='29n')electionView();else index();window.scrollTo(0,0)}
 document.getElementById('lang').onclick=()=>{L=L==='en'?'es':'en';localStorage.setItem('lang',L);document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';applyTheme();route()};
 document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';
 const th=document.getElementById('theme');let dark=(localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';
