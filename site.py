@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build site/index.html from tg.db + channels.csv + wiki.csv. Message search uses /api/search.
+"""Build site/index.html from tg.db + channels.csv. Message search uses /api/search.
 
   python site.py [--out site]
 """
@@ -145,11 +145,6 @@ def build() -> dict:
     db = sqlite3.connect(DB)
     db.row_factory = sqlite3.Row
     watch = read_csv(HERE / "channels.csv")
-    sources = {r["key"]: r for r in read_csv(HERE / "sources.csv") if r.get("kind") == "paper"}  # only academic / research-institute papers are shown
-    wiki = defaultdict(list)
-    for r in read_csv(HERE / "wiki.csv"):
-        if r["source"] in sources:
-            wiki[r["handle"].lower()].append({"fact": r["fact"], "source": r["source"]})
     arenas = {r["key"]: {"axis": r["axis"], "en": r["en"], "es": r["es"]} for r in read_csv(HERE / "arenas.csv")} if (HERE / "arenas.csv").exists() else {}
 
     chans = {r["id"]: dict(r) for r in db.execute("SELECT * FROM channels")}
@@ -252,7 +247,6 @@ def build() -> dict:
             "regions": ch_regions[cid].most_common() if cid else [], "themes": ch_themes[cid].most_common(8) if cid else [],
             "stories": sorted(ch_stories[cid], key=lambda x: (x["week"], x["n"]), reverse=True)[:10] if cid else [],
             "n_stories": len(ch_stories[cid]) if cid else 0,
-            "facts": wiki.get(h, []),
             "linked_note": w.get("note") if w["tier"] == "I_discussion_group" else None,
         })
     total = db.execute("SELECT COUNT(*), MIN(date), MAX(date) FROM messages").fetchone()
@@ -267,7 +261,7 @@ def build() -> dict:
         "built": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "days": DAYS, "start": start, "total": total[0], "range": [(total[1] or "")[:10], (total[2] or "")[:10]],
         "daily": [sum(counts[i] for counts in daily.values()) for i in range(DAYS)],
-        "tiers": TIERS, "sources": sources, "channels": out, "arenas": arenas,
+        "tiers": TIERS, "channels": out, "arenas": arenas,
         "election": election(db, chans, tier_by_id, watch),
     }
 
@@ -301,7 +295,7 @@ nav ul{list-style:none;margin:0;padding:0}nav li{white-space:nowrap;overflow:hid
 nav li a{color:var(--fg)}nav li.cur a{text-decoration:underline}
 h2{font-size:15px;margin:0 0 10px;font-weight:700}
 .ul{display:none}
-.prose,.prose p,p.sum,ol.facts,.story-row .sum,.post .txt,.message-text,.about{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;font-size:16px;line-height:1.55}
+.prose,.prose p,p.sum,.story-row .sum,.post .txt,.message-text,.about{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;font-size:16px;line-height:1.55}
 .prose{max-width:72ch}.prose p{margin:0 0 12px}
 .tabs{display:flex;gap:18px;margin:0 0 14px;border-bottom:1px solid var(--line)}.tabs a{padding:6px 0;color:var(--mute)}.tabs a.on{color:var(--fg);border-bottom:2px solid var(--fg)}
 details.legend{margin-top:22px}details.legend summary{cursor:pointer;color:var(--mute)}details.legend table{margin-top:8px}
@@ -317,7 +311,7 @@ td.num,th.num{text-align:right}
 .kv div:nth-child(odd){color:var(--mute)}
 .about{white-space:pre-wrap;border-left:1px solid var(--line);padding-left:12px;margin:8px 0 18px}
 .bar{display:inline-block;color:var(--bar);letter-spacing:-1px}
-ol.facts{padding-left:22px}ol.facts li{margin-bottom:6px}
+
 .src{color:var(--mute)}
 section{margin-bottom:26px}
 .big{font-size:22px;line-height:1.1;margin:0 0 4px}
@@ -372,20 +366,20 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 const D=JSON.parse(document.getElementById('data').textContent);
 const T={
  en:{channels:'channels',messages:'messages',archive:'archive',tiers:'tiers',sources:'sources',handle:'handle',title:'title',tier:'tier',subs:'subscribers',posts:'posts',last:'last post',days:'last %d days',search:'search /',
-  about:'description (as published by the channel)',facts:'published research',stats:'archive',created:'channel created',first:'first archived post',views:'total views',fwd:'posts that are forwards',senders:'distinct senders',
+  about:'description (as published by the channel)',stats:'archive',created:'channel created',first:'first archived post',views:'total views',fwd:'posts that are forwards',senders:'distinct senders',
   fwdfrom:'most forwarded from',fwdto:'forwarded by tracked channels',domains:'most linked domains',none:'none',notyet:'not yet archived',perday:'posts per day',tracked:'tracked',untracked:'not tracked',
-  tierlist:'tiers',built:'updated',since:'archived from',nofacts:'no published research recorded for this channel.',group:'discussion group',hours:'posts by weekday and hour (UTC)',days7:'Mo Tu We Th Fr Sa Su',
-  name:'Spanish Politics on Telegram',home:'home',browse:'browse channels',directory:'index',indexed:'channels in index',cited:'cited facts',activity:'messages per day',period:'archive dates',light:'light',dark:'dark',
+  tierlist:'tiers',built:'updated',since:'archived from',group:'discussion group',hours:'posts by weekday and hour (UTC)',days7:'Mo Tu We Th Fr Sa Su',
+  name:'Spanish Politics on Telegram',home:'home',browse:'browse channels',directory:'index',indexed:'channels in index',activity:'messages per day',period:'archive dates',light:'light',dark:'dark',
   messageSearch:'search messages',query:'text',searchGo:'search',queryHint:'Words or "quoted phrases"',allChannels:'all channels',dateFrom:'from (UTC)',dateTo:'to (UTC)',order:'order',relevance:'relevance',newest:'newest',oldest:'oldest',
   loading:'searching…',results:'results',noresults:'no matching messages.',original:'original post',previous:'previous',next:'next',page:'page',
   stories:'stories',firstPost:'first post',tierOrder:'order of tiers',threads:'story threads',thisWeek:'by week',overTime:'over time',groupLabel:'group',legend:'tiers inside the groups',sections:'sections',aboutPage:'about',
   aboutText:'<p>A public archive of Telegram channels relevant to Spanish politics.</p>',weeks:'weeks',minWeeks:'at least %d weeks',week:'week',region:'region',theme:'theme',all:'all',story:'story',earlier:'earlier weeks',later:'later weeks',related:'related story',nostories:'no stories for this selection.',postsIn:'posts in this story',chans:'channels',showing:'showing',
   invalid_query:'Enter words or balanced "quoted phrases". Maximum 20 terms.',query_too_long:'Search text is limited to 300 characters.',invalid_date:'Enter a valid date.',date_range:'The start date must be on or before the end date.',invalid_sort:'Choose a valid order.',invalid_page:'Choose a valid page.',invalid_channel:'Choose a channel in the index.',invalid_request:'Check the search fields.',search_unavailable:'Search is unavailable. Try again.',search_timeout:'This search took too long. Try more words or a narrower date range.',monthly:'posts per month · full archive',views30:'average views per own post, last 30 days',withMedia:'posts with photo, video or file',withLinks:'posts with links',storiesIn:'appears in %d stories',byRegion:'posts in stories by region',byTheme:'posts in stories by theme',recentStories:'latest stories',links:'links',method:'method',linkKinds:'links by type',content:'web pages',social:'social networks',telegram:'Telegram',shortener:'shortened links',colLinks:'links',kind:'type',sharedUrls:'pages linked by the most channels · last 7 days · all groups',tmeRefs:'Telegram channels outside the list, linked by the most listed channels',w7:'7 days',w30:'30 days',wall:'all',allGroups:'all groups',lastRef:'last',window:'period',noLinks:'link statistics are not available yet.',e29n:'29N',eTitle:'General election · 29 November 2026',daysTo:'%d days to go',eDay:'election day',daysSince:'%d days since the election',ePosts:'posts containing election terms, per day',eTerms:'terms',eByGroup:'by group',last7:'last 7 days',sinceStart:'since %s',eStories:'stories with the theme “29N election”',eParties:'parties and candidates',perWeek:'posts per week, last 8 weeks',avgViews:'avg views, 30 days',eHits:'posts with election terms, 30 days',queued:'queued',ePages:'pages linked from posts with election terms · last 14 days',noneYet:'none yet.'},
  es:{channels:'canales',messages:'mensajes',archive:'archivo',tiers:'niveles',sources:'fuentes',handle:'usuario',title:'título',tier:'nivel',subs:'suscriptores',posts:'publicaciones',last:'última publicación',days:'últimos %d días',search:'buscar /',
-  about:'descripción (tal como la publica el canal)',facts:'investigaciones publicadas',stats:'archivo',created:'canal creado',first:'primera publicación archivada',views:'visualizaciones totales',fwd:'publicaciones que son reenvíos',senders:'remitentes distintos',
+  about:'descripción (tal como la publica el canal)',stats:'archivo',created:'canal creado',first:'primera publicación archivada',views:'visualizaciones totales',fwd:'publicaciones que son reenvíos',senders:'remitentes distintos',
   fwdfrom:'más reenviado desde',fwdto:'reenviado por canales seguidos',domains:'dominios más enlazados',none:'ninguno',notyet:'aún no archivado',perday:'publicaciones por día',tracked:'seguido',untracked:'no seguido',
-  tierlist:'niveles',built:'actualizado',since:'archivado desde',nofacts:'no hay investigaciones publicadas registradas para este canal.',group:'grupo de debate',hours:'publicaciones por día de la semana y hora (UTC)',days7:'Lu Ma Mi Ju Vi Sá Do',
-  name:'Política española en Telegram',home:'inicio',browse:'ver canales',directory:'índice',indexed:'canales en el índice',cited:'datos con fuentes',activity:'mensajes por día',period:'fechas del archivo',light:'claro',dark:'oscuro',
+  tierlist:'niveles',built:'actualizado',since:'archivado desde',group:'grupo de debate',hours:'publicaciones por día de la semana y hora (UTC)',days7:'Lu Ma Mi Ju Vi Sá Do',
+  name:'Política española en Telegram',home:'inicio',browse:'ver canales',directory:'índice',indexed:'canales en el índice',activity:'mensajes por día',period:'fechas del archivo',light:'claro',dark:'oscuro',
   messageSearch:'buscar mensajes',query:'texto',searchGo:'buscar',queryHint:'Palabras o "frases entre comillas"',allChannels:'todos los canales',dateFrom:'desde (UTC)',dateTo:'hasta (UTC)',order:'orden',relevance:'relevancia',newest:'más recientes',oldest:'más antiguos',
   loading:'buscando…',results:'resultados',noresults:'no hay mensajes coincidentes.',original:'publicación original',previous:'anterior',next:'siguiente',page:'página',
   stories:'historias',firstPost:'primera publicación',tierOrder:'orden de niveles',threads:'hilos de historias',thisWeek:'por semana',overTime:'en el tiempo',groupLabel:'grupo',legend:'niveles dentro de los grupos',sections:'secciones',aboutPage:'acerca de',
@@ -529,9 +523,6 @@ function channel(handle){const c=D.channels.find(x=>x.handle.toLowerCase()===han
  if(c.linked_note)h+=`<div>${t('group')}</div><div>${esc(c.linked_note)}</div>`;
  h+=`<div>${t('subs')}</div><div>${fmt(c.subs)}</div><div>${t('created')}</div><div>${c.created||'—'}</div></div>`;
  if(c.about)h+=`<section><h2>${t('about')}</h2><div class="about">${esc(c.about)}</div></section>`;
- h+=`<section><h2>${t('facts')}</h2>`;
- if(c.facts.length){h+='<ol class="facts">'+c.facts.map(f=>{const s=D.sources[f.source];return `<li>${esc(f.fact)} <span class="src">[<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.publisher)}, ${s.date}</a>]</span></li>`}).join('')+'</ol>'}else h+=`<p class="mute">${t('nofacts')}</p>`;
- h+='</section>';
  h+=`<section><h2>${t('stats')}</h2><div class="kv"><div>${t('posts')}</div><div>${c.n?fmt(c.n):t('notyet')}</div>`;
  if(c.n){h+=`<div>${t('first')}</div><div>${c.first}${c.since?` <span class="mute">(${t('since')} ${c.since})</span>`:''}</div><div>${t('last')}</div><div>${c.last}</div><div>${t('views')}</div><div>${fmt(c.views)}</div><div>${t('fwd')}</div><div>${fmt(c.n_fwd)} (${Math.round(c.n_fwd/c.n*100)}%)</div>`;
   if(c.senders>1)h+=`<div>${t('senders')}</div><div>${fmt(c.senders)}</div>`}
@@ -550,7 +541,6 @@ function channel(handle){const c=D.channels.find(x=>x.handle.toLowerCase()===han
   h+=`<section><h2>${t('recentStories')}</h2>`+c.stories.map(s=>`<div class="story-row"><div class="meta"><span class="tag">${esc(s.week)}</span><span class="tag">${fmt(s.n)} ${t('posts')}</span></div><a href="#/s/${s.id}">${esc((L==='es'&&s.title_es)||s.title)}</a></div>`).join('')+'</section>'}
  document.getElementById('view').innerHTML=h}
 function tiers(){let h=`<h2>${t('tierlist')}</h2><table>`;for(const [k,v] of Object.entries(D.tiers)){const n=D.channels.filter(c=>c.tier===k).length;h+=`<tr><td>${k[0]}</td><td class="num">${n}</td><td>${esc(v[L])}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
-function sources(){let h=`<h2>${t('sources')}</h2><table>`;for(const s of Object.values(D.sources)){const n=D.channels.filter(c=>c.facts.some(f=>f.source===s.key)).length;h+=`<tr><td class="mute">${s.key}</td><td>${s.date}</td><td>${esc(s.publisher)}</td><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a></td><td class="num">${n}</td></tr>`}h+='</table>';document.getElementById('view').innerHTML=h}
 function mchart(m){const a=m.n,H=6,W=a.length,mx=Math.max(1,...a);const rows=[];for(let r=H;r>=1;r--){let s=String(Math.round(mx*r/H)).padStart(6)+' ┤';for(let i=0;i<W;i++){const v=a[i]/mx*H;s+=v>=r?'█':v>=r-.5?'▄':' '}rows.push(s)}
  rows.push('       └'+'─'.repeat(W));let [y,mo]=m.start.split('-').map(Number),lab='';for(let i=0;i<W;i++){if(i===0||mo===1){const txt=String(y);if(lab.length<=i){lab=lab.padEnd(i)+txt}}if(++mo>12){mo=1;y++}}rows.push('        '+lab);return `<div class="chart">${rows.map(r=>esc(r)).join('\n')}</div>`}
 let LJ=null;

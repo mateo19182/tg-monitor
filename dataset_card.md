@@ -28,8 +28,6 @@ configs:
   data_files: story_members.parquet
 - config_name: arenas
   data_files: arenas.parquet
-- config_name: facts
-  data_files: facts.parquet
 - config_name: forward_sources
   data_files: forward_sources.parquet
 extra_gated_prompt: >-
@@ -47,7 +45,7 @@ extra_gated_fields:
 
 # Spanish Politics on Telegram
 
-An archive of Telegram channels and discussion groups relevant to Spanish politics, collected ahead of the general election of 29 November 2026. Release of {built}: {messages} messages from {channels} channels and groups ({groups_n} of them discussion groups), {range}, plus {stories} weekly stories ({weeks}) and {facts} statements about the channels from academic and research-institute reports.
+An archive of Telegram channels and discussion groups relevant to Spanish politics, collected ahead of the general election of 29 November 2026. Release of {built}: {messages} messages from {channels} channels and groups ({groups_n} of them discussion groups), {range} plus {stories} weekly stories ({weeks}).
 
 The same archive is browsable at https://canales.m19182.dev.
 
@@ -60,7 +58,6 @@ The same archive is browsable at https://canales.m19182.dev.
 | `stories` | Weekly groups of similar posts with machine-written title and summary (English and Spanish), one region and one or two themes, and the link to the previous week's story. |
 | `story_members` | The messages in each story (`story_id`, `channel_id`, `msg_id`). |
 | `arenas` | The fixed lists of regions and themes used for stories. |
-| `facts` | Statements about listed channels from academic and research-institute reports, each with its source (publisher, title, date, URL). |
 | `forward_sources` | Channels that archived posts were forwarded from but that are not archived themselves. |
 
 Join messages to channels on `channel_id`, and stories to messages through `story_members` on (`channel_id`, `msg_id`). A message's original is at `https://t.me/<username>/<msg_id>` for channels with a username.
@@ -81,9 +78,6 @@ Join messages to channels on `channel_id`, and stories to messages through `stor
 - Embeddings: BAAI/bge-m3. Per ISO week: UMAP (10 dimensions, cosine, 15 neighbours) → HDBSCAN (min. cluster 12, min. samples 5); members with cosine to the centroid below max(0.60, mean − 1.5 sd) dropped. ~25% of posts unassigned.
 - Week to week: centroid cosine ≥ 0.90 → `prev_story`; 0.85–0.90 → `related_story`.
 - Labels (`label_model`) from the 8 posts nearest the centroid: title and summary (EN, ES), 1 region, 1–2 themes from `arenas`. Not reviewed one by one.
-
-**Facts**
-- `facts`: statements about listed channels from academic and research-institute reports, each with its source.
 
 ## Limits
 

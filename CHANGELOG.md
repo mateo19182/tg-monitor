@@ -1,5 +1,11 @@
 # Change log
 
+## 2026-10-13
+
+- Removed per-channel facts (`wiki.csv`, `sources.csv`): no "published research" on channel pages and no `facts` table in the dataset. The archive now carries no statements about channels.
+- 29N party table: Vox and Santiago Abascal channels moved to tier J (parliamentary parties and leaders).
+- Method page: 2D map of one week's post embeddings; SVG favicon.
+
 ## 2026-10-12
 
 - 29N page (`#/29n`): countdown; daily posts matching election terms since 1 August, by group (FTS over the search index, terms listed on the page and linked to search); stories with the election_29n theme limited to regions spain and maghreb (the label model also tagged Serbian, German, Russian and French elections; the theme definition now says Spain only); parties (J) and campaign channels (U) with posts per week, average views and election-term posts; pages linked from election-term posts in the last 14 days (outlet homepages excluded). Built hourly into the static page.

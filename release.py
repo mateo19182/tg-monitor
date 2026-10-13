@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the Hugging Face dataset release (Parquet + dataset card) and upload it.
 
-  python release.py build              # -> data/release/ (messages shards, channels, stories, facts, card)
+  python release.py build              # -> data/release/ (messages shards, channels, stories, card)
   python release.py upload             # build output -> HF repo (created private + gated if missing)
   python release.py upload --public    # also make the repo public (downloads stay gated)
 
@@ -131,13 +131,6 @@ def build() -> dict:
 
     arenas = read_csv(HERE / "arenas.csv")
     pq.write_table(pa.Table.from_pylist(arenas), OUT / "arenas.parquet", compression="zstd")
-    # published research about channels, each with its source
-    src = {r["key"]: r for r in read_csv(HERE / "sources.csv") if r.get("kind") == "paper"}  # academic / research-institute papers only
-    facts = [{"handle": r["handle"], "fact": r["fact"], "source_key": r["source"], "source_publisher": src.get(r["source"], {}).get("publisher"),
-              "source_title": src.get(r["source"], {}).get("title"), "source_date": src.get(r["source"], {}).get("date"),
-              "source_url": src.get(r["source"], {}).get("url")} for r in read_csv(HERE / "wiki.csv") if r["source"] in src]
-    pq.write_table(pa.Table.from_pylist(facts), OUT / "facts.parquet", compression="zstd")
-    stats["facts"] = len(facts)
 
     lo, hi = db.execute("SELECT MIN(date), MAX(date) FROM messages").fetchone()
     stats["range"] = f"{lo[:10]} to {hi[:10]}"; stats["watchlist"] = len(watch)
@@ -158,7 +151,7 @@ def upload(public: bool) -> None:
     stamp = json.loads((OUT / "release.json").read_text())["built"]
     api.upload_folder(repo_id=REPO, repo_type="dataset", folder_path=str(OUT), commit_message=f"Release {stamp}",
                       allow_patterns=["README.md", "*.parquet", "messages/*.parquet", "release.json"],
-                      delete_patterns=["messages/*.parquet"])
+                      delete_patterns=["*.parquet", "messages/*.parquet"])  # drop tables no longer built
     if public:
         api.update_repo_settings(REPO, repo_type="dataset", private=False)
     print(f"https://huggingface.co/datasets/{REPO} ({'public' if public else 'private'}, gated)")

@@ -1,7 +1,7 @@
 # tg-monitor
 
 A research archive of public Telegram channels relevant to Spanish politics. The site shows
-archived messages, channel statistics and facts attributed to published sources.
+archived messages, channel statistics and weekly stories.
 
 Project changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
@@ -48,7 +48,6 @@ Each channel carries a `tier` label so the dataset can be sliced:
 - `report.py`     `daily`, `sources`, `spikes`, `grep "phrase"`.
 - `export.py`     `data/<handle>.jsonl.gz` + `channels.csv` + `fwd_sources.csv` + `manifest.json`, plus `stories.jsonl.gz` and `arenas.csv` when the story layer exists.
 - `login.py`      two-step login (`send <phone>`, `code <code>`, `password`, `check`).
-- `wiki.csv`, `sources.csv`  cited facts per channel for the site; neutral wording, every fact carries a source key.
 - `site.py`       builds `site/index.html` from the database: about page at `#/`, channel browser at `#/channels` (tiers grouped into seven groups, `GROUPS` in site.py), channel pages at `#/c/<handle>`, stories at `#/stories` (by week, and over time with `?view=time`), story pages at `#/s/<id>`, message search at `#/search`.
 - `embed.py`      embeds message texts (≥40 chars after stripping URLs and share footers) with bge-m3 on the GPU into `vec.db`; one vector per distinct text.
 - `stories.py`    groups one week's posts (or discussion-group comments) into stories by similarity, chains them to the previous week's stories, and labels each story through the Message Batches API with a neutral title, a one-line summary and one to three arenas from `arenas.csv`. Spend is tracked in `data/label_ledger.json` and capped with `--cap`.
