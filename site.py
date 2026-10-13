@@ -342,7 +342,7 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 .story-row .meta .tag{color:var(--mute)}.story-row .sum{margin-top:4px}
 .filters{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 16px;font-size:14px}.filters a.on{text-decoration:underline}
 .thread{padding:10px 0;border-bottom:1px solid var(--line)}.thread .wk{display:flex;gap:2px;align-items:flex-end;height:22px;margin-top:4px}.thread .wk span{display:block;width:14px;background:var(--bar);min-height:2px}.thread .wk span.gap{background:transparent;border-bottom:1px dotted var(--line)}
-#wmap canvas{display:block;width:100%;max-width:100%;touch-action:manipulation;cursor:crosshair}#wmap .cap{font-size:13px;color:var(--mute);margin:6px 0 4px}#wmap .hov{font-size:14px;min-height:2.6em;margin-bottom:12px}
+#wmap canvas{display:block;width:100%;max-width:100%;touch-action:manipulation;cursor:crosshair}#wmap .cap{font-size:13px;color:var(--mute);max-width:65ch}#wmap h3 a{color:inherit}#wmap .hov{font-size:14px;min-height:2.6em;margin:6px 0 4px}#wmap{margin:0 0 32px}#wmap .cap a{color:inherit}
 .prose h3{font-size:16px;margin:22px 0 6px}.prose ul{margin:0 0 12px;padding-left:20px}.prose li{margin-bottom:4px}
 .chain{list-style:none;padding:0;margin:0}.chain li{margin:3px 0}
 .post{padding:12px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
@@ -404,8 +404,9 @@ function home(){
   <section class="home-heading"><div><h2>${t('name')}</h2><div class="mute">${D.range[0]||'—'} → ${D.range[1]||'—'}</div></div></section>
   <section class="prose">${t('aboutText')}</section>
   <dl class="home-stats">${counts.map(([label,n])=>`<div><dt>${label}</dt><dd>${fmt(n)}</dd></div>`).join('')}</dl>
+  <section id="wmap"></section>
   <section><h3>${t('activity')} · ${t('days').replace('%d',n)}</h3>${chart(daily,first)}<div class="mute dates">${first} → ${last.toISOString().slice(0,10)}</div></section>
-  <footer class="home-footer">${t('built')} ${D.built}</footer></div>`;
+  <footer class="home-footer">${t('built')} ${D.built}</footer></div>`;weekMap();
  document.onkeydown=e=>{if(e.key==='/'&&!e.target.closest('input,textarea,select,[contenteditable]')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();location.hash='/search'}};
 }
 let searchController=null;
@@ -570,8 +571,8 @@ const METHOD={
 <li>Embeddings: BAAI/bge-m3 (multilingual, 1024 dimensions).</li>
 <li>Per ISO week: UMAP (10 dimensions, cosine, 15 neighbours) → HDBSCAN (min. cluster 12, min. samples 5). Members with cosine to the centroid below max(0.60, mean − 1.5 sd) dropped. About a third of posts end up unassigned (W38–W41: 33–34%).</li>
 <li>Week to week: centroid cosine ≥ 0.90 = same story; 0.85–0.90 = related.</li>
-<li>Labels: Claude Haiku 5.5 on the 8 posts nearest the centroid (≤ 400 characters each) → title and summary (EN, ES), 1 region of 10, 1–2 themes of 15. Not reviewed one by one.</li></ul>
-<div id="wmap"></div>
+<li>Labels: Claude Haiku 5.5 on the 8 posts nearest the centroid (≤ 400 characters each) → title and summary (EN, ES), 1 region of 10, 1–2 themes of 15. Not reviewed one by one.</li>
+<li>Home page map: the latest labelled week, the same embeddings projected to 2 dimensions with UMAP (cosine, 15 neighbours, min. distance 0.1) for display only. Stories are found in the 10-dimensional projection, so some dots sit away from the rest of their story. Titles are drawn for the largest stories that fit.</li></ul>
 <h3>Links</h3><ul>
 <li>URLs from post text and link previews; canonical form: https, no www/m/amp, no tracking parameters, fragments or trailing slash.</li>
 <li>Types: web page, social network, Telegram, shortener. Shorteners followed to the destination; page titles fetched for a subset (1 request/s per domain). Counts include forwards.</li></ul>
@@ -590,8 +591,8 @@ const METHOD={
 <li>Vectores: BAAI/bge-m3 (multilingüe, 1024 dimensiones).</li>
 <li>Por semana ISO: UMAP (10 dimensiones, coseno, 15 vecinos) → HDBSCAN (grupo mín. 12, muestras mín. 5). Se descartan miembros con coseno al centroide inferior a max(0,60, media − 1,5 de). Alrededor de un tercio de las publicaciones queda sin asignar (S38–S41: 33–34 %).</li>
 <li>Entre semanas: coseno de centroides ≥ 0,90 = misma historia; 0,85–0,90 = relacionada.</li>
-<li>Etiquetas: Claude Haiku 5.5 sobre las 8 publicaciones más cercanas al centroide (≤ 400 caracteres cada una) → título y resumen (EN, ES), 1 región de 10, 1–2 temas de 15. Sin revisión una a una.</li></ul>
-<div id="wmap"></div>
+<li>Etiquetas: Claude Haiku 5.5 sobre las 8 publicaciones más cercanas al centroide (≤ 400 caracteres cada una) → título y resumen (EN, ES), 1 región de 10, 1–2 temas de 15. Sin revisión una a una.</li>
+<li>Mapa de la portada: la última semana etiquetada, los mismos vectores proyectados a 2 dimensiones con UMAP (coseno, 15 vecinos, distancia mín. 0,1) solo para mostrarlos. Las historias se forman en la proyección de 10 dimensiones, así que algunos puntos quedan lejos del resto de su historia. Se rotulan las historias más grandes que caben.</li></ul>
 <h3>Enlaces</h3><ul>
 <li>URL del texto y de las vistas previas; forma canónica: https, sin www/m/amp, sin parámetros de seguimiento, fragmentos ni barra final.</li>
 <li>Tipos: página web, red social, Telegram, acortador. Los acortadores se siguen hasta el destino; títulos de página para una parte (1 petición/s por dominio). Los recuentos incluyen reenvíos.</li></ul>
@@ -601,19 +602,27 @@ const METHOD={
 <li>Sin reacciones ni historias de Telegram; comentarios solo de los grupos de debate de la lista.</li></ul>`};
 function methodView(){document.getElementById('view').innerHTML=`<div class="prose">${METHOD[L]({n:fmt(D.channels.length),a:fmt(D.channels.filter(c=>c.n).length),g:Object.keys(D.groups).length})}</div>`;weekMap()}
 let MJ=null,redrawMap=null;addEventListener('resize',()=>redrawMap&&redrawMap());
-const MAPT={en:{cap:'Week %w: %n distinct post texts, one dot each. Dark: in one of %s stories (%a); light: unassigned. Same bge-m3 embeddings projected to 2 dimensions with UMAP (cosine, 15 neighbours) for display only; the clusters themselves are found in the 10-dimensional projection, so a few dots sit away from the rest of their story.',hov:'Point at a dot to see its story.',none:'unassigned',open:'open story'},
- es:{cap:'Semana %w: %n textos distintos de publicaciones, un punto cada uno. Oscuros: en una de %s historias (%a); claros: sin asignar. Los mismos vectores bge-m3 proyectados a 2 dimensiones con UMAP (coseno, 15 vecinos) solo para mostrarlos; los grupos se forman en la proyección de 10 dimensiones, así que algunos puntos quedan lejos del resto de su historia.',hov:'Señala un punto para ver su historia.',none:'sin asignar',open:'abrir historia'}};
+const MAPT={en:{head:'week %w',cap:'%n post texts, one dot each, placed by similarity of their text. Dark: in one of %s stories; light: unassigned (%u).',how:'how',hov:'Point at a dot to see its story.',none:'unassigned'},
+ es:{head:'semana %w',cap:'%n textos de publicaciones, un punto cada uno, situados por la similitud de su texto. Oscuros: en una de %s historias; claros: sin asignar (%u).',how:'cómo',hov:'Señala un punto para ver su historia.',none:'sin asignar'}};
 async function weekMap(){const box=document.getElementById('wmap');if(!box)return;
  if(!MJ){try{MJ=await fetch('map.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})}catch(e){return}}
  if(!document.body.contains(box))return;const M=MJ,T=MAPT[L],P=M.points;
- box.innerHTML=`<div class="cap">${T.cap.replace('%w',esc(M.week)).replace('%n',fmt(M.n)).replace('%s',fmt(M.stories.length)).replace('%a',Math.round(M.assigned/M.n*100)+'%')}</div><canvas></canvas><div class="hov mute">${T.hov}</div>`;
- const cv=box.querySelector('canvas'),hv=box.querySelector('.hov'),pad=6;let cur=-2,sc=1,W=0,H=0;
- function draw(){const cs=getComputedStyle(document.documentElement),fg=cs.getPropertyValue('--fg'),mu=cs.getPropertyValue('--mute'),dt=cs.getPropertyValue('--dot'),dpr=devicePixelRatio||1;
-  W=cv.clientWidth;sc=(W-2*pad)/M.w;H=Math.round(M.h*sc+2*pad);cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
-  const r=W<500?1.1:1.4,dot=(p,col,rr)=>{c.fillStyle=col;c.fillRect(pad+p[0]*sc-rr,pad+p[1]*sc-rr,2*rr,2*rr)};
+ box.innerHTML=`<h3><a href="#/stories">${t('stories')}</a> · ${T.head.replace('%w',esc(M.week.replace(/^\d+-W/,'')))}</h3><canvas></canvas><div class="hov mute">${T.hov}</div><div class="cap">${T.cap.replace('%n',fmt(M.n)).replace('%s',fmt(M.stories.length)).replace('%u',Math.round(100-M.assigned/M.n*100)+'%')} <a href="#/method">[${T.how}]</a></div>`;
+ const cv=box.querySelector('canvas'),hv=box.querySelector('.hov'),pad=8;let cur=-2,sc=1,ox=0,W=0,H=0;
+ const cen=M.stories.map(()=>[[],[]]);for(const p of P)if(p[2]>=0){cen[p[2]][0].push(p[0]);cen[p[2]][1].push(p[1])}
+ const med=a=>{a.sort((x,y)=>x-y);return a[a.length>>1]||0};const C=cen.map(([x,y])=>[med(x),med(y)]);
+ function draw(){const cs=getComputedStyle(document.documentElement),fg=cs.getPropertyValue('--fg'),mu=cs.getPropertyValue('--mute'),dt=cs.getPropertyValue('--dot'),bg=cs.getPropertyValue('--bg'),dpr=devicePixelRatio||1;
+  W=cv.clientWidth;const maxH=Math.min(640,Math.max(320,innerHeight*.75));sc=Math.min((W-2*pad)/M.w,(maxH-2*pad)/M.h);ox=(W-M.w*sc)/2;H=Math.round(M.h*sc+2*pad);
+  cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  const r=W<500?1.1:1.4,X=p=>ox+p[0]*sc,Y=p=>pad+p[1]*sc,dot=(p,col,rr)=>{c.fillStyle=col;c.fillRect(X(p)-rr,Y(p)-rr,2*rr,2*rr)};
   for(const p of P)if(p[2]<0)dot(p,dt,r);c.globalAlpha=cur>=0?.35:.8;for(const p of P)if(p[2]>=0)dot(p,mu,r);c.globalAlpha=1;
-  if(cur>=0)for(const p of P)if(p[2]===cur)dot(p,fg,r+1.2)}
- function pick(e){const b=cv.getBoundingClientRect(),x=(e.clientX-b.left-pad)/sc,y=(e.clientY-b.top-pad)/sc,lim=(10/sc)**2;let best=-1,bd=lim,un=-1,ud=lim;
+  if(cur>=0)for(const p of P)if(p[2]===cur)dot(p,fg,r+1.2);
+  if(W<560)return;const boxes=[],n=W<800?5:8;c.font='11px '+getComputedStyle(hv).fontFamily;c.textBaseline='middle';
+  for(let k=0;k<M.stories.length&&boxes.length<n;k++){if(cur>=0&&k!==cur)continue;const s=M.stories[k];let tx=(L==='es'&&s.title_es)||s.title||'';if(tx.length>44)tx=tx.slice(0,42).replace(/\s+\S*$/,'')+'…';
+   const w=c.measureText(tx).width,x=Math.max(2,Math.min(W-w-2,X(C[k])-w/2)),y=Y(C[k]),bb=[x-4,y-10,x+w+4,y+10];
+   if(boxes.some(o=>bb[0]<o[2]&&bb[2]>o[0]&&bb[1]<o[3]&&bb[3]>o[1]))continue;boxes.push(bb);
+   c.globalAlpha=.85;c.fillStyle=bg;c.fillRect(bb[0],y-8,bb[2]-bb[0],16);c.globalAlpha=1;c.fillStyle=fg;c.fillText(tx,x,y);if(cur>=0)break}}
+ function pick(e){const b=cv.getBoundingClientRect(),x=(e.clientX-b.left-ox)/sc,y=(e.clientY-b.top-pad)/sc,lim=(10/sc)**2;let best=-1,bd=lim,un=-1,ud=lim;
   for(let i=0;i<P.length;i++){const dx=P[i][0]-x,dy=P[i][1]-y,d=dx*dx+dy*dy;if(P[i][2]<0){if(d<ud){ud=d;un=i}}else if(d<bd){bd=d;best=i}}return best>=0?P[best][2]:un>=0?-1:-2}
  function show(k){if(k===cur)return;cur=k;draw();if(k===-2){hv.className='hov mute';hv.textContent=T.hov;return}
   if(k===-1){hv.className='hov mute';hv.textContent=T.none;return}const s=M.stories[k];hv.className='hov';
