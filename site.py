@@ -288,7 +288,7 @@ header .r{margin-left:auto;display:flex;gap:14px}
 .btn{cursor:pointer;color:var(--mute);background:none;border:0;padding:0;font:inherit}.btn:hover{color:var(--fg)}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:1px dashed var(--fg);outline-offset:4px}
 main{display:block}#view{overflow-wrap:anywhere}.tw{overflow-x:auto}.tw table{min-width:640px}td,th{overflow-wrap:normal}
-#top{display:flex;flex-wrap:wrap;gap:4px 16px}#top a{color:var(--mute)}#top a.on{color:var(--fg);text-decoration:underline}
+#top{display:flex;flex-wrap:wrap;gap:4px 30px}#top a{color:var(--mute)}#top a.on{color:var(--fg);text-decoration:underline}
 nav{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto;font-size:14px}
 nav h3{margin:14px 0 4px;font-size:12px;color:var(--mute);font-weight:400}
 nav ul{list-style:none;margin:0;padding:0}nav li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -327,7 +327,7 @@ body.home main{display:block}
 .home-stats div{display:flex;justify-content:space-between;align-items:baseline;gap:12px}.home-stats dt{font-size:12px;color:var(--mute)}.home-stats dd{font-size:20px;margin:0}
 .home-page h3{font-size:13px;font-weight:400;color:var(--mute);margin:0 0 10px}
 .archive-tree{list-style:none;margin:0;padding:0}.archive-tree li{margin:8px 0}.archive-tree .branch{color:var(--mute);white-space:pre}
-.home-page .chart{font-size:11px;line-height:1.15}#wcap{font-size:12px;color:var(--mute);margin-top:18px}#wcap a{color:inherit}
+.home-page .chart{font-size:11px;line-height:1.15}
 .home-footer{border-top:1px dashed var(--line);padding-top:12px;margin-top:18px;font-size:13px;color:var(--mute)}
 .message-form{margin:20px 0 24px}.message-query{display:flex;gap:16px;align-items:end}.message-query label{flex:1;min-width:0}
 .message-form label{display:block;color:var(--mute);font-size:12px}
@@ -345,7 +345,7 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 .prose h3{font-size:16px;margin:22px 0 6px}.prose ul{margin:0 0 12px;padding-left:20px}.prose li{margin-bottom:4px}
 .chain{list-style:none;padding:0;margin:0}.chain li{margin:3px 0}
 .post{padding:12px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
-@media(max-width:760px){.m-hide{display:none}.wrap{padding:12px}#top{width:100%;order:3;gap:14px}
+@media(max-width:760px){.m-hide{display:none}.wrap{padding:12px}#top{width:100%;order:3;gap:6px 22px}
  .kv{grid-template-columns:1fr;gap:0 0}.kv div:nth-child(odd){margin-top:6px}.big{font-size:18px}
  .home-page{margin-top:12px}.home-main{grid-template-columns:1fr;gap:20px}.home-grid{grid-template-columns:1fr;gap:24px}
  .message-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.message-query{gap:12px}}
@@ -394,7 +394,7 @@ function bar(n,max,w=24){return '<span class="bar">'+'█'.repeat(Math.max(1,Mat
 function link(c){return c.handle?`<a href="https://t.me/${esc(c.handle)}" target="_blank" rel="noopener">@${esc(c.handle)}</a>`:`<span class="mute">id ${c.id}</span>`}
 function chanLink(c){return c.tracked?`<a href="#/c/${esc(c.handle||c.id)}">${esc(c.title||c.handle||c.id)}</a>`:esc(c.title||c.handle||('id '+c.id))}
 const G=k=>D.groups[k]?D.groups[k][L]:k;
-function nav(cur){document.getElementById('top').innerHTML=[['',t('aboutPage')],['29n',t('e29n')],['channels',t('channels')],['stories',t('stories')],['links',t('links')],['search',t('messageSearch')],['method',t('method')]].map(([k,l])=>`<a class="${cur===k?'on':''}" href="#/${k}">${l}</a>`).join('')}
+function nav(cur){document.getElementById('top').innerHTML=[['',t('aboutPage')],['29n',t('e29n')],['channels',t('channels')],['stories',t('stories')],['links',t('links')],['search',t('searchGo')],['method',t('method')]].map(([k,l])=>`<a class="${cur===k?'on':''}" href="#/${k}">${l}</a>`).join('')}
 function home(){
  const counts=[[t('channels'),D.channels.length],[t('messages'),D.total],[t('stories'),D.stories]];
  const n=30,daily=D.daily.slice(-n),start=new Date(D.start+'T00:00:00Z');start.setUTCDate(start.getUTCDate()+D.days-n);
@@ -404,7 +404,6 @@ function home(){
   <div class="home-main"><section id="wmap"></section>
   <aside class="home-side"><dl class="home-stats">${counts.map(([label,n])=>`<div><dt>${label}</dt><dd>${fmt(n)}</dd></div>`).join('')}</dl>
   <section><h3>${t('activity')} · ${t('days').replace('%d',n)}</h3>${chart(daily,first)}</section>
-  <div id="wcap"></div>
   <footer class="home-footer">${t('built')} ${D.built}</footer></aside></div></div>`;weekMap();
  document.onkeydown=e=>{if(e.key==='/'&&!e.target.closest('input,textarea,select,[contenteditable]')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();location.hash='/search'}};
 }
@@ -601,13 +600,12 @@ const METHOD={
 <li>Sin reacciones ni historias de Telegram; comentarios solo de los grupos de debate de la lista.</li></ul>`};
 function methodView(){document.getElementById('view').innerHTML=`<div class="prose">${METHOD[L]({n:fmt(D.channels.length),a:fmt(D.channels.filter(c=>c.n).length),g:Object.keys(D.groups).length})}</div>`;weekMap()}
 let MJ=null,redrawMap=null;addEventListener('resize',()=>redrawMap&&redrawMap());
-const MAPT={en:{head:'week %w',cap:'%n post texts, one dot each, placed by similarity of their text. Dark: in one of %s stories; light: unassigned (%u).',how:'how',hov:'Point at a dot to see its story.',none:'unassigned'},
- es:{head:'semana %w',cap:'%n textos de publicaciones, un punto cada uno, situados por la similitud de su texto. Oscuros: en una de %s historias; claros: sin asignar (%u).',how:'cómo',hov:'Señala un punto para ver su historia.',none:'sin asignar'}};
+const MAPT={en:{head:'week %w',hov:'Point at a dot to see its story.',none:'unassigned'},
+ es:{head:'semana %w',hov:'Señala un punto para ver su historia.',none:'sin asignar'}};
 async function weekMap(){const box=document.getElementById('wmap');if(!box)return;
  if(!MJ){try{MJ=await fetch('map.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})}catch(e){return}}
  if(!document.body.contains(box))return;const M=MJ,T=MAPT[L],P=M.points;
  box.innerHTML=`<h3><span style="white-space:nowrap"><a href="#/stories">${t('stories')}</a> · ${T.head.replace('%w',esc(M.week.replace(/^\d+-W/,'')))} ·</span><span class="hov mute">${T.hov}</span></h3><canvas></canvas>`;
- const wc=document.getElementById('wcap');if(wc)wc.innerHTML=`${T.cap.replace('%n',fmt(M.n)).replace('%s',fmt(M.stories.length)).replace('%u',Math.round(100-M.assigned/M.n*100)+'%')} <a href="#/method">[${T.how}]</a>`;
  const cv=box.querySelector('canvas'),hv=box.querySelector('.hov'),pad=8;let cur=-2,sc=1,ox=0,W=0,H=0,slack=0;
  const cen=M.stories.map(()=>[[],[]]);for(const p of P)if(p[2]>=0){cen[p[2]][0].push(p[0]);cen[p[2]][1].push(p[1])}
  const med=a=>{a.sort((x,y)=>x-y);return a[a.length>>1]||0};const C=cen.map(([x,y])=>[med(x),med(y)]);
