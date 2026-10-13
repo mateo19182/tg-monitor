@@ -2,10 +2,10 @@
 
 Usage:
   stories.py --week 2026-W41 [--kind post|comment] [--min-size 12]   # cluster (replaces that week's stories)
-  stories.py --week 2026-W41 --label [--cap 10]                       # label unlabelled stories with Haiku
+  stories.py --week 2026-W41 --label [--cap 10]                       # label unlabelled stories with Haiku (optional total-spend cap)
   stories.py --week 2026-W41 --show [--full]                          # list stories (=prev: same story continued, ~prev: related)
   stories.py --week 2026-W41 --map                                    # that week on the fixed 2D layout for the home page -> site/maps/
-  stories.py --subjects [--label --cap 30]                            # join the year's stories into narrow subjects, name new ones
+  stories.py --subjects [--label]                                     # join the year's stories into narrow subjects, name new ones
   stories.py --fit-layout                                              # fit the year's 2D layout once (data/layout2d.joblib)
   stories.py --proposals                                               # arena names the model proposed, for promotion into arenas.csv
 """
@@ -299,9 +299,9 @@ def label_subjects(vec, cap):
         pick = sorted(st[:16], key=lambda r: r[0])
         todo.append((sid, "Story titles (week: title):\n" + "\n".join(f"{w}: {t}" for w, _, t in pick)))
     spent = ledger_read()["usd"]; est = len(todo) * 0.0007
-    log.info("naming %d subjects (spent $%.3f, estimate +$%.2f, cap $%.2f)", len(todo), spent, est, cap)
+    log.info("naming %d subjects (spent $%.3f, estimate +$%.2f, cap %s)", len(todo), spent, est, f"${cap:.2f}" if cap else "none")
     if not todo: return
-    if spent + est > cap:
+    if cap is not None and spent + est > cap:
         log.error("would exceed the spend cap, not submitting"); return
     system = [{"type": "text", "text": SUBJECT_SYSTEM, "cache_control": {"type": "ephemeral"}}]
     batch = client.messages.batches.create(requests=[{"custom_id": f"j{sid}", "params": {"model": MODEL, "max_tokens": 200, "thinking": {"type": "disabled"},
@@ -405,10 +405,10 @@ def label(vec, week, kind, cap):
     todo = [r[0] for r in vec.execute("SELECT id FROM stories WHERE week=? AND kind=? AND title IS NULL ORDER BY size DESC", (week, kind))]
     spent = ledger_read()["usd"]
     est = len(todo) * 0.0015
-    log.info("labelling %d stories as a batch (spent $%.3f, estimate +$%.2f, cap $%.2f)", len(todo), spent, est, cap)
+    log.info("labelling %d stories as a batch (spent $%.3f, estimate +$%.2f, cap %s)", len(todo), spent, est, f"${cap:.2f}" if cap else "none")
     if not todo:
         return
-    if spent + est > cap:
+    if cap is not None and spent + est > cap:
         log.error("would exceed the spend cap, not submitting"); return
     system = [{"type": "text", "text": SYSTEM, "cache_control": {"type": "ephemeral"}}]
     reqs = []
@@ -472,7 +472,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--week"); ap.add_argument("--kind", default="post", choices=["post", "comment"])
     ap.add_argument("--min-size", type=int, default=12); ap.add_argument("--label", action="store_true")
-    ap.add_argument("--cap", type=float, default=10.0); ap.add_argument("--show", action="store_true")
+    ap.add_argument("--cap", type=float, default=None); ap.add_argument("--show", action="store_true")
     ap.add_argument("--relink", action="store_true"); ap.add_argument("--full", action="store_true")
     ap.add_argument("--proposals", action="store_true"); ap.add_argument("--clear-labels", action="store_true")
     ap.add_argument("--map", action="store_true"); ap.add_argument("--fit-layout", action="store_true")
