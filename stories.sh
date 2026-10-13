@@ -5,7 +5,7 @@ cd "$(dirname "$0")" || exit 1
 week="${1:-$(date -d 'last monday' +%G-W%V)}"   # on a Monday this is the week that just ended
 {
   echo "=== $(date -Is) stories for $week"
-  .venv/bin/python stories.py --week "$week" && .venv/bin/python stories.py --week "$week" --label --cap 25
+  .venv/bin/python stories.py --week "$week" && .venv/bin/python stories.py --week "$week" --label --cap 30
   .venv/bin/python stories.py --week "$week" --map
   .venv/bin/python release.py build && .venv/bin/python release.py upload   # refresh the HF dataset (visibility unchanged)
 } >> stories.log 2>&1

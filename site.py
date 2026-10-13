@@ -341,7 +341,7 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 .story-row .meta .tag{color:var(--mute)}.story-row .sum{margin-top:4px}
 .filters{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 16px;font-size:14px}.filters a.on{text-decoration:underline}
 .thread{padding:10px 0;border-bottom:1px solid var(--line)}.thread .wk{display:flex;gap:2px;align-items:flex-end;height:22px;margin-top:4px}.thread .wk span{display:block;width:14px;background:var(--bar);min-height:2px}.thread .wk span.gap{background:transparent;border-bottom:1px dotted var(--line)}
-#wmap canvas{display:block;width:100%;max-width:100%;touch-action:manipulation;cursor:crosshair}#wmap h3{display:flex;gap:6px;height:2em;align-items:baseline;margin:0}#wmap h3 a{color:inherit}#wmap .hov{color:var(--fg);font-size:13px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#wmap .hov.mute{color:var(--mute)}
+#wmap canvas{display:block;width:100%;max-width:100%;touch-action:manipulation;cursor:crosshair}#wmap h3{display:flex;gap:6px;height:2em;align-items:baseline;margin:0}#wmap h3 a{color:inherit}#wmap .wk{padding:0 4px}#wmap .wk.off{opacity:.3}#wmap .hov{color:var(--fg);font-size:13px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#wmap .hov.mute{color:var(--mute)}
 .prose h3{font-size:16px;margin:22px 0 6px}.prose ul{margin:0 0 12px;padding-left:20px}.prose li{margin-bottom:4px}
 .chain{list-style:none;padding:0;margin:0}.chain li{margin:3px 0}
 .post{padding:12px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
@@ -599,13 +599,16 @@ const METHOD={
 <li>Visualizaciones según Telegram.</li>
 <li>Sin reacciones ni historias de Telegram; comentarios solo de los grupos de debate de la lista.</li></ul>`};
 function methodView(){document.getElementById('view').innerHTML=`<div class="prose">${METHOD[L]({n:fmt(D.channels.length),a:fmt(D.channels.filter(c=>c.n).length),g:Object.keys(D.groups).length})}</div>`;weekMap()}
-let MJ=null,redrawMap=null;addEventListener('resize',()=>redrawMap&&redrawMap());
+let MI=null,MW=null,MC={},redrawMap=null;addEventListener('resize',()=>redrawMap&&redrawMap());
 const MAPT={en:{head:'week %w',hov:'Point at a dot to see its story.',none:'unassigned'},
  es:{head:'semana %w',hov:'Señala un punto para ver su historia.',none:'sin asignar'}};
 async function weekMap(){const box=document.getElementById('wmap');if(!box)return;
- if(!MJ){try{MJ=await fetch('map.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})}catch(e){return}}
- if(!document.body.contains(box))return;const M=MJ,T=MAPT[L],P=M.points;
- box.innerHTML=`<h3><span style="white-space:nowrap"><a href="#/stories">${t('stories')}</a> · ${T.head.replace('%w',esc(M.week.replace(/^\d+-W/,'')))} ·</span><span class="hov mute">${T.hov}</span></h3><canvas></canvas>`;
+ const get=u=>fetch(u,{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()});
+ try{if(!MI)MI=await get('maps/index.json');if(!MW||!MI.includes(MW))MW=MI[MI.length-1];if(!MC[MW])MC[MW]=await get('maps/'+MW+'.json')}catch(e){return}
+ if(!document.body.contains(box))return;const M=MC[MW],T=MAPT[L],P=M.points,wi=MI.indexOf(MW);
+ const step=(d,ch)=>MI[wi+d]?`<a href="#" class="wk" data-d="${d}">${ch}</a>`:`<span class="wk off">${ch}</span>`;
+ box.innerHTML=`<h3><span style="white-space:nowrap"><a href="#/stories?week=${esc(M.week)}">${t('stories')}</a> · ${step(-1,'‹')} ${T.head.replace('%w',esc(M.week.replace(/^\d+-W/,'')))} ${step(1,'›')} ·</span><span class="hov mute">${T.hov}</span></h3><canvas></canvas>`;
+ box.querySelectorAll('a.wk').forEach(a=>a.onclick=e=>{e.preventDefault();MW=MI[wi+ +a.dataset.d];weekMap()});
  const cv=box.querySelector('canvas'),hv=box.querySelector('.hov'),pad=8;let cur=-2,sc=1,ox=0,W=0,H=0,slack=0;
  const cen=M.stories.map(()=>[[],[]]);for(const p of P)if(p[2]>=0){cen[p[2]][0].push(p[0]);cen[p[2]][1].push(p[1])}
  const med=a=>{a.sort((x,y)=>x-y);return a[a.length>>1]||0};const C=cen.map(([x,y])=>[med(x),med(y)]);

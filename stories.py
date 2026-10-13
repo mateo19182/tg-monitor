@@ -4,7 +4,7 @@ Usage:
   stories.py --week 2026-W41 [--kind post|comment] [--min-size 12]   # cluster (replaces that week's stories)
   stories.py --week 2026-W41 --label [--cap 10]                       # label unlabelled stories with Haiku
   stories.py --week 2026-W41 --show [--full]                          # list stories (=prev: same story continued, ~prev: related)
-  stories.py --week 2026-W41 --map                                    # 2D projection of that week for the method page -> site/map.json
+  stories.py --week 2026-W41 --map                                    # 2D projection of that week for the home page -> site/maps/
   stories.py --proposals                                               # arena names the model proposed, for promotion into arenas.csv
 """
 import argparse, csv, datetime as dt, json, logging, os, re, sqlite3, sys
@@ -119,7 +119,7 @@ def cluster(vec, week: str, kind: str, min_size: int):
 
 
 def week_map(vec, week: str, kind: str = "post"):
-    """2D UMAP of one week's distinct texts with their story ids, for the method page. Separate from the 10D projection used for clustering."""
+    """2D UMAP of one week's distinct texts with their story ids, for the home page map (site/maps/<week>.json + index.json). Separate from the 10D projection used for clustering."""
     start, end = week_bounds(week)
     hashes = sorted({h for (h,) in vec.execute("SELECT hash FROM msg_text WHERE kind=? AND date>=? AND date<? AND hash IS NOT NULL", (kind, start, end))})
     if not hashes:
@@ -136,9 +136,11 @@ def week_map(vec, week: str, kind: str = "post"):
     pts = [[int(x), int(y), idx.get(story_of.get(h), -1)] for (x, y), h in zip(U, hashes)]
     out = {"week": week, "n": len(hashes), "assigned": sum(p[2] >= 0 for p in pts), "w": int(U[:, 0].max()) + 1, "h": int(U[:, 1].max()) + 1,
            "stories": [{"id": i, "title": t, "title_es": te, "size": n} for i, t, te, n in stories], "points": pts}
-    (HERE / "site").mkdir(exist_ok=True)
-    tmp = HERE / "site" / "map.json.tmp"
-    tmp.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"); tmp.replace(HERE / "site" / "map.json")
+    d = HERE / "site" / "maps"; d.mkdir(parents=True, exist_ok=True)
+    tmp = d / f"{week}.json.tmp"
+    tmp.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"); tmp.replace(d / f"{week}.json")
+    weeks = sorted(p.stem for p in d.glob("????-W??.json"))
+    (d / "index.json.tmp").write_text(json.dumps(weeks)); (d / "index.json.tmp").replace(d / "index.json")
     log.info("%s map: %d texts, %d in %d stories", week, out["n"], out["assigned"], len(stories))
 
 
