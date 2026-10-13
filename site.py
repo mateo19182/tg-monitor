@@ -320,16 +320,15 @@ section{margin-bottom:26px}
 .chart .lbl{color:var(--mute)}
 .tip{position:absolute;pointer-events:none;background:var(--bg);border:1px solid var(--line);padding:2px 6px;font-size:12px;display:none}
 body.home main{display:block}
-.home-page{max-width:880px;margin:48px auto 24px}
-.home-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:32px}
-.home-heading h2{font-size:clamp(24px,4vw,36px);font-weight:400;line-height:1.2;margin:0 0 12px}
-.home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:22px 0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);margin:0 0 32px}
-.home-stats dt{font-size:12px;color:var(--mute)}.home-stats dd{font-size:24px;margin:4px 0 0}
-.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:36px}
-.home-page h3{font-size:13px;font-weight:400;color:var(--mute);margin:0 0 12px}
+.home-page{margin:20px 0 0}
+.home-heading{margin-bottom:18px}.home-heading h2{font-size:clamp(22px,3vw,30px);font-weight:400;line-height:1.2;margin:0 0 6px}.home-heading .mute{font-size:13px}
+.home-main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;align-items:start}
+.home-stats{display:grid;grid-template-columns:1fr;gap:10px;padding:0 0 16px;border-bottom:1px dashed var(--line);margin:0 0 18px}
+.home-stats div{display:flex;justify-content:space-between;align-items:baseline;gap:12px}.home-stats dt{font-size:12px;color:var(--mute)}.home-stats dd{font-size:20px;margin:0}
+.home-page h3{font-size:13px;font-weight:400;color:var(--mute);margin:0 0 10px}
 .archive-tree{list-style:none;margin:0;padding:0}.archive-tree li{margin:8px 0}.archive-tree .branch{color:var(--mute);white-space:pre}
-.home-page .chart{font-size:13px}.home-page .dates{font-size:13px;margin-top:10px}
-.home-footer{border-top:1px dashed var(--line);padding-top:14px;margin-top:24px;font-size:13px;color:var(--mute)}
+.home-page .chart{font-size:11px;line-height:1.15}#wcap{font-size:12px;color:var(--mute);margin-top:18px}#wcap a{color:inherit}
+.home-footer{border-top:1px dashed var(--line);padding-top:12px;margin-top:18px;font-size:13px;color:var(--mute)}
 .message-form{margin:20px 0 24px}.message-query{display:flex;gap:16px;align-items:end}.message-query label{flex:1;min-width:0}
 .message-form label{display:block;color:var(--mute);font-size:12px}
 .message-form input,.message-form select{display:block;width:100%;min-width:0;background:var(--bg);color:var(--fg);font:inherit;font-size:14px;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:6px 0}
@@ -342,13 +341,13 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 .story-row .meta .tag{color:var(--mute)}.story-row .sum{margin-top:4px}
 .filters{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 16px;font-size:14px}.filters a.on{text-decoration:underline}
 .thread{padding:10px 0;border-bottom:1px solid var(--line)}.thread .wk{display:flex;gap:2px;align-items:flex-end;height:22px;margin-top:4px}.thread .wk span{display:block;width:14px;background:var(--bar);min-height:2px}.thread .wk span.gap{background:transparent;border-bottom:1px dotted var(--line)}
-#wmap canvas{display:block;width:100%;max-width:100%;touch-action:manipulation;cursor:crosshair}#wmap .cap{font-size:13px;color:var(--mute);max-width:65ch}#wmap h3 a{color:inherit}#wmap .hov{font-size:14px;min-height:2.6em;margin:6px 0 4px}#wmap{margin:0 0 32px}#wmap .cap a{color:inherit}
+#wmap canvas{display:block;width:100%;max-width:100%;touch-action:manipulation;cursor:crosshair}#wmap h3{display:flex;gap:6px;min-height:2.6em;align-items:baseline;margin:0}#wmap h3 a{color:inherit}#wmap .hov{color:var(--fg);font-size:13px;min-width:0}#wmap .hov.mute{color:var(--mute)}
 .prose h3{font-size:16px;margin:22px 0 6px}.prose ul{margin:0 0 12px;padding-left:20px}.prose li{margin-bottom:4px}
 .chain{list-style:none;padding:0;margin:0}.chain li{margin:3px 0}
 .post{padding:12px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
 @media(max-width:760px){.m-hide{display:none}.wrap{padding:12px}#top{width:100%;order:3;gap:14px}
  .kv{grid-template-columns:1fr;gap:0 0}.kv div:nth-child(odd){margin-top:6px}.big{font-size:18px}
- .home-page{margin-top:28px}.home-heading{gap:12px}.home-stats{grid-template-columns:repeat(2,1fr);gap:20px}.home-grid{grid-template-columns:1fr;gap:24px}
+ .home-page{margin-top:12px}.home-main{grid-template-columns:1fr;gap:20px}.home-grid{grid-template-columns:1fr;gap:24px}
  .message-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.message-query{gap:12px}}
 </style>
 </head>
@@ -398,15 +397,15 @@ const G=k=>D.groups[k]?D.groups[k][L]:k;
 function nav(cur){document.getElementById('top').innerHTML=[['',t('aboutPage')],['29n',t('e29n')],['channels',t('channels')],['stories',t('stories')],['links',t('links')],['search',t('messageSearch')],['method',t('method')]].map(([k,l])=>`<a class="${cur===k?'on':''}" href="#/${k}">${l}</a>`).join('')}
 function home(){
  const counts=[[t('channels'),D.channels.length],[t('messages'),D.total],[t('stories'),D.stories]];
- const n=SP(),daily=D.daily.slice(-n),start=new Date(D.start+'T00:00:00Z');start.setUTCDate(start.getUTCDate()+D.days-n);
- const first=start.toISOString().slice(0,10),last=new Date(start);last.setUTCDate(last.getUTCDate()+n-1);
+ const n=30,daily=D.daily.slice(-n),start=new Date(D.start+'T00:00:00Z');start.setUTCDate(start.getUTCDate()+D.days-n);
+ const first=start.toISOString().slice(0,10);
  document.getElementById('view').innerHTML=`<div class="home-page">
-  <section class="home-heading"><div><h2>${t('name')}</h2><div class="mute">${D.range[0]||'—'} → ${D.range[1]||'—'}</div></div></section>
-  <section class="prose">${t('aboutText')}</section>
-  <dl class="home-stats">${counts.map(([label,n])=>`<div><dt>${label}</dt><dd>${fmt(n)}</dd></div>`).join('')}</dl>
-  <section id="wmap"></section>
-  <section><h3>${t('activity')} · ${t('days').replace('%d',n)}</h3>${chart(daily,first)}<div class="mute dates">${first} → ${last.toISOString().slice(0,10)}</div></section>
-  <footer class="home-footer">${t('built')} ${D.built}</footer></div>`;weekMap();
+  <section class="home-heading"><h2>${t('name')}</h2><div class="mute">${D.range[0]||'—'} → ${D.range[1]||'—'} · ${t('aboutText').replace(/<\/?p>/g,'')}</div></section>
+  <div class="home-main"><section id="wmap"></section>
+  <aside class="home-side"><dl class="home-stats">${counts.map(([label,n])=>`<div><dt>${label}</dt><dd>${fmt(n)}</dd></div>`).join('')}</dl>
+  <section><h3>${t('activity')} · ${t('days').replace('%d',n)}</h3>${chart(daily,first)}</section>
+  <div id="wcap"></div>
+  <footer class="home-footer">${t('built')} ${D.built}</footer></aside></div></div>`;weekMap();
  document.onkeydown=e=>{if(e.key==='/'&&!e.target.closest('input,textarea,select,[contenteditable]')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();location.hash='/search'}};
 }
 let searchController=null;
@@ -607,16 +606,18 @@ const MAPT={en:{head:'week %w',cap:'%n post texts, one dot each, placed by simil
 async function weekMap(){const box=document.getElementById('wmap');if(!box)return;
  if(!MJ){try{MJ=await fetch('map.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})}catch(e){return}}
  if(!document.body.contains(box))return;const M=MJ,T=MAPT[L],P=M.points;
- box.innerHTML=`<h3><a href="#/stories">${t('stories')}</a> · ${T.head.replace('%w',esc(M.week.replace(/^\d+-W/,'')))}</h3><canvas></canvas><div class="hov mute">${T.hov}</div><div class="cap">${T.cap.replace('%n',fmt(M.n)).replace('%s',fmt(M.stories.length)).replace('%u',Math.round(100-M.assigned/M.n*100)+'%')} <a href="#/method">[${T.how}]</a></div>`;
- const cv=box.querySelector('canvas'),hv=box.querySelector('.hov'),pad=8;let cur=-2,sc=1,ox=0,W=0,H=0;
+ box.innerHTML=`<h3><span style="white-space:nowrap"><a href="#/stories">${t('stories')}</a> · ${T.head.replace('%w',esc(M.week.replace(/^\d+-W/,'')))} ·</span><span class="hov mute">${T.hov}</span></h3><canvas></canvas>`;
+ const wc=document.getElementById('wcap');if(wc)wc.innerHTML=`${T.cap.replace('%n',fmt(M.n)).replace('%s',fmt(M.stories.length)).replace('%u',Math.round(100-M.assigned/M.n*100)+'%')} <a href="#/method">[${T.how}]</a>`;
+ const cv=box.querySelector('canvas'),hv=box.querySelector('.hov'),pad=8;let cur=-2,sc=1,ox=0,W=0,H=0,slack=0;
  const cen=M.stories.map(()=>[[],[]]);for(const p of P)if(p[2]>=0){cen[p[2]][0].push(p[0]);cen[p[2]][1].push(p[1])}
  const med=a=>{a.sort((x,y)=>x-y);return a[a.length>>1]||0};const C=cen.map(([x,y])=>[med(x),med(y)]);
  function draw(){const cs=getComputedStyle(document.documentElement),fg=cs.getPropertyValue('--fg'),mu=cs.getPropertyValue('--mute'),dt=cs.getPropertyValue('--dot'),bg=cs.getPropertyValue('--bg'),dpr=devicePixelRatio||1;
-  W=cv.clientWidth;const maxH=Math.min(640,Math.max(320,innerHeight*.75));sc=Math.min((W-2*pad)/M.w,(maxH-2*pad)/M.h);ox=(W-M.w*sc)/2;H=Math.round(M.h*sc+2*pad);
+  W=cv.clientWidth;const fit=innerWidth>760,maxH=fit?Math.max(300,innerHeight-(cv.getBoundingClientRect().top+scrollY)-24-slack):W;sc=Math.min((W-2*pad)/M.w,(maxH-2*pad)/M.h);ox=(W-M.w*sc)/2;H=Math.round(M.h*sc+2*pad);
   cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
   const r=W<500?1.1:1.4,X=p=>ox+p[0]*sc,Y=p=>pad+p[1]*sc,dot=(p,col,rr)=>{c.fillStyle=col;c.fillRect(X(p)-rr,Y(p)-rr,2*rr,2*rr)};
   for(const p of P)if(p[2]<0)dot(p,dt,r);c.globalAlpha=cur>=0?.35:.8;for(const p of P)if(p[2]>=0)dot(p,mu,r);c.globalAlpha=1;
   if(cur>=0)for(const p of P)if(p[2]===cur)dot(p,fg,r+1.2);
+  if(fit&&!slack){const o=document.documentElement.scrollHeight-innerHeight;if(o>0){slack=o+2;return draw()}}
   if(W<560)return;const boxes=[],n=W<800?5:8;c.font='11px '+getComputedStyle(hv).fontFamily;c.textBaseline='middle';
   for(let k=0;k<M.stories.length&&boxes.length<n;k++){if(cur>=0&&k!==cur)continue;const s=M.stories[k];let tx=(L==='es'&&s.title_es)||s.title||'';if(tx.length>44)tx=tx.slice(0,42).replace(/\s+\S*$/,'')+'…';
    const w=c.measureText(tx).width,x=Math.max(2,Math.min(W-w-2,X(C[k])-w/2)),y=Y(C[k]),bb=[x-4,y-10,x+w+4,y+10];
@@ -629,7 +630,7 @@ async function weekMap(){const box=document.getElementById('wmap');if(!box)retur
   hv.innerHTML=`<a href="#/s/${s.id}">${esc((L==='es'&&s.title_es)||s.title||'')}</a> <span class="mute">· ${fmt(s.size)} ${t('posts')}</span>`}
  cv.onpointermove=e=>show(pick(e));cv.onpointerleave=e=>{if(e.pointerType==='mouse')show(-2)};
  cv.onclick=e=>{const k=pick(e);if(k>=0&&e.pointerType==='mouse'&&k===cur)location.hash='#/s/'+M.stories[k].id;else show(k)};
- redrawMap=()=>{if(document.body.contains(cv))draw()};draw()}
+ redrawMap=()=>{if(document.body.contains(cv)){slack=0;draw()}};draw()}
 function electionView(){const E=D.election,v=document.getElementById('view');if(!E){v.innerHTML='';return}
  const today=new Date(new Date().toISOString().slice(0,10)+'T00:00:00Z'),dd=Math.round((new Date(E.day+'T00:00:00Z')-today)/864e5);
  const cd=dd>0?t('daysTo').replace('%d',dd):dd===0?t('eDay'):t('daysSince').replace('%d',-dd);
