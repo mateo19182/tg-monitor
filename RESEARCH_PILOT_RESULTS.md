@@ -2,6 +2,8 @@
 
 Completed on 14 October 2026 with three subagents. This executes the five proposals in [RESEARCH_NEXT_STEPS.md](RESEARCH_NEXT_STEPS.md). Production databases were opened read-only. No channels, collectors, schedules, frontend fields or dataset fields were changed. Raw observations, provider snapshots and one-off scripts are local files under ignored `data/research/`.
 
+Follow-up decision on 14 October 2026: the user selected PadresxlaVerdadE for collection. Its title and 6,428 subscribers were reverified, and it was added to tier M with history starting on 1 January 2026 and the pinned CheckFirst discovery URL. The pilot observations and recommendations below describe the earlier review.
+
 ## What proved useful
 
 | Pilot | Observed result | Recommendation |

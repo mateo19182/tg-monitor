@@ -2,6 +2,7 @@
 
 ## 2026-10-14
 
+- Added verified public channel `PadresxlaVerdadE` to tier M, with history bounded to 1 January 2026 and the pinned CheckFirst source-list URL recorded as its discovery source.
 - Ran five bounded external-research pilots with three subagents: 30 article inspections, published-case searches, Meta indicator review, seven handle checks and Hamilton searches. Recorded reviewed text correspondences, URL-row duplication, archive coverage limits, Hamilton timestamp discrepancies and the small set of proposed follow-up work. Production collection and watchlist were not changed.
 - Expanded the external research register using three subagents: datasets, technical investigations, platform reports, broadcast tools and access limits. Added a proposed work plan with read-only archive link counts, CheckFirst source-list overlap and a bounded Meta indicator comparison. Corrected the CheckFirst integration premise: current public files are aggregate JSON, not the article-level CSVs described in its README.
 - Documented Antibot4Navalny and Metabot as external research leads, with Spanish-language examples, repository limitations and rules for verifying evidence in the archive. Linked the assessment from README.
