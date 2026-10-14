@@ -2,6 +2,7 @@
 
 ## 2026-10-14
 
+- Expanded the external research register using three subagents: datasets, technical investigations, platform reports, broadcast tools and access limits. Added a proposed work plan with read-only archive link counts, CheckFirst source-list overlap and a bounded Meta indicator comparison. Corrected the CheckFirst integration premise: current public files are aggregate JSON, not the article-level CSVs described in its README.
 - Documented Antibot4Navalny and Metabot as external research leads, with Spanish-language examples, repository limitations and rules for verifying evidence in the archive. Linked the assessment from README.
 
 ## 2026-10-13

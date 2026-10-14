@@ -4,7 +4,7 @@ A research archive of public Telegram channels relevant to Spanish politics. The
 archived messages, channel statistics and weekly stories.
 
 Project changes are recorded in [CHANGELOG.md](CHANGELOG.md).
-External research leads and tool assessments are recorded in [RESEARCH_SOURCES.md](RESEARCH_SOURCES.md).
+External research leads and tool assessments are recorded in [RESEARCH_SOURCES.md](RESEARCH_SOURCES.md), with proposed pilots in [RESEARCH_NEXT_STEPS.md](RESEARCH_NEXT_STEPS.md).
 
 The channel list comes from published research (Maldita.es' 25 most-replicated Pravda feeders,
 DFRLab's Info Defense / Surf Noise networks, EK Strategies' Ceuta analysis) plus our own additions.
