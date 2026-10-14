@@ -2,6 +2,8 @@
 
 Prepared on 14 October 2026 alongside [RESEARCH_SOURCES.md](RESEARCH_SOURCES.md). These are proposed research tasks, not changes to production collection. The source review used three subagents to check datasets, technical investigations and broader cross-platform sources.
 
+The five pilots have now been run. [RESEARCH_PILOT_RESULTS.md](RESEARCH_PILOT_RESULTS.md) records outcomes and the narrower implementation recommendations; the plan below is retained as the original proposal.
+
 ## Recommended first task
 
 Build a small evidence worksheet from existing archive links and published examples. Start with a bounded Pravda website sample and Spanish-language cases from VIGINUM, Overload and ATAFIMI. CheckFirst's current public JSON can help select sources and periods, but does not contain the article-level records needed for a direct message join.
