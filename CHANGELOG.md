@@ -1,5 +1,9 @@
 # Change log
 
+## 2026-10-14
+
+- Documented Antibot4Navalny and Metabot as external research leads, with Spanish-language examples, repository limitations and rules for verifying evidence in the archive. Linked the assessment from README.
+
 ## 2026-10-13
 
 - Removed per-channel facts (`wiki.csv`, `sources.csv`): no "published research" on channel pages and no `facts` table in the dataset. The archive now carries no statements about channels.
