@@ -16,3 +16,4 @@ stories.log
 .embed.lock
 links.db
 links.db-*
+/secrets/

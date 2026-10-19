@@ -347,7 +347,8 @@ mark{background:var(--fg);color:var(--bg)}.pagination{display:flex;gap:18px;marg
 .post{padding:12px 0;border-bottom:1px solid var(--line)}.post .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 12px}.post .txt{white-space:pre-wrap;margin:6px 0;overflow-wrap:anywhere}
 @media(max-width:760px){.m-hide{display:none}.wrap{padding:12px}#top{width:100%;order:3;gap:6px 22px}
  .kv{grid-template-columns:1fr;gap:0 0}.kv div:nth-child(odd){margin-top:6px}.big{font-size:18px}
- .home-page{margin-top:12px}.home-main{grid-template-columns:1fr;gap:20px}.home-grid{grid-template-columns:1fr;gap:24px}
+ .home-page{margin-top:12px}.home-main{grid-template-columns:minmax(0,1fr);gap:20px}
+ #wmap h3{flex-wrap:wrap;height:auto;row-gap:4px}#wmap .hov{order:3;flex-basis:100%;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:2.6em;line-height:1.3}.home-grid{grid-template-columns:1fr;gap:24px}
  .message-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.message-query{gap:12px}}
 </style>
 </head>
