@@ -123,10 +123,8 @@ those ids to names.
 ## Hosting
 
 - `serve.sh` serves `site/` and message search on 127.0.0.1:8788 (crontab `@reboot`).
-- Public via a dedicated locally-managed Cloudflare tunnel `tg-monitor` (`~/.cloudflared/tg-monitor.yml`,
-  user unit `cloudflared-tg-monitor.service`): https://canales.m19182.dev and https://tg.m19182.dev.
-- Gotcha: `cloudflared tunnel route dns` takes the tunnel from the default `~/.cloudflared/config.yml`
-  regardless of the name argument. Always pass `--config tg-monitor.yml` (and `--overwrite-dns` to repoint).
+- Public at https://canales.m19182.dev through the server's main Cloudflare tunnel (ingress managed remotely; see
+  `~/projects/services/HOSTING.md`).
 
 ## Licence
 
