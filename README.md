@@ -8,7 +8,7 @@ External research leads and tool assessments are recorded in [RESEARCH_SOURCES.m
 Completed pilot results and implementation recommendations are in [RESEARCH_PILOT_RESULTS.md](RESEARCH_PILOT_RESULTS.md).
 
 The channel list comes from published research (Maldita.es' 25 most-replicated Pravda feeders,
-DFRLab's Info Defense / Surf Noise networks, EK Strategies' Ceuta analysis) plus our own additions.
+DFRLab's Info Defense / Surf Noise networks, EK Strategies' Ceuta analysis, Golden Owl's 29N report) plus our own additions.
 Each channel carries a `tier` label so the dataset can be sliced:
 
 | tier | meaning |

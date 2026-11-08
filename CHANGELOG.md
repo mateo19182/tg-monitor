@@ -1,5 +1,9 @@
 # Change log
 
+## 2026-11-08
+
+- Reviewed Golden Owl's 29N report ("El arsenal invisible", 5 November 2026) against the archive: its Telegram claims checked read-only in `tg.db`, matches and discrepancies recorded in RESEARCH_SOURCES.md. Added five verified channels it names: `NoticiasPatriotas`, `QPatriotas`, `PrensaPatriota`, `mundomultipolarZOV` (tier B) and `frentemilitargeo` (tier H).
+
 ## 2026-10-14
 
 - Added verified public channel `PadresxlaVerdadE` to tier M, with history bounded to 1 January 2026 and the pinned CheckFirst source-list URL recorded as its discovery source.

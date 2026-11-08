@@ -99,6 +99,25 @@ The [EUvsDisinfo database](https://euvsdisinfo.eu/disinformation-cases/) provide
 
 [NewsGuard's Russia-Ukraine tracker](https://www.newsguardtech.com/special-reports/russian-disinformation-tracking-center/) publishes summaries and asks organisations to contact it for the full domain list and detailed records. Its [Media Imposter Tracking Center](https://www.newsguardtech.com/special-reports/media-imposter-tracking-center/) includes cases identified by Antibot4Navalny and VIGINUM. These are public discovery pages; complete underlying data access and terms require separate confirmation.
 
+### Golden Owl: El arsenal invisible (29N)
+
+Links: [report page](https://goldenowl.ai/es/resources/research/The-Invisible-Arsenal-Hybrid-Threats-to-Spain-2026-Elections), [PDF](https://davupfqgxyzrwuyyigna.supabase.co/storage/v1/object/public/research/Spain%20Election/Espana_29N_El_Arsenal_Invisible_cleaned.pdf). Published 5 November 2026; reviewed 7–8 November 2026.
+
+A commercial OSINT report on the 29N election covering Facebook, Instagram, TikTok, YouTube, X, Telegram and dark-web sources, collected 20 August to 5 November 2026. Its Telegram layer is small: 59 channels, 20,538 messages and 390 forward links, read from public `t.me/s` previews, with a 21-channel ring examined from 20 October to 5 November. Part I (a Moscow-based Spanish-language channel, `@musicarusaesp`, and the channels around it) overlaps our scope; the Meta page farm, X, TikTok and dark-web sections do not. The report assigns account risk tiers, confidence levels and attribution; those are the authors' assessments, not archive labels.
+
+Read-only checks against `tg.db` on 7 November 2026:
+
+- 12 of the 16 Telegram handles it names were already watched, and all ten cited evidence messages are archived.
+- Exact matches: nine `@musicarusaesp` posts with the army-contract text between 21 October and 3 November on the report's dates; the Western Sahara veto text at 22:19:22 UTC on 30 October, repeated by `elespiadigital` at 22:19:41. The archive also has it on `desinformadorusochatZ` at 22:19:25, which the report does not mention.
+- Close but not identical forward counts for 20 October–5 November (window edges and preview sampling): `BalearesWWG1WGA` 53 from `herQles` and 50 from `tass_es` (report: 48 / 44); `ucraniando` 14 from `SputnikMundo` and 16 from `informador_global` (report: 13 / 13).
+- Not reproduced: "16 reenvíos al nodo central" for `Lyudmila_ZOV`. The archive shows `@musicarusaesp` forwarding `Lyudmila_ZOV` 56 times in that window, the reverse direction.
+- Its timestamp for message 15709 reads "21 de octubre, 00:59 CET"; the archive has 22:59:42 UTC on 21 October, which is 00:59 CEST on 22 October.
+- Channels forwarding `@musicarusaesp` that are absent from its graph include `ophiucu` (642 forwards, all time), `surf_noise_sp` (309), `la_primicia` (279) and `espanolesamigosderusia` (265).
+
+Five handles it names were verified on 7 November 2026 and added with this report as `source`: `NoticiasPatriotas`, `QPatriotas`, `PrensaPatriota` and `mundomultipolarZOV` (all four also among the Telegram sources in CheckFirst's Pravda dashboard files, so tier B) and `frentemilitargeo` (tier H). The Spanish NoName057(16) mirrors it cites (`noname05716_esp`, `nnm05716espvers`) no longer resolve; `fwd_sources` holds a later mirror, `nnm05716espversion_n_new_154500`.
+
+Methods worth reusing as data, without its scoring: subscriber-count snapshots over time, co-posting of identical texts within minutes across channels, per-event first-post latency, perceptual image hashes for re-uploads that `media_id` misses, and topic counts for election-procedure subjects (postal vote, census, CERA, count).
+
 ## Platform reports and technical research
 
 ### Meta threat-research indicators
