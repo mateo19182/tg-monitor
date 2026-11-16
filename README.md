@@ -52,19 +52,19 @@ Each channel carries a `tier` label so the dataset can be sliced:
 - `login.py`      two-step login (`send <phone>`, `code <code>`, `password`, `check`).
 - `site.py`       builds `site/index.html` from the database: about page at `#/`, channel browser at `#/channels` (tiers grouped into seven groups, `GROUPS` in site.py), channel pages at `#/c/<handle>`, stories at `#/stories` (by week, and over time with `?view=time`), story pages at `#/s/<id>`, message search at `#/search`.
 - `embed.py`      embeds message texts (≥40 chars after stripping URLs and share footers) with bge-m3 on the GPU into `vec.db`; one vector per distinct text.
-- `stories.py`    groups one week's posts (or discussion-group comments) into stories by similarity, chains them to the previous week's stories, and labels each story through the Message Batches API with a neutral title, a one-line summary and one to three arenas from `arenas.csv`. Spend is tracked in `data/label_ledger.json` and capped with `--cap`.
+- `stories.py`    groups one week's posts (or discussion-group comments) into stories by similarity, chains them to the previous week's stories, and labels each story with Haiku through CLIProxy (plain requests, the proxy has no Message Batches API) with a neutral title, a one-line summary and one to three arenas from `arenas.csv`. Spend is tracked in `data/label_ledger.json` and capped with `--cap`.
 - `arenas.csv`    two fixed axes with EN/ES names and definitions: 10 regions (where a story happens) and 14 themes (what it is about), plus two buckets (housekeeping, reactions). Each story gets one region and one or two themes. Stories carry their own open labels; the model may propose new themes (`stories.py --proposals`), which are added here by hand.
 - `links.py`      links archive in `links.db`: every URL in archived messages with canonical form, domain and kind (telegram, social, shortener, content); shortener targets (`resolve`), page titles and descriptions for content URLs (`fetch`, 1 request/s per domain), and the t.me reference graph as a discovery feed (`tme`: handles referenced by watched channels but not on the watchlist). `index` and `summary` (writes `site/links.json` for the `#/links` page) run hourly from `sync.sh`.
 - `search.py`     SQLite FTS5 index and search queries. Insert, text-update and delete triggers keep the index current during collection.
 - `server.py`     serves `site/` and `GET /api/search` on the same origin; `serve.sh` starts it on 127.0.0.1:8788.
 
-Secrets/data never in git: `.env` (TG_API_ID/TG_API_HASH, ANTHROPIC_API_KEY), `tgmon.session*`, `tg.db*`, `vec.db*`, `links.db*`, logs, `data/`.
+Secrets/data never in git: `.env` (TG_API_ID/TG_API_HASH, ANTHROPIC_API_KEY = CLIProxy key, ANTHROPIC_BASE_URL = the proxy), `tgmon.session*`, `tg.db*`, `vec.db*`, `links.db*`, logs, `data/`.
 
 Stories:
 ```
 .venv/bin/python embed.py --since 2026-09-28            # embed new texts (hourly runs embed increments)
 .venv/bin/python stories.py --week 2026-W41             # cluster that week's posts into stories
-.venv/bin/python stories.py --week 2026-W41 --label     # label unlabelled stories (batch, cached system prompt)
+.venv/bin/python stories.py --week 2026-W41 --label     # label unlabelled stories (parallel requests, cached system prompt)
 .venv/bin/python stories.py --week 2026-W41 --show --full
 .venv/bin/python stories.py --week 2026-W41 --kind comment   # same for discussion-group comments
 ```

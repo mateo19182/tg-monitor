@@ -22,7 +22,7 @@ PRICE_IN, PRICE_OUT = 1.0, 5.0          # USD per million tokens (Haiku list pri
 N_REPS, REP_CHARS = 8, 400
 LINK_SIM, RELATED_SIM = 0.90, 0.85      # same story continued / related story
 TRIM_FLOOR, TRIM_STD = 0.60, 1.5        # a member stays only if its cosine to the story centroid >= max(floor, mean - k*std)
-BATCH_POLL_S = 20
+WORKERS = 6                             # parallel requests to CLIProxy (it has no Message Batches API)
 
 ARENAS = {r["key"]: r for r in csv.DictReader(open(HERE / "arenas.csv", encoding="utf-8"))}
 REGIONS = [k for k, r in ARENAS.items() if r["axis"] == "region"]
@@ -285,12 +285,26 @@ def subjects(vec, kind="post"):
              sum(len(v) for v in keep.values()), len(rows))
 
 
-def label_subjects(vec, cap):
-    """Name unnamed subjects from their stories' titles, as one batch."""
+def run_requests(reqs):
+    """Send {custom_id, params} message requests in parallel; yield (custom_id, message or None)."""
+    from concurrent.futures import ThreadPoolExecutor
     from dotenv import load_dotenv
     load_dotenv(HERE / ".env")
-    import anthropic, time
-    client = anthropic.Anthropic()
+    import anthropic
+    client = anthropic.Anthropic(max_retries=4)
+
+    def one(r):
+        try:
+            return r["custom_id"], client.messages.create(**r["params"])
+        except anthropic.APIError as e:
+            log.warning("%s: %s", r["custom_id"], e)
+            return r["custom_id"], None
+    with ThreadPoolExecutor(WORKERS) as pool:
+        yield from pool.map(one, reqs)
+
+
+def label_subjects(vec, cap):
+    """Name unnamed subjects from their stories' titles."""
     todo = []
     for sid, members in vec.execute("SELECT id, members FROM subjects WHERE title IS NULL"):
         ids = json.loads(members)
@@ -303,21 +317,19 @@ def label_subjects(vec, cap):
     if not todo: return
     if cap is not None and spent + est > cap:
         log.error("would exceed the spend cap, not submitting"); return
-    system = [{"type": "text", "text": SUBJECT_SYSTEM, "cache_control": {"type": "ephemeral"}}]
-    batch = client.messages.batches.create(requests=[{"custom_id": f"j{sid}", "params": {"model": MODEL, "max_tokens": 200, "thinking": {"type": "disabled"},
-                                                       "system": system, "messages": [{"role": "user", "content": u}]}} for sid, u in todo])
-    log.info("batch %s submitted", batch.id)
-    while client.messages.batches.retrieve(batch.id).processing_status != "ended":
-        time.sleep(BATCH_POLL_S)
+    # Through CLIProxy a short system prompt is not followed (the model answers as if it had no task), so the
+    # instructions travel in the user message.
+    reqs = [{"custom_id": f"j{sid}", "params": {"model": MODEL, "max_tokens": 200, "thinking": {"type": "disabled"},
+                                                "messages": [{"role": "user", "content": SUBJECT_SYSTEM + "\n\n" + u}]}} for sid, u in todo]
     ok = bad = 0
     now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-    for res in client.messages.batches.results(batch.id):
-        sid = int(res.custom_id[1:])
-        if res.result.type != "succeeded":
+    for cid, msg in run_requests(reqs):
+        sid = int(cid[1:])
+        if msg is None:
             bad += 1; continue
-        ledger_add(res.result.message.usage, batch=True)
+        ledger_add(msg.usage, batch=False)
         try:
-            j = parse_reply(res.result.message)
+            j = parse_reply(msg)
             vec.execute("UPDATE subjects SET title=?, title_es=?, labelled_at=?, model=? WHERE id=?", (j.get("title"), j.get("title_es"), now, MODEL, sid)); ok += 1
         except (json.JSONDecodeError, AttributeError):
             bad += 1
@@ -397,15 +409,11 @@ def store_label(vec, sid, j):
 
 
 def label(vec, week, kind, cap):
-    """Label unlabelled stories of a week through the Message Batches API (half price), with the system prompt cached."""
-    from dotenv import load_dotenv
-    load_dotenv(HERE / ".env")
-    import anthropic, time
-    client = anthropic.Anthropic()
+    """Label unlabelled stories of a week, with the system prompt cached."""
     todo = [r[0] for r in vec.execute("SELECT id FROM stories WHERE week=? AND kind=? AND title IS NULL ORDER BY size DESC", (week, kind))]
     spent = ledger_read()["usd"]
     est = len(todo) * 0.0015
-    log.info("labelling %d stories as a batch (spent $%.3f, estimate +$%.2f, cap %s)", len(todo), spent, est, f"${cap:.2f}" if cap else "none")
+    log.info("labelling %d stories (spent $%.3f, estimate +$%.2f, cap %s)", len(todo), spent, est, f"${cap:.2f}" if cap else "none")
     if not todo:
         return
     if cap is not None and spent + est > cap:
@@ -418,27 +426,20 @@ def label(vec, week, kind, cap):
             user = user.replace("posts", "discussion-group comments", 1)
         reqs.append({"custom_id": f"s{sid}", "params": {"model": MODEL, "max_tokens": 700, "thinking": {"type": "disabled"}, "system": system,
                                                         "messages": [{"role": "user", "content": user}]}})
-    batch = client.messages.batches.create(requests=reqs)
-    log.info("batch %s submitted", batch.id)
-    while True:
-        b = client.messages.batches.retrieve(batch.id)
-        c = b.request_counts
-        if b.processing_status == "ended":
-            break
-        log.info("batch %s: %d done, %d processing", batch.id, c.succeeded + c.errored + c.expired + c.canceled, c.processing)
-        time.sleep(BATCH_POLL_S)
     ok = bad = 0
-    for res in client.messages.batches.results(batch.id):
-        sid = int(res.custom_id[1:])
-        if res.result.type != "succeeded":
-            log.warning("story %d: %s", sid, res.result.type); bad += 1; continue
-        L = ledger_add(res.result.message.usage, batch=True)
+    for cid, msg in run_requests(reqs):
+        sid = int(cid[1:])
+        if msg is None:
+            bad += 1; continue
+        ledger_add(msg.usage, batch=False)
         try:
-            store_label(vec, sid, parse_reply(res.result.message)); ok += 1
+            store_label(vec, sid, parse_reply(msg)); ok += 1
         except (json.JSONDecodeError, AttributeError) as e:
             log.warning("story %d: unparseable reply (%s)", sid, e); bad += 1
+        if (ok + bad) % 50 == 0:
+            vec.commit(); log.info("%d of %d done", ok + bad, len(reqs))
     vec.commit()
-    log.info("batch %s: %d labelled, %d failed, total spend $%.3f", batch.id, ok, bad, ledger_read()["usd"])
+    log.info("%d labelled, %d failed, total spend $%.3f", ok, bad, ledger_read()["usd"])
 
 
 def proposals(vec):
