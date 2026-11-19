@@ -15,6 +15,7 @@ from urllib.parse import urlsplit
 
 HERE = Path(__file__).resolve().parent
 DB = HERE / "tg.db"
+SITE_URL = "https://canales.m19182.dev/"
 DAYS = 120
 TOP = 12
 
@@ -271,7 +272,16 @@ HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spanish Politics on Telegram</title>
+<title>Spanish Politics on Telegram: an archive of public channels</title>
+<meta name="description" content="A public archive of Telegram channels relevant to Spanish politics, with per-channel statistics, weekly stories, shared links and message search.">
+<meta name="author" content="Mateo Amado Ares">
+<link rel="canonical" href="__SITE_URL__">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Spanish Politics on Telegram">
+<meta property="og:title" content="Spanish Politics on Telegram: an archive of public channels">
+<meta property="og:description" content="A public archive of Telegram channels relevant to Spanish politics, with per-channel statistics, weekly stories, shared links and message search.">
+<meta property="og:url" content="__SITE_URL__">
+<meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cstyle%3Erect%7Bfill:%231a1a1a%7D@media(prefers-color-scheme:dark)%7Brect%7Bfill:%23e6e6e0%7D%7D%3C/style%3E%3Crect x='1' y='1' width='7' height='7'/%3E%3Crect x='8' y='8' width='7' height='7'/%3E%3C/svg%3E">
 <style>
 :root{color-scheme:light;--bg:#f7f7f4;--fg:#1a1a1a;--mute:#6b6b66;--line:#d8d8d2;--dot:#cfcfc8;--acc:#1a1a1a;--bar:#1a1a1a}
@@ -369,7 +379,7 @@ const T={
   about:'description (as published by the channel)',stats:'archive',created:'channel created',first:'first archived post',views:'total views',fwd:'posts that are forwards',senders:'distinct senders',
   fwdfrom:'most forwarded from',fwdto:'forwarded by tracked channels',domains:'most linked domains',none:'none',notyet:'not yet archived',perday:'posts per day',tracked:'tracked',untracked:'not tracked',
   tierlist:'tiers',built:'updated',since:'archived from',group:'discussion group',hours:'posts by weekday and hour (UTC)',days7:'Mo Tu We Th Fr Sa Su',
-  name:'Spanish Politics on Telegram',home:'home',browse:'browse channels',directory:'index',indexed:'channels in index',activity:'messages per day',period:'archive dates',light:'light',dark:'dark',
+  name:'Spanish Politics on Telegram',nameLong:'Spanish Politics on Telegram: an archive of public channels',home:'home',browse:'browse channels',directory:'index',indexed:'channels in index',activity:'messages per day',period:'archive dates',light:'light',dark:'dark',
   messageSearch:'search messages',query:'text',searchGo:'search',queryHint:'Words or "quoted phrases"',allChannels:'all channels',dateFrom:'from (UTC)',dateTo:'to (UTC)',order:'order',relevance:'relevance',newest:'newest',oldest:'oldest',
   loading:'searching…',results:'results',noresults:'no matching messages.',original:'original post',previous:'previous',next:'next',page:'page',
   stories:'stories',firstPost:'first post',tierOrder:'order of tiers',subjects:'subjects',subject:'subject',subjHint:'stories from different weeks with similar content (average cosine ≥ 0.88)',more:'more',thisWeek:'by week',groupLabel:'group',legend:'tiers inside the groups',sections:'sections',aboutPage:'about',
@@ -379,7 +389,7 @@ const T={
   about:'descripción (tal como la publica el canal)',stats:'archivo',created:'canal creado',first:'primera publicación archivada',views:'visualizaciones totales',fwd:'publicaciones que son reenvíos',senders:'remitentes distintos',
   fwdfrom:'más reenviado desde',fwdto:'reenviado por canales seguidos',domains:'dominios más enlazados',none:'ninguno',notyet:'aún no archivado',perday:'publicaciones por día',tracked:'seguido',untracked:'no seguido',
   tierlist:'niveles',built:'actualizado',since:'archivado desde',group:'grupo de debate',hours:'publicaciones por día de la semana y hora (UTC)',days7:'Lu Ma Mi Ju Vi Sá Do',
-  name:'Política española en Telegram',home:'inicio',browse:'ver canales',directory:'índice',indexed:'canales en el índice',activity:'mensajes por día',period:'fechas del archivo',light:'claro',dark:'oscuro',
+  name:'Política española en Telegram',nameLong:'Política española en Telegram: un archivo de canales públicos',home:'inicio',browse:'ver canales',directory:'índice',indexed:'canales en el índice',activity:'mensajes por día',period:'fechas del archivo',light:'claro',dark:'oscuro',
   messageSearch:'buscar mensajes',query:'texto',searchGo:'buscar',queryHint:'Palabras o "frases entre comillas"',allChannels:'todos los canales',dateFrom:'desde (UTC)',dateTo:'hasta (UTC)',order:'orden',relevance:'relevancia',newest:'más recientes',oldest:'más antiguos',
   loading:'buscando…',results:'resultados',noresults:'no hay mensajes coincidentes.',original:'publicación original',previous:'anterior',next:'siguiente',page:'página',
   stories:'historias',firstPost:'primera publicación',tierOrder:'orden de niveles',subjects:'asuntos',subject:'asunto',subjHint:'historias de distintas semanas con contenido parecido (coseno medio ≥ 0,88)',more:'más',thisWeek:'por semana',groupLabel:'grupo',legend:'niveles dentro de los grupos',sections:'secciones',aboutPage:'acerca de',
@@ -405,7 +415,7 @@ function home(){
   <div class="home-main"><section id="wmap"></section>
   <aside class="home-side"><dl class="home-stats">${counts.map(([label,n])=>`<div><dt>${label}</dt><dd>${fmt(n)}</dd></div>`).join('')}</dl>
   <section><h3>${t('activity')} · ${t('days').replace('%d',n)}</h3>${chart(daily,first)}</section>
-  <footer class="home-footer">${t('built')} ${D.built}</footer></aside></div></div>`;weekMap();
+  <footer class="home-footer">${t('built')} ${D.built} · <a href="https://blog.m19182.dev/">Mateo Amado Ares</a></footer></aside></div></div>`;weekMap();
  document.onkeydown=e=>{if(e.key==='/'&&!e.target.closest('input,textarea,select,[contenteditable]')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();location.hash='/search'}};
 }
 let searchController=null;
@@ -679,7 +689,7 @@ function electionView(){const E=D.election,v=document.getElementById('view');if(
 function route(){if(searchController){searchController.abort();searchController=null}const hash=location.hash.replace(/^#\/?/,''),split=hash.indexOf('?'),p=split<0?hash:hash.slice(0,split),query=split<0?'':hash.slice(split+1);const m=p.match(/^c\/(.+)$/),sm=p.match(/^s\/(\d+)$/);const isHome=!p;
  document.body.classList.toggle('home',isHome);document.documentElement.lang=L;
  {const b=document.getElementById('brand');b.setAttribute('aria-label',t('name'));b.title=t('name')}
- document.title=`${t('name')}${isHome?'':' / '+(m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='links'?t('links'):p==='29n'?t('e29n'):p==='method'?t('method'):p==='stories'||sm?t('stories'):t('channels'))}`;
+ document.title=isHome?t('nameLong'):`${t('name')} / ${m?decodeURIComponent(m[1]):p==='search'?t('messageSearch'):p==='links'?t('links'):p==='29n'?t('e29n'):p==='method'?t('method'):p==='stories'||sm?t('stories'):t('channels')}`;
  nav(isHome?'':(m?'channels':p==='search'||p==='links'||p==='method'||p==='29n'?p:(p==='stories'||sm)?'stories':'channels'));
  if(isHome)home();else if(m)channel(decodeURIComponent(m[1]));else if(sm)storyView(sm[1]);else if(p==='stories'){const q=new URLSearchParams(query);q.get('view')==='subjects'?subjectsView(q):storiesView(q)}else if(p==='search')messageSearch(new URLSearchParams(query));else if(p==='links')linksView(new URLSearchParams(query));else if(p==='method')methodView();else if(p==='29n')electionView();else index();window.scrollTo(0,0)}
 document.getElementById('lang').onclick=()=>{L=L==='en'?'es':'en';localStorage.setItem('lang',L);document.getElementById('lang').textContent=L==='en'?'[es]':'[en]';applyTheme();route()};
@@ -702,8 +712,13 @@ def main() -> None:
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     data = build()
-    html = HTML.replace("__DATA__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
+    html = HTML.replace("__SITE_URL__", SITE_URL).replace("__DATA__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
     (out / "index.html").write_text(html, encoding="utf-8")
+    # Routes are hash fragments, so the root is the only crawlable page.
+    (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}sitemap.xml\n", encoding="utf-8")
+    (out / "sitemap.xml").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"<url><loc>{SITE_URL}</loc><lastmod>{data['built'][:10]}</lastmod></url>\n</urlset>\n", encoding="utf-8")
     print(f"{out/'index.html'}: {len(data['channels'])} channels, {data['total']} messages, {len(html)//1024} KB")
 
 
